@@ -3,7 +3,8 @@
 #
 # PR Check — tiêu đề theo Conventional Commits, thân PR có nội dung, và liên kết
 # issue (closes/fixes/resolves #N) để issue tự đóng khi merge. Gắn nhãn
-# `skip-issue-link` cho PR không cần issue (sửa chính tả, cập nhật CI).
+# `skip-issue-link` cho PR không cần issue (sửa chính tả, cập nhật CI);
+# PR của dependabot[bot] được miễn liên kết issue.
 name: PR Check
 
 on:
@@ -33,7 +34,7 @@ jobs:
           n=$(printf '%s' "$PR_BODY" | tr -d '[:space:]' | wc -c)
           [ "$n" -ge 20 ] && echo "✅ thân PR $n ký tự" || { echo "::error::Thân PR quá ngắn (< 20 ký tự): mô tả thay đổi, lý do, cách kiểm."; exit 1; }
       - name: Liên kết issue
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-issue-link') }}
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-issue-link') && github.event.pull_request.user.login != 'dependabot[bot]' }}
         env:
           PR_TEXT: "${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}"
         run: |
