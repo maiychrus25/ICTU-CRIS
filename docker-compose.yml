@@ -1,3 +1,5 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
 services:
   db:
     image: postgres:16
@@ -9,5 +11,11 @@ services:
     volumes:
       - ./docker/initdb:/docker-entrypoint-initdb.d
       - cris_pg:/var/lib/postgresql/data
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://cris:cris@db:5432/cris
+    depends_on: [db]
+    profiles: ["app"]
 volumes:
   cris_pg: {}
