@@ -120,7 +120,28 @@ VALUES ('ten@ictu.edu.vn', 'Tên hiển thị', ARRAY['rd_officer']);
 chưa triển khai. Máy chủ dùng `wsgiref` — máy chủ phát triển, **không triển khai
 lên mạng công khai**.
 
-## 7. Lưu ý khi đồng bộ (Sync notes)
+## 7. Bật AI (Enabling the AI features)
+
+AI là **tuỳ chọn**. Mặc định `CRIS_AI_PROVIDER=none`: mọi chức năng khác chạy bình
+thường, các chỗ gợi ý hiện "AI chưa bật". Để bật mô hình cục bộ (chạy CPU, không cần
+GPU, không gọi ra ngoài sau khi đã tải):
+
+```bash
+pip install -e ".[ai]"            # thêm onnxruntime, tokenizers, numpy — xem DEPENDENCIES.md
+python -m cris ai download        # tải mô hình 118 MB + tokenizer 17 MB vào ~/.cache/ictu-cris/models,
+                                  # kiểm SHA-256 trước khi dùng; chỉ tải một lần
+export CRIS_AI_PROVIDER=local     # hoặc đặt trong .env
+python -m cris ai embed           # sinh vector cho toàn bộ công trình (~3 phút trên CPU 4 nhân)
+python -m cris ai status          # provider đang dùng, số vector đã có
+```
+
+Đổi thư mục mô hình bằng `CRIS_AI_MODEL_DIR`. Với Docker, mount thư mục đó vào container
+để không tải lại mỗi lần dựng.
+
+Kiểm thử mô hình thật: `pytest -m slow` (tự bỏ qua nếu chưa tải mô hình). CI chạy
+`pytest -m "not slow"` nên không cần mô hình.
+
+## 8. Lưu ý khi đồng bộ (Sync notes)
 
 - Mỗi yêu cầu tới kho nguồn được giãn cách **0,35 giây**
   (`DELAY` trong `cris/source/repository.py`) để tránh gây tải cho máy chủ
@@ -130,7 +151,7 @@ lên mạng công khai**.
   liệu cho `sync` (`giang-vien`, `bai-bao`, `luan-an`, `luan-van`, `do-an`,
   `hoc-lieu-so`) hoặc dùng `--no-details` để bỏ qua bước đọc trang chi tiết.
 
-## 8. Đã kiểm chứng (Verified)
+## 9. Đã kiểm chứng (Verified)
 
 Các lệnh sau đã chạy thành công từ image `app` dịch bằng `docker compose
 build app`, không cần thư mục mã nguồn trên máy chạy:
