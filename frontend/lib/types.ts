@@ -69,6 +69,17 @@ export interface CompareOut {
   query_id: number; provider: string; fallback: boolean; note: string; input: Record<string, unknown>;
   results: CompareResultItem[]; created_at: string | null;
 }
+export type ScreenLevel = "cao" | "vua" | "thap";
+export interface ScreenNeighbour {
+  work_id: number; title: string | null; cohort: string | null; score: number; aspects: Record<string, string>;
+}
+export interface ScreenItem {
+  work_id: number; title: string | null; cohort: string | null; neighbours: ScreenNeighbour[];
+  max_score: number; level: string;
+}
+export interface ScreenList { items: ScreenItem[]; page: PageInfo; cohorts: string[] }
+export interface ScreenCohortSummary { cohort: string; screened: number; flagged: number }
+export interface ScreenFilters { cohort?: string; min?: ScreenLevel; min_score?: number; page?: number }
 export interface QualityMetric { key: string; label: string; value: unknown; queue_url: string | null }
 export interface QualityOut {
   metrics: QualityMetric[]; works_by_type: Record<string, number>; works_with_link_pct: number;

@@ -9,6 +9,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
 
+import { AspectMatrix } from "@/components/aspect-matrix";
+import { CompareModeTabs } from "@/components/compare-mode-tabs";
 import { PageHeader } from "@/components/page-header";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { StatusBadge } from "@/components/status-badge";
@@ -18,18 +20,12 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { aspectLabels, aspectLevelLabels, docTypeLabels, getAspectLevel, type AspectLevel } from "@/lib/labels";
+import { aspectLabels, docTypeLabels } from "@/lib/labels";
 import { useComparison, useCreateComparison } from "@/lib/queries";
 import type { CompareOut } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 const aspectKeys = Object.keys(aspectLabels);
 const selectableDocTypes = Object.entries(docTypeLabels).slice(0, 5);
-const levelStyles: Record<AspectLevel, string> = {
-  cao: "border-status-danger/25 bg-status-danger/10 text-status-danger",
-  vua: "border-status-warning/30 bg-status-warning/10 text-status-warning",
-  thap: "border-status-success/25 bg-status-success/10 text-status-success",
-};
 
 function Results({ data }: { data: CompareOut }) {
   return (
@@ -39,7 +35,7 @@ function Results({ data }: { data: CompareOut }) {
       {!data.results.length ? <EmptyView title="Chưa có kết quả tương đồng" description="Hãy bổ sung mô tả hoặc các khía cạnh cụ thể hơn rồi đối chiếu lại." /> : data.results.map((result, index) => (
         <article key={result.work_id} className="rounded-lg border bg-card p-4 shadow-sm shadow-primary/5">
           <div className="flex items-start gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary tabular-nums">{index + 1}</span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><StatusBadge value={result.doc_type} kind="docType" />{result.year && <span className="text-xs text-muted-foreground tabular-nums">{result.year}</span>}{result.ai_generated && <Badge variant="outline" className="text-muted-foreground"><Bot />AI giải thích</Badge>}</div><h3 className="mt-2 text-[15px] font-semibold leading-6"><Link href={result.url ?? `/cong-trinh/?id=${result.work_id}`} className="hover:text-primary hover:underline">{result.title ?? "Chưa có tiêu đề"}<ArrowUpRight className="ml-1 inline size-3.5" /></Link></h3></div></div>
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">{aspectKeys.map((key) => { const level = getAspectLevel(result.aspects[key] ?? "thap"); return <div key={key} className={cn("rounded-md border px-3 py-2", levelStyles[level])}><p className="text-[11px] font-medium uppercase tracking-wide opacity-80">{aspectLabels[key]}</p><p className="mt-0.5 text-sm font-semibold">{aspectLevelLabels[level]}</p></div>; })}</div>
+          <div className="mt-4"><AspectMatrix aspects={result.aspects} /></div>
           {result.explanation && <p className="mt-3 border-l-2 border-primary/25 pl-3 text-sm leading-6 text-muted-foreground">{result.explanation}</p>}
         </article>
       ))}
@@ -49,12 +45,13 @@ function Results({ data }: { data: CompareOut }) {
 
 function CompareContent() {
   const router = useRouter();
-  const rawId = useSearchParams().get("id");
+  const searchParams = useSearchParams();
+  const rawId = searchParams.get("id");
   const id = rawId && /^\d+$/.test(rawId) ? Number(rawId) : null;
   const saved = useComparison(id);
   const create = useCreateComparison();
   const [created, setCreated] = useState<CompareOut | null>(null);
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(searchParams.get("title") ?? "");
   const [description, setDescription] = useState("");
   const [aspects, setAspects] = useState<Record<string, string>>({ bai_toan: "", doi_tuong: "", pham_vi: "", phuong_phap: "" });
   const [docTypes, setDocTypes] = useState<string[]>(selectableDocTypes.map(([value]) => value));
@@ -76,6 +73,7 @@ function CompareContent() {
   return (
     <>
       <PageHeader title="Đối chiếu đề tài" description="AI gợi ý các công trình liên quan theo từng khía cạnh; người dùng tự đánh giá và quyết định." />
+      <CompareModeTabs active="compare" />
       <div className="grid items-start gap-6 xl:grid-cols-[390px_minmax(0,1fr)]">
         <form onSubmit={submit} className="space-y-5 rounded-lg border bg-card p-5 xl:sticky xl:top-20">
           <div><label htmlFor="compare-title" className="mb-1.5 block text-sm font-medium">Tiêu đề đề tài <span className="text-status-danger">*</span></label><Input id="compare-title" required minLength={3} value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Nhập tiêu đề cần đối chiếu" /></div>

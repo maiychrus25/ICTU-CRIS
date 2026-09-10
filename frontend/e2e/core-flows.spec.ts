@@ -72,3 +72,16 @@ test("đối chiếu đề tài hiển thị note và ma trận khía cạnh", a
   await expect(page.getByText("Phạm vi", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Phương pháp", { exact: true }).first()).toBeVisible();
 });
+
+test("rà soát theo khoá mở đối chiếu với tiêu đề điền sẵn", async ({ page }) => {
+  await page.goto("/doi-chieu/ra-soat/");
+  await expect(page.getByRole("heading", { name: "Rà soát trùng đề tài theo khoá" })).toBeVisible();
+
+  await page.getByRole("combobox", { name: "Khoá rà soát" }).click();
+  await page.getByRole("option", { name: /Khoá 21 — 529 đồ án, 47 gắn cờ/ }).click();
+
+  await expect(page.locator('[data-slot="badge"]').filter({ hasText: /^Cao$/ }).first()).toBeVisible();
+  await page.getByRole("link", { name: "Đối chiếu chi tiết" }).first().click();
+  await expect(page).toHaveURL(/\/doi-chieu\/\?title=/);
+  await expect(page.getByLabel("Tiêu đề đề tài")).toHaveValue("Phát triển hệ thống điểm danh sinh viên bằng nhận diện khuôn mặt");
+});

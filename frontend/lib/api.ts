@@ -4,12 +4,13 @@
 import {
   aboutFixture, auditFixture, authorQueueFixture, compareFixture, duplicateDetailFixture, duplicateGroupsFixture,
   healthFixture, periodProgressFixture, periodsFixture, personFixture, qualityFixture, statsFixture,
-  topicsFixture, workDetailsFixture, worksFixture,
+  screenCohortsFixture, screenFixture, topicsFixture, workDetailsFixture, worksFixture,
 } from "@/lib/fixtures";
 import type {
   AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DecideAuthorsIn, DecideDupIn,
   DecideResult, DupGroupDetail, DupGroupList, HealthOut, PeriodOpenIn, PeriodOut, PeriodProgress,
   PersonProfile, QualityOut, StatsOut, Topic, WorkDetail, WorkFilters, WorkList,
+  ScreenCohortSummary, ScreenFilters, ScreenList,
 } from "@/lib/types";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
@@ -58,6 +59,15 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   else if (/^\/api\/queue\/duplicates\/\d+\/decide$/.test(url.pathname)) data = { ok: true, processed: [Number(url.pathname.split("/").at(-2))] };
   else if (url.pathname === "/api/compare" && init?.method === "POST") data = { ...compareFixture, query_id: Date.now(), input: JSON.parse(String(init.body)) };
   else if (/^\/api\/compare\/\d+$/.test(url.pathname)) data = { ...compareFixture, query_id: id };
+  else if (url.pathname === "/api/ai/screen/cohorts") data = screenCohortsFixture;
+  else if (url.pathname === "/api/ai/screen") {
+    const cohort = url.searchParams.get("cohort");
+    const min = url.searchParams.get("min");
+    const minScore = Number(url.searchParams.get("min_score") ?? 0);
+    const order = { thap: 0, vua: 1, cao: 2 } as const;
+    const items = screenFixture.items.filter((item) => (!cohort || item.cohort === cohort) && (!min || order[item.level as keyof typeof order] >= order[min as keyof typeof order]) && item.max_score >= minScore);
+    data = { ...screenFixture, items, page: { ...screenFixture.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
+  }
   else if (url.pathname === "/api/quality") data = qualityFixture;
   else if (url.pathname === "/api/about") data = aboutFixture;
   else if (url.pathname === "/api/stats") data = statsFixture;
@@ -109,6 +119,8 @@ export const api = {
   decideDuplicate: (id: number, input: DecideDupIn) => apiRequest<DecideResult>(`/api/queue/duplicates/${id}/decide`, { method: "POST", body: JSON.stringify(input) }),
   compare: (input: CompareIn) => apiRequest<CompareOut>("/api/compare", { method: "POST", body: JSON.stringify(input) }),
   getComparison: (id: number) => apiRequest<CompareOut>(`/api/compare/${id}`),
+  getScreenCohorts: () => apiRequest<ScreenCohortSummary[]>("/api/ai/screen/cohorts"),
+  getScreen: (filters: ScreenFilters = {}) => apiRequest<ScreenList>(`/api/ai/screen${queryString({ cohort: filters.cohort, min: filters.min, min_score: filters.min_score, page: filters.page })}`),
   getQuality: () => apiRequest<QualityOut>("/api/quality"),
   getAbout: () => apiRequest<AboutOut>("/api/about"),
   getStats: (years = 5) => apiRequest<StatsOut>(`/api/stats${queryString({ years })}`),

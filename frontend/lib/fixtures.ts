@@ -4,6 +4,7 @@
 import type {
   AboutOut, AuditList, AuthorQueueList, CompareOut, DupGroupDetail, DupGroupList, HealthOut,
   PeriodOut, PeriodProgress, PersonProfile, QualityOut, StatsOut, Topic, WorkDetail, WorkList, WorkSummary,
+  ScreenCohortSummary, ScreenList,
 } from "@/lib/types";
 
 export const workItems: WorkSummary[] = [
@@ -110,6 +111,27 @@ export const compareFixture: CompareOut = {
     { work_id: 5, title: workItems[4].title, doc_type: "hoc_lieu", year: 2023, score: 0.44, aspects: { bai_toan: "thap", doi_tuong: "vua", pham_vi: "0.38", phuong_phap: "thap" }, url: "/cong-trinh/?id=5", explanation: "Liên quan cơ sở dữ liệu, không trực tiếp giải quyết quản lý thư viện.", ai_generated: true },
     { work_id: 3, title: workItems[2].title, doc_type: "do_an", year: 2024, score: 0.39, aspects: { bai_toan: "0.31", doi_tuong: "thap", pham_vi: "vua", phuong_phap: "cao" }, url: "/cong-trinh/?id=3", explanation: "Tương đồng về phạm vi trường học và triển khai hệ thống web.", ai_generated: true },
     { work_id: 10, title: workItems[9].title, doc_type: "do_an", year: 2023, score: 0.28, aspects: { bai_toan: "thap", doi_tuong: "0.21", pham_vi: "thap", phuong_phap: "vua" }, url: "/cong-trinh/?id=10", explanation: "Chỉ gần ở cách xây dựng hệ thống; bài toán và đối tượng khác nhau.", ai_generated: true },
+  ],
+};
+
+export const screenCohortsFixture: ScreenCohortSummary[] = [
+  { cohort: "21", screened: 529, flagged: 47 },
+  { cohort: "20", screened: 486, flagged: 39 },
+];
+
+export const screenFixture: ScreenList = {
+  page: { page: 1, per_page: 50, total: 2 }, cohorts: ["20", "21"],
+  items: [
+    {
+      work_id: 3, title: "Phát triển hệ thống điểm danh sinh viên bằng nhận diện khuôn mặt", cohort: "21",
+      max_score: 0.951, level: "cao",
+      neighbours: [{ work_id: 2, title: "Ứng dụng AI xây dựng hệ thống điểm danh sinh viên dựa trên nhận diện khuôn mặt", cohort: "20", score: 0.951, aspects: { bai_toan: "cao", doi_tuong: "khong_du_du_lieu", pham_vi: "khong_du_du_lieu", phuong_phap: "khong_du_du_lieu" } }],
+    },
+    {
+      work_id: 7, title: "Xây dựng ứng dụng quản lý ký túc xá trên nền tảng web", cohort: "21",
+      max_score: 0.864, level: "vua",
+      neighbours: [{ work_id: 1, title: workItems[0].title, cohort: "18", score: 0.864, aspects: { bai_toan: "vua", doi_tuong: "khong_du_du_lieu", pham_vi: "khong_du_du_lieu", phuong_phap: "khong_du_du_lieu" } }],
+    },
   ],
 };
 
