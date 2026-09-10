@@ -4,3 +4,7 @@
 khao-sat-nguon/out
 tests
 docs
+.env
+**/__pycache__/
+**/*.pyc
+**/*.egg-info/
