@@ -236,7 +236,7 @@ Khi `DaGop`: các `work` không phải survivor chuyển `state = DaGop`, `merge
 | STT | Cột | Kiểu | Bắt buộc | Khởi tạo | Ràng buộc, ghi chú |
 |---|---|---|---|---|---|
 | 1 | `id` | bigserial | C | | |
-| 2 | `kind` | text | C | | `name_norm` · `pub_type_map` · `dedup` · `year_rule` |
+| 2 | `kind` | text | C | | `name_norm` · `pub_type_map` · `dedup` · `year_rule` · `field_map` (nhãn meta của thẻ đồ án, luận văn: sinh viên, khoá, năm, GVHD) |
 | 3 | `version` | int | C | | Duy nhất trong `kind` |
 | 4 | `body` | jsonb | C | | Xem dưới |
 | 5 | `active` | bool | C | false | Một phiên bản active mỗi `kind` |
@@ -281,9 +281,9 @@ Vai trò CSDL của ứng dụng chỉ có INSERT và SELECT trên bảng này. 
 
 | View | Nội dung | Phục vụ |
 |---|---|---|
-| `v_work_unit` | Mỗi cặp (`work_id`, `unit_id`) có ít nhất một `author_link` ở `DaNoiTuDong` hoặc `DaXacNhan` tới `person` thuộc đơn vị đó. Đây là **đơn vị tham gia**, khác `work.lead_unit_id` | N-13, R-04, BR-03 |
-| `v_work_current` | `work` cùng giá trị hiện hành từ `field_provenance` và cờ có dòng `manual` | SC-05, UX-09 |
-| `v_person_publications` | Công trình theo người, tách hai nhóm: đã nối và nghi thuộc chưa xác nhận | T-02, SC-12 |
+| `v_work_unit` | Mỗi cặp (`work_id`, `unit_id`) có ít nhất một `author_link` ở `DaNoiTuDong` hoặc `DaXacNhan` tới `person` thuộc đơn vị đó, chỉ tính lượt tên đang hiện hành (`position > 0`). Đây là **đơn vị tham gia**, khác `work.lead_unit_id` | N-13, R-04, BR-03 |
+| `v_work_current` | `work` chưa bị gộp (`merged_into_id` null) kèm cờ `has_manual` cho biết có trường do người sửa hoặc chọn khi gộp; giá trị gốc từng trường tra ở `field_provenance` | SC-05, UX-09 |
+| `v_person_publications` | Công trình theo người, tách hai nhóm: đã nối và nghi thuộc chưa xác nhận; bỏ công trình đã gộp và lượt tên mồ côi | T-02, SC-12 |
 | `v_data_quality` | Độ phủ theo trường, số lượt tên chưa nối, số công trình chưa có đơn vị tham gia, số nhóm nghi trùng chờ, kết quả `sync_run` gần nhất | N-15, SC-10 |
 
 ## 17.5 Luồng ghi chính
