@@ -146,3 +146,42 @@ badge; BUILDING.md mục frontend; `docs/ba/07-screens.md` cập nhật theo mà
 `pytest -q -m "not slow"` xanh · `npm run build` xanh · `docker build` một ảnh chạy được cả
 API lẫn UI · `git diff --stat` không đụng tầng nghiệp vụ · `DEPENDENCIES.md` có đủ
 fastapi/uvicorn/pydantic/httpx và mọi gói npm runtime có giấy phép MIT/ISC/Apache.
+
+## Kết quả (11/09/2026)
+
+Đối chiếu với `git log --oneline b3c3436..HEAD` (11 commit, từ cũ tới mới):
+
+| Task kế hoạch | Xong ở commit | Ghi chú |
+|---|---|---|
+| Task 1 — API FastAPI + OpenAPI | `ea9f847` feat(api): FastAPI JSON layer with 13 endpoints and OpenAPI docs | Giao **13** endpoint, không phải 12 như kế hoạch ước tính ban đầu — thêm khi các lát cắt E1–E5 (mo-rong-sau-ui) gắn route mới vào cùng router `/api/*` |
+| Task 2 — Scaffold Next.js + 3 màn lõi | `44184d2` feat(frontend): Next.js UI batch A — shell, design tokens, search, work detail, topic comparison, about | Tra cứu + chi tiết công trình, đối chiếu đề tài, về hệ thống — đúng ba màn kế hoạch |
+| Task 3 — Hàng đợi tác giả, nghi trùng, hồ sơ giảng viên, chất lượng dữ liệu | `296db38` feat(frontend): batch B — author queue, duplicate queue with side-by-side merge, lecturer profile, data quality | Đúng phạm vi kế hoạch |
+| Task 4 — Đóng gói, CI, tài liệu, gỡ UI cũ | `06f977e` refactor: remove the legacy stdlib web UI · `16b498f` build: multi-stage image serving the Next.js export; docs for the new architecture · `d3e607e` fix(ui): real-data QA — about-page counts, comparison links, chart contrast, aspect levels; screenshots | Gỡ UI cũ và dựng ảnh đa tầng tách thành hai commit riêng thay vì một; QA trên dữ liệu thật + ảnh chụp README được tách thành một commit thứ ba không có trong kế hoạch ban đầu |
+
+Ba commit không nằm trong bốn task ở trên đến từ kế hoạch song song
+`2026-09-11-mo-rong-sau-ui.md` (lát cắt E), chạy xen giữa Task 3 và Task 4 của kế hoạch
+này: `0eb0814` (E1–E4 backend), `140fb08` + `86de610` + `151e6f5` (E5 — AI rà soát theo
+khoá), `81cf5dd` (E1–E4 frontend). Xem kết quả chi tiết của các task đó ở mục "Kết quả" của
+`2026-09-11-mo-rong-sau-ui.md`.
+
+### Điều lệch so với kế hoạch
+
+- **Đường dẫn chi tiết dùng query string, không dùng route động `[id]`.** Kế hoạch ở mục
+  "Cấu trúc" liệt kê `tra-cuu/cong-trinh/[id]`, `tra-cuu/giang-vien/[id]`, `doi-chieu/[id]`,
+  `doi-soat/trung-lap/[id]`. Bản dựng thật dùng `frontend/app/cong-trinh/page.tsx` +
+  `useSearchParams().get("id")` (tương tự cho `giang-vien`, `doi-soat/trung-lap/chi-tiet`,
+  `doi-chieu`), tức là `/cong-trinh/?id=123` chứ không phải `/cong-trinh/123/`. Lý do:
+  `next export` (`output: "export"`) dựng route động phải liệt kê trước toàn bộ ID lúc
+  build (`generateStaticParams`) — với 7.618 công trình đổi liên tục sau mỗi lần đồng bộ,
+  phải build lại toàn bộ site mỗi khi có công trình mới thay vì chỉ deploy lại API. Query
+  string giữ nguyên "một ảnh, dựng một lần, dữ liệu đổi độc lập với build tĩnh".
+- **Task 1 giao 13 endpoint thay vì 12** — chênh lệch vì các endpoint của lát cắt E
+  (`/api/stats`, `/api/audit`, `/api/periods*`, `/api/ai/screen*`) được cộng dồn vào cùng
+  con số cuối cùng ghi trong commit message, không phải một sai lệch trong Task 1 gốc.
+- **Gỡ UI cũ và đóng gói tách làm ba commit** (`06f977e`, `16b498f`, `d3e607e`) thay vì một
+  commit "Task 4" duy nhất như kế hoạch mô tả — mỗi bước (gỡ mã, dựng ảnh, QA dữ liệu thật)
+  có rủi ro khác nhau nên tách để dễ `git bisect` nếu có hồi quy.
+- Ba màn "phải ăn điểm khi trình diễn" (đối chiếu đề tài, nghi trùng, chi tiết công trình)
+  đúng như kế hoạch, nhưng phần "không hiện điểm % tương đồng tổng hợp" (BR-17) áp dụng
+  luôn cho cả màn mới "rà soát theo khoá" (E5, ngoài phạm vi kế hoạch này) — nhất quán hơn
+  kế hoạch ban đầu dự kiến vì tính năng đó chưa tồn tại khi viết kế hoạch.

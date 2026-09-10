@@ -1,5 +1,34 @@
 # 8. Sitemap — ICTU-CRIS (web, tối đa cấp 2)
 
+## Cập nhật 11/09/2026
+
+Giao diện làm lại bằng Next.js xuất tĩnh (xem
+[2026-09-11-giao-dien-nextjs.md](../superpowers/plans/2026-09-11-giao-dien-nextjs.md) và
+[2026-09-11-mo-rong-sau-ui.md](../superpowers/plans/2026-09-11-mo-rong-sau-ui.md)) dùng
+đường dẫn phẳng, trang chi tiết nhận id qua **query string** (không phải route động
+`[id]` — lý do: xuất tĩnh `next export` phải liệt kê trước mọi id lúc build, không hợp
+với dữ liệu đổi theo mỗi lần đồng bộ). Đường dẫn UI thật đang chạy:
+
+```
+/tong-quan/                                Tổng quan cho lãnh đạo
+/tra-cuu/                                  Tìm công trình
+/cong-trinh/?id=                           Chi tiết công trình (xuất xứ từng trường)
+/giang-vien/?id=                           Hồ sơ công bố của giảng viên
+/doi-chieu/                                Đối chiếu đề tài dự kiến (bốn khía cạnh)
+/doi-chieu/ra-soat/                        Rà soát trùng đề tài theo khoá
+/doi-soat/tac-gia/                         Hàng đợi xác nhận liên kết tác giả
+/doi-soat/trung-lap/                       Hàng đợi nghi trùng
+/doi-soat/trung-lap/chi-tiet/?id=          Chi tiết nhóm nghi trùng (so cạnh nhau)
+/ky-bao-cao/                               Danh sách kỳ báo cáo
+/ky-bao-cao/chi-tiet/?id=                  Chi tiết kỳ: tiến độ theo đơn vị
+/nhat-ky/                                  Nhật ký thao tác
+/chat-luong-du-lieu/                       Báo cáo chất lượng dữ liệu
+/ve/                                       Về hệ thống
+```
+
+Sitemap gốc bên dưới (`ho-so`, `trinh-duyet`, `bao-cao`, `quan-tri`, v.v.) mô tả tầm nhìn
+đầy đủ của lát cắt K/D/R, không phải đường dẫn đã triển khai — xem đường dẫn thật ở trên.
+
 ```
 /                          Bảng công việc của tôi
 ├─ /ky-bao-cao             Danh sách kỳ báo cáo

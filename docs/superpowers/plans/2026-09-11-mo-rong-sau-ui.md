@@ -107,3 +107,56 @@ giềng với ma trận khía cạnh (tái dùng component AspectMatrix), nút "
 
 Đăng nhập (NFR-01), kê khai từng công trình + minh chứng, xuất Excel định dạng biểu mẫu
 Bộ, thông báo email. Ghi vào "Đã biết" của CHANGELOG khi phát hành 0.2.0.
+
+## Kết quả (11/09/2026)
+
+Đối chiếu với `git log --oneline b3c3436..HEAD` (11 commit, từ cũ tới mới). Các task E1–E6
+chạy xen kẽ với Task 3/4 của `2026-09-11-giao-dien-nextjs.md` chứ không tách hẳn thành một
+đợt riêng sau khi UI ngang màn, như phần mở đầu của kế hoạch này giả định.
+
+| Task kế hoạch | Xong ở commit | Ghi chú |
+|---|---|---|
+| E1 — Tổng quan cho lãnh đạo | backend `0eb0814` feat(api): stats, CSV export, audit log and reporting-period endpoints · frontend `81cf5dd` feat(frontend): batch C — leadership overview, CSV export links, audit log, reporting periods | `GET /api/stats` + trang `/tong-quan/` đúng như đặc tả: thẻ số, biểu đồ theo năm × loại, bảng đơn vị, top giảng viên |
+| E2 — Xuất CSV | `0eb0814` (backend) · `81cf5dd` (nút "Tải CSV") | Đúng kế hoạch |
+| E3 — Nhật ký thao tác | `0eb0814` (backend `/api/audit`) · `81cf5dd` (trang `/nhat-ky/`) | Đúng kế hoạch |
+| E4 — Kỳ báo cáo (đọc + mở/đóng) | `0eb0814` (backend `/api/periods*`) · `81cf5dd` (trang `/ky-bao-cao/`, `/ky-bao-cao/chi-tiet/`) | Kê khai từng công trình vẫn để lại cho lát cắt sau, đúng như kế hoạch đã ghi rõ từ đầu |
+| E5 — AI rà soát trùng đề tài theo lô | `140fb08` feat(ai): cohort topic-overlap screening with suggestions, CLI and API · `86de610` fix(ai): calibrate cohort screening thresholds on real score distribution · `151e6f5` feat(frontend): batch D — cohort topic-overlap screening with aspect matrix and prefilled comparison | Xem "Điều lệch" bên dưới — ngưỡng phải hiệu chuẩn lại sau khi đo trên dữ liệu thật |
+| E6 — Đóng gói một container, gỡ UI cũ | `06f977e` refactor: remove the legacy stdlib web UI · `16b498f` build: multi-stage image serving the Next.js export; docs for the new architecture | Kiểm tra `frontend/out/index.html` trong ảnh CI đúng như kế hoạch; QA dữ liệu thật bổ sung thêm ở `d3e607e` (ngoài phạm vi E6 gốc) |
+
+### Điều lệch so với kế hoạch
+
+- **Ngưỡng rà soát (E5) phải hiệu chuẩn lại, không dùng lại ngưỡng của `compare_topic`.**
+  Kế hoạch viết: "tính mức 4 khía cạnh như `compare_topic` (tái dùng hàm nội bộ...)" — ngụ
+  ý dùng chung ngưỡng khía cạnh 0,55/0,35 đã có. Khi chạy thật trên cohort 21 (529 đồ án),
+  ngưỡng đó gắn cờ **529/529 (100%)** — vô dụng, vì nó được hiệu chuẩn cho việc so một khía
+  cạnh với một câu, không phải so toàn văn bản hai công trình cùng loại. Commit `86de610`
+  thêm hằng số riêng `SCREEN_THRESHOLDS = (0.90, 0.80)` sau khi đo phân vị điểm thật
+  (p50=0,835 · p90=0,897 · p99=0,928) và đọc thủ công các cặp quanh từng mức — kết quả gắn
+  cờ 47/529 (8,9%), nằm trong khoảng mục tiêu 5–15% mà kế hoạch không hề đặt ra trước (vì
+  chưa có số đo lúc viết kế hoạch). Xem phương pháp đầy đủ ở `docs/ai.md` §5.
+- **E5 rà theo cohort do người vận hành truyền vào (`--cohort <mã>`), không tự động chọn
+  "khoá mới nhất".** Mục "Bối cảnh" của E5 mô tả rà "đồ án của khoá mới nhất" — bản dựng
+  thật để `screen_cohort(conn, provider, *, cohort, k=3, thresholds)` nhận `cohort` bất kỳ
+  làm tham số bắt buộc, và trang `/doi-chieu/ra-soat/` cho chọn khoá từ danh sách các khoá
+  đã rà (`GET /api/ai/screen/cohorts`) thay vì tự suy khoá mới nhất. Tổng quát hơn kế hoạch
+  gốc: dùng được cho bất kỳ khoá nào đã `ai embed`, không chỉ khoá gần nhất.
+  `dang_ky_do_an` vẫn đúng như kế hoạch nêu — không có ở nguồn, chỉ tồn tại trong schema —
+  nên hướng "rà theo lô sau khi có dữ liệu" là lựa chọn đúng, không phải điều lệch.
+  Migration cho tính năng này (`0008_ai_screen.sql`, thêm `'topic_overlap'` vào
+  `ai_suggestion.kind`) không được nêu tên trong kế hoạch nhưng là hệ quả tất yếu của việc
+  thêm `kind` mới — không phải sai lệch, chỉ là chi tiết kế hoạch bỏ sót.
+- **E1 — biểu đồ theo năm chỉ vẽ được cho bài báo, không phải mọi loại tài liệu.** Kế
+  hoạch mô tả `by_year_type` gồm đủ `bai_bao, do_an, luan_van, luan_an, hoc_lieu` theo năm,
+  ngụ ý biểu đồ có đủ dữ liệu cho mọi loại. Trên dữ liệu thật, đồ án/luận văn/luận án không
+  có năm xuất bản đáng tin ở nguồn nên phần lớn rơi vào `unknown_year` (5.734 công trình) —
+  biểu đồ theo năm trên `/tong-quan/` vì vậy hiển thị chủ yếu là bài báo. API vẫn trả đúng
+  cấu trúc kế hoạch yêu cầu; đây là giới hạn của dữ liệu nguồn, không phải lỗi triển khai —
+  ghi vào mục "Đã biết" của `docs/release-notes/v0.2.0.md`.
+- **Thứ tự chạy thực tế không tách bạch "trước/sau UI ngang màn"** như câu mở đầu kế hoạch
+  giả định ("Tiền đề: ... đã ngang màn với UI cũ"). Nhìn theo lịch sử commit, E1–E4 backend
+  (`0eb0814`) chạy ngay sau Task 3 của kế hoạch UI (`296db38`) và trước khi UI cũ bị gỡ
+  (`06f977e`), tức là các lát cắt E và Task 4 của kế hoạch UI đan xen nhau thay vì nối tiếp
+  tuần tự như hai kế hoạch riêng biệt ngụ ý.
+- Phân công "UI luôn giao Codex, backend giao subagent sonnet" ghi trong Ràng buộc chung
+  không kiểm chứng được từ lịch sử Git (tác giả commit là một tài khoản duy nhất); không
+  tính là điều lệch vì đây là chi tiết quy trình nội bộ, không phải kết quả kỹ thuật.
