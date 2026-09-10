@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+Chưa có.
+
+## [0.1.0] - 2026-09-10
+
+Bản dự thi "Phát triển phần mềm mã nguồn mở tích hợp AI 2026". Tag `v0.1.0`.
+
 Chưa có trong bản này: đăng nhập và phân quyền thật (NFR-01, NFR-02 — giao
 diện hiện chạy với một người dùng mặc định, KHÔNG triển khai lên mạng công
 khai), nhập Excel khoa (S-06), kê khai và phê duyệt (phần còn lại của lát cắt
@@ -70,6 +76,13 @@ K, toàn bộ D và R), nhà cung cấp AI ngoài (giao diện `explain` đã c�
   qua GitHub Actions).
 - `BUILDING.md` — hướng dẫn dịch và chạy từ mã nguồn (Docker và venv).
 
+### Đã kiểm chứng trên dữ liệu thật (10/09/2026)
+
+Toàn kho `repository.ictu.edu.vn` đồng bộ đủ 8.034 bản ghi (đồ án 5.375/5.375 nhờ quét
+bù phân trang), 7.618 công trình sau chuẩn hoá. Bài báo đạt 86,6 % có liên kết tác giả
+(78,8 % tự nối, 15,9 % chờ xác nhận) so với 8 % ở nguồn. Vector cho toàn bộ công trình
+sinh trong 11 phút trên CPU; đối chiếu một đề tài 3,25 s. Chi tiết: BUILDING.md §9.
+
 ### Đã biết (Known issues)
 
 - Chỉ số `mentions_placeholder` trên trang chất lượng dữ liệu **chỉ đếm sinh viên**
@@ -94,6 +107,5 @@ K, toàn bộ D và R), nhà cung cấp AI ngoài (giao diện `explain` đã c�
   hỗ trợ `DISTINCT` trong window function nên mọi lần mở hàng đợi đều lỗi 500.
   Thay bằng subquery gộp rồi nối lại theo tên thô (`cris/web/views_queue.py`).
 
-## [0.1.0] - Chưa phát hành
-
-Sẽ gắn nhãn (tag) và điền ngày khi phát hành bản đầu.
+[Unreleased]: https://github.com/maiychrus25/CRIS/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/maiychrus25/CRIS/releases/tag/v0.1.0

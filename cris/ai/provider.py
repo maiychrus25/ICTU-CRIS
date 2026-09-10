@@ -94,15 +94,34 @@ class FakeProvider:
 
 VALID = ("none", "fake", "local")
 
+# Cache theo tiến trình, khoá bởi (tên provider, thư mục mô hình). Nạp phiên ONNX
+# mất ~1,8 s; web tạo provider mỗi request nên không cache thì mỗi lần đối chiếu
+# đội thêm chừng đó (đo 10/09: 5,9 s so với 3,4 s ở tầng nghiệp vụ, vượt NFR-41).
+_CACHE: dict = {}
 
-def get_provider(env=None):
-    env = os.environ if env is None else env
-    name = (env.get("CRIS_AI_PROVIDER") or "none").strip().lower()
+
+def _build(name, model_dir):
     if name == "none":
         return NoneProvider()
     if name == "fake":
         return FakeProvider()
     if name == "local":
         from cris.ai.local import LocalProvider  # import muộn: gói lõi không cần onnxruntime
-        return LocalProvider(model_dir=env.get("CRIS_AI_MODEL_DIR"))
+        return LocalProvider(model_dir=model_dir)
     raise ValueError(f"CRIS_AI_PROVIDER={name!r} không hợp lệ; chọn một trong {', '.join(VALID)}")
+
+
+def get_provider(env=None):
+    env = os.environ if env is None else env
+    name = (env.get("CRIS_AI_PROVIDER") or "none").strip().lower()
+    key = (name, env.get("CRIS_AI_MODEL_DIR") or "")
+    p = _CACHE.get(key)
+    if p is None:
+        p = _build(name, key[1] or None)
+        _CACHE[key] = p
+    return p
+
+
+def clear_provider_cache():
+    """Cho kiểm thử và cho lệnh đổi cấu hình lúc chạy."""
+    _CACHE.clear()

@@ -164,7 +164,12 @@ mount thư mục mã nguồn và PostgreSQL 16 từ `docker compose`:
 | `CRIS_AI_PROVIDER=none python -c "import cris.web.wsgi, cris.cli"` | `onnxruntime`, `numpy`, `tokenizers` không nằm trong `sys.modules` |
 | `python -m cris serve` rồi gọi 13 route bằng `curl` | trang có dữ liệu 200; id không tồn tại 404; DB chưa có `rd_officer` 503 kèm câu SQL hướng dẫn |
 | `python -m cris migrate` trên DB trống | áp `0001`–`0007` liền một lượt |
-| Đồng bộ toàn kho `python -m cris sync` | giảng viên 410, luận án 11, học liệu 2, luận văn 323, bài báo 1.907 — tất cả `status=ok`, không cảnh báo lệch số lượng (đồ án: xem CHANGELOG bản kế) |
+| Đồng bộ toàn kho `python -m cris sync` (6 loại, đọc cả trang chi tiết) | giảng viên 410, luận án 11, học liệu 2, luận văn 323, bài báo 1.907, **đồ án 5.375/5.375** — tất cả `status=ok`, không cảnh báo lệch số lượng; quét bù S-04 lấy đủ 11 bản ghi phân trang bỏ sót. Toàn bộ ≈ 2 giờ ở 3 yêu cầu/giây |
+| `people` → `normalize` → `link` → `dedup` trên dữ liệu thật | 400/410 người (10 hồ sơ trùng ORCID ở nguồn bị từ chối, xem CHANGELOG "Đã biết"); 7.618 công trình; nối tự động 3.135 lượt, hàng đợi 903; 39 nhóm nghi trùng, 15 có cảnh báo đồ án nhóm. Bài báo: 78,8 % nối tự động + 15,9 % chờ xác nhận = 86,6 % có liên kết (mốc nguồn 8 %) |
+| `CRIS_AI_PROVIDER=local python -m cris ai embed` trên 7.618 công trình | 679 s ≈ 11 phút, CPU 4 nhân (NFR-40 ≤ 15 phút). Lưu ý: chỉ 210/1.907 bài báo có tóm tắt ở nguồn, phần còn lại embed bằng tiêu đề + từ khoá |
+| `ai topics` / `ai suggest` | 40 cụm trên 11.716 từ khoá trong 52 s; 978 gợi ý hàng đợi tác giả + 26 gợi ý nghi trùng trong 8 s |
+| `POST /doi-chieu` qua server sống, DB thật, provider `local` | lần đầu 5,07 s (nạp mô hình một lần cho tiến trình), các lần sau 3,28–3,29 s (NFR-41 ≤ 5 s); các trang khác 0,05–0,13 s; 0 traceback |
+| `compare_topic` một đề tài thật trên 7.618 vector | 3,25 s kể cả nạp provider (NFR-41 ≤ 5 s). Đề tài "học tiếng Anh cho trẻ khiếm thính, luyện phát âm": top-5 tách đúng hai trục — đồ án luyện phát âm tiếng Anh (*phương pháp: giống*) và đồ án cho người khiếm thính (*đối tượng: giống*) |
 
 `migrate` trả về danh sách rỗng khi mọi migration đã được áp dụng; `quality --json` in
 báo cáo chất lượng hiện tại của cơ sở dữ liệu.

@@ -67,3 +67,14 @@ def test_fake_provider_empty_text_gives_zero_vector_without_error():
 def test_get_provider_fake_via_env():
     p = P.get_provider({"CRIS_AI_PROVIDER": " FAKE "})
     assert p.name == "fake" and p.model_id == "fake-32"
+
+
+def test_get_provider_is_cached_per_process_and_keyed_by_env():
+    P.clear_provider_cache()
+    a = P.get_provider({"CRIS_AI_PROVIDER": "fake"})
+    b = P.get_provider({"CRIS_AI_PROVIDER": "fake"})
+    assert a is b                                   # cùng cấu hình → cùng đối tượng, không nạp lại
+    c = P.get_provider({"CRIS_AI_PROVIDER": "none"})
+    assert c is not a and c.name == "none"          # cấu hình khác → đối tượng khác
+    P.clear_provider_cache()
+    assert P.get_provider({"CRIS_AI_PROVIDER": "fake"}) is not a
