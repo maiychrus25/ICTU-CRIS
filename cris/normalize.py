@@ -92,7 +92,7 @@ def normalize_record(conn, rec, rules, actor_id=None):
                         (*upd_cols.values(), rec["id"], rs_id, work_id))
             # giải phóng vị trí đang active (không vi phạm UNIQUE) trước khi khớp lại theo name_key;
             # không đụng tới các hàng đã mồ côi từ chu kỳ trước (đang giữ position âm)
-            cur.execute("UPDATE author_mention SET position = -position WHERE work_id=%s AND position > 0 RETURNING id", (work_id,))
+            cur.execute("UPDATE author_mention SET position = -id WHERE work_id=%s AND position > 0 RETURNING id", (work_id,))
             freed = {r["id"] for r in cur.fetchall()}
             cur.execute("DELETE FROM author_mention WHERE work_id=%s AND id NOT IN (SELECT mention_id FROM author_link)", (work_id,))
         else:

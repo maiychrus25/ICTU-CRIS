@@ -221,3 +221,37 @@ def test_duplicate_names_in_one_record_keep_two_rows(conn, seeded):
     ms = q(conn, "SELECT id, position FROM author_mention WHERE work_id=%s ORDER BY position", work_id)
     assert [m["position"] for m in ms] == [1, 2]
     assert ms[0]["id"] == ab_id
+
+def test_two_orphans_from_different_cycles_do_not_collide(conn, seeded):
+    v1 = {"archive": {"url": "https://r/bai-bao/j/", "title": "T6", "authors": "A B, C D, E F", "pub_type": "Scopus",
+                      "year": "2021", "journal": "J", "volume": "V", "keywords": None},
+          "detail": {"title": "T6", "authors": ["A B", "C D", "E F"], "doi": [], "abstract": None, "meta": {}}}
+    load(conn, "bai_bao", v1, "https://r/bai-bao/j/")
+    normalize.normalize_pending(conn)
+    work_id = q(conn, "SELECT id FROM work")[0]["id"]
+    cd_id = q(conn, "SELECT id FROM author_mention WHERE work_id=%s AND raw_name='C D'", work_id)[0]["id"]
+    ef_id = q(conn, "SELECT id FROM author_mention WHERE work_id=%s AND raw_name='E F'", work_id)[0]["id"]
+    with conn.cursor() as cur:
+        for mention_id, name in ((cd_id, "C D"), (ef_id, "E F")):
+            cur.execute("INSERT INTO person(kind, display_name, name_norm) VALUES ('external',%s,%s) RETURNING id",
+                        (name, name.lower()))
+            person_id = cur.fetchone()["id"]
+            cur.execute("INSERT INTO author_link(mention_id, person_id, confidence, state) VALUES (%s,%s,'ten_day_du_duy_nhat','DaXacNhan')",
+                        (mention_id, person_id))
+    conn.commit()
+
+    v2 = json.loads(json.dumps(v1)); v2["detail"]["authors"] = ["A B", "E F"]
+    load(conn, "bai_bao", v2, "https://r/bai-bao/j/")
+    normalize.normalize_pending(conn)   # "C D" mồ côi ở chu kỳ này
+
+    v3 = json.loads(json.dumps(v1)); v3["detail"]["authors"] = ["A B"]
+    load(conn, "bai_bao", v3, "https://r/bai-bao/j/")
+    normalize.normalize_pending(conn)   # "E F" mồ côi ở chu kỳ này; không được ném UniqueViolation
+
+    rows = {r["id"]: r["position"] for r in q(conn, "SELECT id, position FROM author_mention WHERE work_id=%s", work_id)}
+    assert rows[cd_id] < 0 and rows[ef_id] < 0
+    assert rows[cd_id] != rows[ef_id]
+    ab = q(conn, "SELECT position FROM author_mention WHERE work_id=%s AND raw_name='A B'", work_id)[0]
+    assert ab["position"] == 1
+    logs = q(conn, "SELECT entity_id FROM audit_log WHERE action='mention.orphaned'")
+    assert sorted(r["entity_id"] for r in logs) == sorted([cd_id, ef_id])
