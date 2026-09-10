@@ -19,14 +19,17 @@ def test_parse_archive_do_an_has_meta_and_mentors():
 
 def test_parse_archive_giang_vien_has_identity_fields():
     rows = R.parse_archive("giang-vien", (FX / "giang-vien-archive.html").read_text(encoding="utf-8"))
-    assert rows and rows[0]["url"] and rows[0]["name"]
+    assert len(rows) == 28
+    assert rows[0]["url"] and rows[0]["name"]
     assert "email" in rows[0] and "degree" in rows[0]
 
 def test_parse_detail_bai_bao_authors_and_doi():
     d = R.parse_detail((FX / "bai-bao-detail.html").read_text(encoding="utf-8"),
                        "https://repository.ictu.edu.vn/bai-bao/x/")
     assert d["title"]
-    assert d["authors"] is None or (isinstance(d["authors"], list) and all(isinstance(a, str) for a in d["authors"]))
+    assert d["authors"] == [
+        "Thi Minh-Hue Luong", "The-Vinh Nguyen", "Van-Viet Nguyen", "Duc-Quang Vu", "Trung-Nghia Phung",
+    ]
     assert isinstance(d["doi"], list) and isinstance(d["pdf"], list)
 
 def test_iter_archive_stops_when_no_new_rows():
