@@ -127,6 +127,37 @@ def test_diff_compares_against_all_other_members(conn):
     diffs = {r["work_id"]: r["diff"] for r in q(conn, "SELECT work_id, diff FROM duplicate_member")}
     assert "journal" in diffs[a]
 
+def test_title_bucket_includes_doi_bearing_work(conn):
+    a = mk(conn, "bai_bao", "Same Title Doi Mix", doi="10.1/x")
+    b = mk(conn, "bai_bao", "Same title doi mix")
+    dedup.find_duplicates(conn)
+    gs = q(conn, "SELECT id, basis FROM duplicate_group")
+    assert len(gs) == 1 and gs[0]["basis"] == "title_norm"
+    members = {r["work_id"] for r in q(conn, "SELECT work_id FROM duplicate_member WHERE group_id=%s", gs[0]["id"])}
+    assert members == {a, b}
+
+def test_thesis_same_title_absent_student_no_false_hint(conn):
+    mk(conn, "do_an", "Đề tài không sinh viên", student=None, cohort="K14")
+    mk(conn, "do_an", "Đề tài không sinh viên", student="Nguyễn A", cohort="K14")
+    out = dedup.find_duplicates(conn)
+    assert out == {"groups": 1, "group_hint": 0}
+    assert q(conn, "SELECT hint FROM duplicate_group")[0]["hint"] is None
+
+def test_new_duplicate_of_giu_rieng_pair_is_surfaced(conn, user_id):
+    a = mk(conn, "bai_bao", "Giu Rieng Regroup")
+    b = mk(conn, "bai_bao", "Giu rieng regroup")
+    dedup.find_duplicates(conn)
+    gid = q(conn, "SELECT id FROM duplicate_group")[0]["id"]
+    dedup.decide_group(conn, gid, "keep", user_id, reason="khác nhau")
+    c = mk(conn, "bai_bao", "giu rieng regroup")
+    out = dedup.find_duplicates(conn)
+    assert out["groups"] == 1
+    new_gid = q(conn, "SELECT id FROM duplicate_group WHERE id <> %s", gid)[0]["id"]
+    members = {r["work_id"] for r in q(conn, "SELECT work_id FROM duplicate_member WHERE group_id=%s", new_gid)}
+    assert members == {a, b, c}
+    ws = {w["id"]: w["state"] for w in q(conn, "SELECT id, state FROM work")}
+    assert ws[a] == "GiuRieng" and ws[b] == "GiuRieng" and ws[c] == "NghiTrung"
+
 def test_decide_group_twice_raises(conn, user_id):
     mk(conn, "do_an", "Dup", student="A B", cohort="K1")
     mk(conn, "do_an", "Dup", student="A B", cohort="K1")

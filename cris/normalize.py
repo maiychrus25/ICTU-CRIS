@@ -74,7 +74,7 @@ def normalize_record(conn, rec, rules, actor_id=None):
     nb = rules["name_norm"][1]
     with conn.cursor() as cur:
         cur.execute("""SELECT w.id FROM work w JOIN source_record s ON s.id=w.primary_source_record_id
-                       WHERE s.source=%s AND s.source_key=%s AND w.merged_into_id IS NULL""",
+                       WHERE s.source=%s AND s.source_key=%s ORDER BY w.id DESC LIMIT 1""",
                     (rec["source"], rec["source_key"]))
         existing = cur.fetchone()
         cols = {k: f[k] for k in FIELDS}
@@ -101,7 +101,7 @@ def normalize_record(conn, rec, rules, actor_id=None):
             cur.execute(f"INSERT INTO work(doc_type, primary_source_record_id, rule_set_id, state, {names}) VALUES (%s,%s,%s,'DaChuanHoa',{ph}) RETURNING id",
                         (rec["doc_type"], rec["id"], rs_id, *cols.values()))
             work_id = cur.fetchone()["id"]
-        arc = rec["raw"].get("archive", {})
+        arc = rec["raw"].get("archive") or {}
         raw_map = {"title": (rec["raw"].get("detail") or {}).get("title") or arc.get("title"),
                    "pub_type_raw": arc.get("pub_type"), "year_issue": arc.get("year"),
                    "doi": ",".join((rec["raw"].get("detail") or {}).get("doi") or [])}

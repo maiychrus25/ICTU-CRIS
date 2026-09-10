@@ -37,7 +37,8 @@ def import_people(conn):
     out = {"created": 0, "updated": 0, "errors": []}
     with tx(conn), conn.cursor() as cur:
         cur.execute("""SELECT s.* FROM source_record s WHERE s.doc_type='giang_vien' AND s.status='active'
-                       AND s.version=(SELECT max(version) FROM source_record x WHERE x.source=s.source AND x.source_key=s.source_key)""")
+                       AND s.version=(SELECT max(version) FROM source_record x WHERE x.source=s.source AND x.source_key=s.source_key)
+                       ORDER BY s.id""")
         for rec in cur.fetchall():
             try:
                 with conn.transaction():

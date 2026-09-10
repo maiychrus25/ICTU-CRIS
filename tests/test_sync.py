@@ -64,3 +64,41 @@ def test_sync_repository_merges_archive_and_detail(conn, monkeypatch):
     raw = rows(conn, "SELECT raw FROM source_record")[0]["raw"]
     assert raw["archive"]["title"] == "T" and raw["detail"]["authors"] == ["A B"]
     assert rows(conn, "SELECT status FROM sync_run WHERE id=%s", rid)[0]["status"] == "ok"
+
+def test_sync_repository_detail_failure_unchanged_archive_keeps_one_version(conn, monkeypatch):
+    from cris.source import repository as R
+    url = "https://x/bai-bao/b/"
+    monkeypatch.setattr(R, "iter_archive", lambda path, fetch=None: iter([{"url": url, "title": "T"}]))
+    monkeypatch.setattr(R, "archive_total", lambda h: 1)
+    monkeypatch.setattr(R, "parse_detail", lambda h, u: {"url": u, "authors": ["A B"], "doi": []})
+    sync.sync_repository(conn, "bai-bao", fetch=lambda u: "<html></html>")
+
+    def boom(h, u):
+        raise RuntimeError("timeout")
+    monkeypatch.setattr(R, "parse_detail", boom)
+    sync.sync_repository(conn, "bai-bao", fetch=lambda u: "<html></html>")
+
+    versions = rows(conn, "SELECT version, raw FROM source_record WHERE source_key=%s ORDER BY version", url)
+    assert [v["version"] for v in versions] == [1]
+    assert versions[0]["raw"]["detail"]["authors"] == ["A B"]
+    assert "detail_error" not in versions[0]["raw"]
+
+def test_sync_repository_detail_failure_changed_archive_marks_stale(conn, monkeypatch):
+    from cris.source import repository as R
+    url = "https://x/bai-bao/c/"
+    monkeypatch.setattr(R, "iter_archive", lambda path, fetch=None: iter([{"url": url, "title": "T"}]))
+    monkeypatch.setattr(R, "archive_total", lambda h: 1)
+    monkeypatch.setattr(R, "parse_detail", lambda h, u: {"url": u, "authors": ["A B"], "doi": []})
+    sync.sync_repository(conn, "bai-bao", fetch=lambda u: "<html></html>")
+
+    def boom(h, u):
+        raise RuntimeError("timeout")
+    monkeypatch.setattr(R, "iter_archive", lambda path, fetch=None: iter([{"url": url, "title": "T2"}]))
+    monkeypatch.setattr(R, "parse_detail", boom)
+    sync.sync_repository(conn, "bai-bao", fetch=lambda u: "<html></html>")
+
+    versions = rows(conn, "SELECT version, raw FROM source_record WHERE source_key=%s ORDER BY version", url)
+    assert [v["version"] for v in versions] == [1, 2]
+    assert versions[1]["raw"]["archive"]["title"] == "T2"
+    assert versions[1]["raw"]["detail"]["authors"] == ["A B"]
+    assert versions[1]["raw"]["detail_stale"] is True

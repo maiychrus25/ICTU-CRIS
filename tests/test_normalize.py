@@ -1,6 +1,6 @@
 import json
 import pytest
-from cris import normalize, rules, sync
+from cris import dedup, normalize, rules, sync
 
 def q(conn, sql, *args):
     with conn.cursor() as cur:
@@ -198,6 +198,34 @@ def test_orphan_survives_next_cycle(conn, seeded):
     assert xy["position"] == 2
     logs = q(conn, "SELECT 1 FROM audit_log WHERE action='mention.orphaned' AND entity_id=%s", cd_id)
     assert len(logs) == 1
+
+def test_normalize_updates_merged_away_work_in_place(conn, seeded, user_id):
+    rec1 = json.loads(json.dumps(BAI_BAO)); rec1["archive"]["url"] = "https://r/bai-bao/k1/"; rec1["detail"]["url"] = "https://r/bai-bao/k1/"
+    rec2 = json.loads(json.dumps(BAI_BAO)); rec2["archive"]["url"] = "https://r/bai-bao/k2/"; rec2["detail"]["url"] = "https://r/bai-bao/k2/"
+    load(conn, "bai_bao", rec1, "https://r/bai-bao/k1/")
+    load(conn, "bai_bao", rec2, "https://r/bai-bao/k2/")
+    normalize.normalize_pending(conn)
+    k1 = q(conn, """SELECT w.id FROM work w JOIN source_record s ON s.id=w.primary_source_record_id
+                    WHERE s.source_key=%s""", "https://r/bai-bao/k1/")[0]["id"]
+    k2 = q(conn, """SELECT w.id FROM work w JOIN source_record s ON s.id=w.primary_source_record_id
+                    WHERE s.source_key=%s""", "https://r/bai-bao/k2/")[0]["id"]
+
+    dedup.find_duplicates(conn)
+    gid = q(conn, "SELECT id FROM duplicate_group")[0]["id"]
+    dedup.decide_group(conn, gid, "merge", user_id, survivor_id=k1)
+    assert q(conn, "SELECT state, merged_into_id FROM work WHERE id=%s", k2)[0] == {"state": "DaGop", "merged_into_id": k1}
+
+    changed = json.loads(json.dumps(rec2))
+    changed["archive"]["title"] = "Đề tài K2 đã đổi tên"
+    changed["detail"]["title"] = "Đề tài K2 đã đổi tên"
+    load(conn, "bai_bao", changed, "https://r/bai-bao/k2/")
+    normalize.normalize_pending(conn)
+
+    works = q(conn, "SELECT id, state, merged_into_id, title FROM work")
+    assert len(works) == 2
+    k2_work = next(w for w in works if w["id"] == k2)
+    assert k2_work["state"] == "DaGop" and k2_work["merged_into_id"] == k1
+    assert k2_work["title"] == "Đề tài K2 đã đổi tên"
 
 def test_duplicate_names_in_one_record_keep_two_rows(conn, seeded):
     v1 = {"archive": {"url": "https://r/bai-bao/i/", "title": "T5", "authors": "A B", "pub_type": "Scopus",

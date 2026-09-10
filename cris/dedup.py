@@ -7,7 +7,7 @@ from cris.db import tx
 COMPARE = ("title", "doi", "year_issue", "journal", "volume", "pub_type_raw", "cohort")
 MERGEABLE = ("title", "doi", "journal", "volume", "year_issue", "abstract", "keywords_raw",
              "pub_type_raw", "indexes", "quartile", "venue_kind", "score", "cohort")
-ELIGIBLE_STATES = ("DaChuanHoa", "NghiTrung", "DaXacNhan")
+ELIGIBLE_STATES = ("DaChuanHoa", "NghiTrung", "DaXacNhan", "GiuRieng")
 NEW_SUSPECT_STATES = ("DaChuanHoa", "NghiTrung")
 
 def _diff(w, others):
@@ -42,7 +42,7 @@ def find_duplicates(conn):
                         continue
                     if basis == "doi" and w["doi"]:
                         buckets[w["doi"]].append(w)
-                    elif basis == "title_norm" and not w["doi"]:
+                    elif basis == "title_norm":
                         buckets[w["title_norm"]].append(w)
                     elif basis == "title_student_cohort":
                         buckets[(w["title_norm"], w["cohort"])].append(w)
@@ -54,7 +54,7 @@ def find_duplicates(conn):
                     hint = None
                     if basis == "title_student_cohort":
                         studs = [students.get(w["id"], set()) for w in members]
-                        if any(not (s & t) for i, s in enumerate(studs) for t in studs[i + 1:]):
+                        if any(s and t and not (s & t) for i, s in enumerate(studs) for t in studs[i + 1:]):
                             hint = "nhiều khả năng là đồ án nhóm: cùng tiêu đề, khác sinh viên"
                     cur.execute("INSERT INTO duplicate_group(doc_type, basis, hint) VALUES (%s,%s,%s) RETURNING id", (doc_type, basis, hint))
                     gid = cur.fetchone()["id"]
@@ -62,7 +62,7 @@ def find_duplicates(conn):
                         others = [o for o in members if o["id"] != w["id"]]
                         cur.execute("INSERT INTO duplicate_member(group_id, work_id, diff) VALUES (%s,%s,%s)",
                                     (gid, w["id"], json.dumps(_diff(w, others), ensure_ascii=False, default=str)))
-                        if w["state"] != "DaXacNhan":
+                        if w["state"] not in ("DaXacNhan", "GiuRieng"):
                             cur.execute("UPDATE work SET state='NghiTrung', updated_at=now() WHERE id=%s", (w["id"],))
                         grouped.add(w["id"])
                     out["groups"] += 1

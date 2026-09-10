@@ -69,7 +69,20 @@ def sync_repository(conn, path, fetch=None, with_details=True, triggered_by=None
                     if doc_type == "giang_vien":
                         raw["detail"]["orcid"] = R.extract_orcid(page)
                 except Exception as e:      # trang chi tiết lỗi: ghi nhận, tiếp tục (UC-01 3a)
-                    raw["detail_error"] = str(e)
+                    with conn.cursor() as c2:
+                        c2.execute("SELECT raw FROM source_record WHERE source='repository' AND source_key=%s ORDER BY version DESC LIMIT 1",
+                                   (arc["url"],))
+                        prev = c2.fetchone()
+                    prev_detail = prev["raw"].get("detail") if prev else None
+                    if prev_detail:
+                        raw["detail"] = prev_detail
+                        # bản lưu trữ (archive) không đổi so với phiên bản trước: coi như phục hồi
+                        # hoàn toàn, không đánh dấu lỗi/cũ để tránh tạo version giả (hash không đổi)
+                        if prev["raw"].get("archive") != arc:
+                            raw["detail_error"] = str(e)
+                            raw["detail_stale"] = True
+                    else:
+                        raw["detail_error"] = str(e)
             yield arc["url"], raw
 
     return run_sync(conn, source="repository", scope=path, doc_type=doc_type,
