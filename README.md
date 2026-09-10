@@ -135,6 +135,22 @@ python -m cris ai download|embed|topics|suggest|screen|status      # cần CRIS_
 - **Chất lượng dữ liệu** (`/chat-luong-du-lieu/`) — báo cáo độ phủ liên kết,
   cảnh báo dữ liệu thiếu/nghi vấn.
 
+### Màn hình (Screenshots)
+
+Chụp trên dữ liệu thật đồng bộ từ `repository.ictu.edu.vn` (11/09/2026).
+
+| Tổng quan cho lãnh đạo | Đối chiếu đề tài (4 khía cạnh) |
+|---|---|
+| ![Tổng quan](docs/images/tong-quan.png) | ![Đối chiếu đề tài](docs/images/doi-chieu.png) |
+
+| Rà soát trùng đề tài theo khoá | Hàng đợi liên kết tác giả |
+|---|---|
+| ![Rà soát theo khoá](docs/images/ra-soat.png) | ![Hàng đợi tác giả](docs/images/hang-doi-tac-gia.png) |
+
+| Nghi trùng — so cạnh nhau | Chi tiết công trình — xuất xứ từng trường |
+|---|---|
+| ![Nghi trùng](docs/images/nghi-trung.png) | ![Chi tiết công trình](docs/images/cong-trinh.png) |
+
 ## 🚀 Cài đặt nhanh (Quick start)
 
 ```bash

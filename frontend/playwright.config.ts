@@ -5,6 +5,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: "real-backend.spec.ts",
   use: { baseURL: "http://localhost:3000" },
   webServer: {
     command: "NEXT_PUBLIC_MOCK=1 npm run dev -- --webpack",

@@ -87,7 +87,8 @@ export interface QualityOut {
 }
 export interface AboutAI {
   provider: string; model: string; dim: number; repo: string; licence: string; size: string;
-  runs: number; embeddings: number; topics: number; suggestions: number;
+  runs: number | string; embeddings: number | Record<string, number>; topics: number;
+  suggestions: number | Record<string, number>;
 }
 export interface AboutOut {
   source_url: string; repo_url: string; last_sync: LastSync | null; works: number;

@@ -141,4 +141,17 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+
+  .recharts-cartesian-axis-tick-value,
+  .recharts-label {
+    fill: var(--muted-foreground);
+  }
+
+  .recharts-cartesian-grid line {
+    stroke: var(--border);
+  }
+
+  .recharts-legend-item-text {
+    color: var(--foreground) !important;
+  }
 }

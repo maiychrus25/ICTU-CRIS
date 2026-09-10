@@ -151,7 +151,7 @@ def _semantic_results(conn, provider, title, description, k, doc_types, threshol
             "year": info["year"],
             "score": score,
             "aspects": aspects_out,
-            "url": f"/tra-cuu/cong-trinh/{wid}",
+            "url": f"/cong-trinh/?id={wid}",
         }
         explanation = provider.explain(_explain_prompt(title, description, info))
         if explanation:
@@ -202,7 +202,7 @@ def _fallback_results(conn, title, description, k, doc_types):
             "year": r["year_issue"],
             "score": float(overlap),
             "aspects": {a: "chua_du" for a in ASPECTS},
-            "url": f"/tra-cuu/cong-trinh/{r['id']}",
+            "url": f"/cong-trinh/?id={r['id']}",
         })
     return results
 
