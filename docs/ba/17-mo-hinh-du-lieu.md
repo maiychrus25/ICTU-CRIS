@@ -141,6 +141,8 @@ Chỉ số `(work_id, field, set_at desc)`. Giá trị hiện hành của một 
 
 Duy nhất `(work_id, role, position)`. Ô chứa hai người (`"Phạm Thanh Giang, Trần Duy Minh"`) được tách thành hai dòng khi đồng bộ, `raw_name` giữ từng phần, `field_provenance` của `work` giữ chuỗi gốc.
 
+Khi chuẩn hoá lại một công trình đã có lượt tên **đã nối**: lượt chưa nối bị thay bằng danh sách mới; lượt đã nối được giữ nguyên `id` và khớp lại theo `(role, name_key)` để nhận vị trí mới; lượt đã nối mà tên không còn trong nguồn được giữ với `position` âm và ghi `audit_log` hành động `mention.orphaned` để người rà. Cột của `work` có xuất xứ mới nhất là `manual` hoặc `merge` không bị chuẩn hoá lại ghi đè (BR-06).
+
 ### `person` — giảng viên, sinh viên, người ngoài (N-02, T-02)
 
 | STT | Cột | Kiểu | Bắt buộc | Khởi tạo | Ràng buộc, ghi chú |
