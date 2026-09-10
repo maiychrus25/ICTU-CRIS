@@ -2,14 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 [project]
 name = "cris"
-version = "0.1.0"
+version = "0.2.0.dev0"
 requires-python = ">=3.12"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
-dependencies = ["psycopg[binary]>=3.2,<4"]
+dependencies = [
+  "psycopg[binary]>=3.2,<4",
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.30,<1",
+  "pydantic>=2.7,<3",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<9"]
+dev = ["pytest>=8,<10", "httpx>=0.27,<1"]
 # Thư viện AI là tuỳ chọn: provider none/fake chạy không cần chúng.
 # Giấy phép: onnxruntime MIT, tokenizers Apache-2.0, numpy BSD-3 (xem DEPENDENCIES.md).
 ai = ["onnxruntime>=1.17,<2", "tokenizers>=0.15,<1", "numpy>=1.26,<3"]

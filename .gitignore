@@ -22,3 +22,10 @@ docs/THONG BAO*.pdf
 # cấu hình triển khai thật
 deploy/.env
 dist/
+
+# Giao diện Next.js (frontend/) — phụ thuộc và sản phẩm dựng, không đưa vào repo
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/test-results/
+frontend/playwright-report/

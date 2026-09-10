@@ -21,12 +21,20 @@
 | `psycopg-binary` (kéo theo bởi `psycopg[binary]`) | theo `psycopg` | LGPL-3.0-or-later | Bản build sẵn của driver, đóng gói `libpq` |
 | ↳ `libpq` (đóng gói trong `psycopg-binary`) | theo bản build | PostgreSQL License | Thư viện client PostgreSQL, dùng nguyên trạng, không sửa |
 | ↳ OpenSSL (đóng gói trong `psycopg-binary`) | theo bản build | Apache-2.0 | TLS cho `libpq`, dùng nguyên trạng, không sửa |
+| `fastapi` | `>=0.115,<1` | MIT | Router `/api/*`, OpenAPI tại `/docs`, lớp mỏng gọi vào tầng nghiệp vụ |
+| `starlette` (kéo theo bởi `fastapi`) | theo `fastapi` | BSD-3-Clause | ASGI nền cho FastAPI: routing, middleware, `TestClient` |
+| `uvicorn` | `>=0.30,<1` | BSD-3-Clause | Máy chủ ASGI chạy bởi `python -m cris serve` |
+| `pydantic` | `>=2.7,<3` | MIT | Kiểu dữ liệu vào/ra của API (`cris/api/schemas.py`) |
+
+Tầng nghiệp vụ (`cris/*.py` ngoài `cris/api/`) vẫn chỉ phụ thuộc `psycopg`; bốn
+thư viện web ở trên chỉ phục vụ lớp API JSON mỏng gọi vào tầng đó.
 
 ### Thư viện phát triển (dev)
 
 | Thư viện | Phiên bản | Giấy phép | Mục đích |
 |---|---|---|---|
-| `pytest` | `>=8,<9` | MIT | Chạy bộ kiểm thử tự động |
+| `pytest` | `>=8,<10` | MIT | Chạy bộ kiểm thử tự động |
+| `httpx` | `>=0.27,<1` | BSD-3-Clause | `fastapi.testclient.TestClient` gọi API trong test; không chạy trong sản phẩm |
 
 ### Thư viện tuỳ chọn cho AI (`pip install -e ".[ai]"`)
 

@@ -20,10 +20,15 @@ def main(argv=None):
     tp = ais.add_parser("topics"); tp.add_argument("--k", type=int, default=40, help="số cụm mong muốn")
     ais.add_parser("suggest")
     sv = sub.add_parser("serve"); sv.add_argument("--host", default="127.0.0.1"); sv.add_argument("--port", type=int, default=8000)
+    sv.add_argument("--legacy", action="store_true", help="chạy UI HTML cũ (WSGI) thay vì API FastAPI")
     a = ap.parse_args(argv)
     if a.cmd == "serve":
-        from cris.web.wsgi import serve
-        serve(a.host, a.port)
+        if a.legacy:
+            from cris.web.wsgi import serve
+            serve(a.host, a.port)
+        else:
+            import uvicorn
+            uvicorn.run("cris.api.app:app", host=a.host, port=a.port)
         return
     conn = db.connect()
     if a.cmd == "migrate":

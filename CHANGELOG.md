@@ -5,7 +5,17 @@
 
 ## [Unreleased]
 
-Chưa có.
+### Added
+
+- API JSON FastAPI 13 endpoint (`/api/*`, OpenAPI tại `/docs`): tra cứu công
+  trình và hồ sơ giảng viên, hàng đợi liên kết tác giả, hàng đợi nghi trùng,
+  đối chiếu đề tài, chất lượng dữ liệu — lớp mỏng gọi vào tầng nghiệp vụ hiện
+  có (`cris/api/`).
+
+### Changed
+
+- `serve` nay chạy `uvicorn` phục vụ API FastAPI; UI HTML cũ giữ qua cờ
+  `--legacy` tới khi giao diện Next.js ngang màn.
 
 ## [0.1.0] - 2026-09-10
 

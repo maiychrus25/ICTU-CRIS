@@ -96,19 +96,32 @@ pytest -v
 
 ## 6. Chạy giao diện web (Running the web interface)
 
-Sau khi đã `migrate` và có dữ liệu, mở giao diện hàng đợi xác nhận và tra cứu:
+Sau khi đã `migrate` và có dữ liệu, chạy API:
 
 ```bash
-python -m cris serve                      # mặc định http://127.0.0.1:8000
+python -m cris serve                      # FastAPI/uvicorn, mặc định http://127.0.0.1:8000
 python -m cris serve --host 0.0.0.0 --port 8080
 ```
 
-Giao diện gồm: hàng đợi liên kết tác giả (`/doi-soat/tac-gia`), hàng đợi nghi
+Mặc định `serve` chạy lớp API JSON FastAPI: router `/api/*` (tra cứu, hàng đợi
+liên kết tác giả, hàng đợi nghi trùng, đối chiếu đề tài, chất lượng dữ liệu),
+tài liệu OpenAPI tương tác tại `/docs`. Bản xuất tĩnh của giao diện Next.js
+(`frontend/out`), nếu có, được phục vụ ở `/`.
+
+UI HTML cũ (`cris/web/wsgi.py`, `wsgiref`) vẫn giữ cho tới khi giao diện Next.js
+ngang màn; chạy bằng cờ `--legacy`:
+
+```bash
+python -m cris serve --legacy             # UI HTML cũ: /doi-soat/tac-gia, /tra-cuu, ...
+```
+
+Giao diện cũ gồm: hàng đợi liên kết tác giả (`/doi-soat/tac-gia`), hàng đợi nghi
 trùng (`/doi-soat/trung-lap`), tra cứu công trình (`/tra-cuu`), hồ sơ công bố
 giảng viên, và báo cáo chất lượng dữ liệu (`/chat-luong-du-lieu`).
 
 Mọi quyết định đều được ghi kèm người thực hiện, nên cần ít nhất một người dùng
-có vai trò `rd_officer`. Chưa có thì trang trả về `503` kèm hướng dẫn:
+có vai trò `rd_officer`. Chưa có thì cả `/api/*` (dùng `link.decide_link` /
+`dedup.decide_group`) lẫn UI cũ đều trả về `503` kèm hướng dẫn:
 
 ```sql
 INSERT INTO app_user(email, display_name, roles)
@@ -117,8 +130,9 @@ VALUES ('ten@ictu.edu.vn', 'Tên hiển thị', ARRAY['rd_officer']);
 
 **Chưa có đăng nhập thật.** Bản này chạy với một người dùng mặc định (hoặc header
 `X-CRIS-User: <id>`); xác thực và phân quyền theo đơn vị là NFR-01 và NFR-02,
-chưa triển khai. Máy chủ dùng `wsgiref` — máy chủ phát triển, **không triển khai
-lên mạng công khai**.
+chưa triển khai. `--legacy` dùng `wsgiref` — máy chủ phát triển; API FastAPI
+chạy qua `uvicorn` — cũng **không triển khai lên mạng công khai** nếu chưa có
+xác thực thật.
 
 ## 7. Bật AI (Enabling the AI features)
 
