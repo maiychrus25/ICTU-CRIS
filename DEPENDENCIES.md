@@ -28,6 +28,34 @@
 |---|---|---|---|
 | `pytest` | `>=8,<9` | MIT | Chạy bộ kiểm thử tự động |
 
+### Thư viện tuỳ chọn cho AI (`pip install -e ".[ai]"`)
+
+Chỉ cần khi `CRIS_AI_PROVIDER=local`. Provider `none` (mặc định) và `fake` (kiểm thử)
+chạy hoàn toàn không có ba thư viện này; mã trong `cris/ai/local.py` import chúng bên
+trong lớp, nên gói lõi không kéo theo. Cả ba dùng nguyên trạng từ PyPI, không sửa.
+
+| Thư viện | Phiên bản | Giấy phép | Kích thước cài | Mục đích |
+|---|---|---|---|---|
+| `onnxruntime` | `>=1.17,<2` (thử: 1.29.0) | MIT | ~66 MB | Chạy mô hình embedding ONNX trên CPU |
+| `tokenizers` | `>=0.15,<1` (thử: 0.23.2) | Apache-2.0 | ~12 MB | Tách token theo `tokenizer.json` của mô hình |
+| `numpy` | `>=1.26,<3` (thử: 2.5.3) | BSD-3-Clause (kèm 0BSD, MIT, Zlib, CC0 cho phần con) | ~43 MB | Mean pooling, chuẩn hoá, tìm k gần nhất, k-means |
+
+### Mô hình AI (tải một lần, không đưa vào repo)
+
+| Mục | Giá trị |
+|---|---|
+| Mô hình | `paraphrase-multilingual-MiniLM-L12-v2` (sentence-transformers) |
+| Bản dùng | ONNX lượng tử hoá 8-bit, repo `Xenova/paraphrase-multilingual-MiniLM-L12-v2` |
+| Giấy phép | Apache-2.0 (theo mô hình gốc `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`) |
+| Kích thước | `model_quantized.onnx` 118 MB + `tokenizer.json` 17 MB |
+| Chiều vector | 384; hỗ trợ 50+ ngôn ngữ, có tiếng Việt |
+| SHA-256 | `model_quantized.onnx` `66fc00f5f29afcaff34092e1bdd20008ca3918265a82fb9695a551e510cc4ebc` · `tokenizer.json` `b60b6b43406a48bf3638526314f3d232d97058bc93472ff2de930d43686fa441` — mã kiểm băm trước khi dùng |
+| Nơi lưu | `CRIS_AI_MODEL_DIR`, mặc định `~/.cache/ictu-cris/models/paraphrase-multilingual-MiniLM-L12-v2/`; tải bằng `python -m cris ai download` |
+| Đo 10/09/2026 | CPU 4 nhân: 64 đoạn ~200 token trong 1,8 s → toàn kho 5.709 công trình ≈ 3 phút |
+
+Không có thư viện nào trong nhóm này chứa mã bên thứ ba được đính kèm vào repo; mô hình
+là dữ liệu tải về, không phải mã nguồn, và không bị sửa.
+
 ## 3. Dịch vụ ngoài (External Services)
 
 | Dịch vụ | Phiên bản/Image | Giấy phép | Ghi chú |
