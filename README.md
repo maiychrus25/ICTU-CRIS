@@ -23,7 +23,7 @@
 
 <p align="center"><img src="docs/images/duong-ong-du-lieu.svg" alt="Sơ đồ đường ống dữ liệu ICTU-CRIS" width="900"></p>
 
-*Đường ống sáu bước: đồng bộ → chuẩn hoá → định danh tác giả → nối tác giả → gộp trùng → báo cáo chất lượng — mỗi bước ghi qua PostgreSQL, quyết định cuối luôn thuộc về người dùng.*
+*Đường ống sáu bước: đồng bộ → chuẩn hoá → định danh tác giả → nối tác giả → gộp trùng → báo cáo chất lượng — mỗi bước ghi qua PostgreSQL, quyết định cuối luôn thuộc về người dùng. Tầng AI (đối chiếu đề tài, gợi ý hàng đợi, trục chủ đề) đọc từ các bảng của đường ống và chỉ ghi vào bảng `ai_*` của riêng nó — sơ đồ vẽ trước khi có tầng này, xem [docs/ai.md](docs/ai.md).*
 
 Bản tương tác (pan/zoom, tra vết quan hệ, đổi sáng/tối): [docs/architecture/duong-ong-du-lieu.html](docs/architecture/duong-ong-du-lieu.html).
 
@@ -80,24 +80,30 @@ mô hình quan hệ (relational model), không phải một chuỗi công cụ l
 
 ## 🏗️ Kiến trúc & Ngăn xếp công nghệ (Architecture & Tech stack)
 
-Gói `cris` tổ chức thành đường ống bốn bước: **đồng bộ** (`sync`) → **chuẩn
-hoá** (`normalize`) → **nối và gộp tác giả** (`people`, `link`, `dedup`) →
-**báo cáo chất lượng** (`quality`). Lược đồ CSDL nằm ở
-`cris/migrations/0001`–`0005` (PostgreSQL 16, không ORM).
+Gói `cris` gồm ba tầng tách bạch. **Tầng nghiệp vụ** là đường ống: **đồng bộ**
+(`sync`) → **chuẩn hoá** (`normalize`) → **nối và gộp tác giả** (`people`, `link`,
+`dedup`) → **báo cáo chất lượng** (`quality`), cộng lược đồ kỳ báo cáo (`period`).
+**Tầng web** (`cris/web/`, WSGI thuần stdlib, 14 route) chỉ gọi vào tầng nghiệp vụ.
+**Tầng AI** (`cris/ai/`) cũng chỉ gọi vào tầng nghiệp vụ và chỉ ghi vào bảng `ai_*`.
+Lược đồ CSDL nằm ở `cris/migrations/0001`–`0007` (PostgreSQL 16, không ORM).
 
 | Thành phần | Công nghệ | Vai trò |
 |---|---|---|
 | Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3 | Không ORM — truy vấn SQL trực tiếp |
-| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0005` |
+| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0007` |
 | Đóng gói | Docker Compose | Image chạy được ngoài thư mục mã nguồn |
-| Kiểm thử | pytest 8 trên PostgreSQL thật | 208 test, không mock cơ sở dữ liệu |
-| CI | GitHub Actions | `pytest -v` trên PostgreSQL 16 |
+| Web | WSGI stdlib (`wsgiref`), server-render, không framework | 14 route; đổi sang Flask khi làm đăng nhập là thay `wsgi.py` + `render.py`, giữ các view |
+| AI | Extra tuỳ chọn `[ai]`: `onnxruntime` · `tokenizers` · `numpy` | Mô hình `paraphrase-multilingual-MiniLM-L12-v2` ONNX 118 MB chạy CPU; `CRIS_AI_PROVIDER=none` vẫn chạy đủ chức năng |
+| Kiểm thử | pytest 8 trên PostgreSQL thật | 209 test, không mock cơ sở dữ liệu; +3 test `slow` chạy mô hình thật |
+| CI | GitHub Actions | `pytest -v -m "not slow"` trên PostgreSQL 16 |
 | Quy tắc | Bảng `rule_set` có phiên bản | Chuẩn hoá tên, ánh xạ loại bài, khoá gộp |
 
 CLI thống nhất:
 
 ```
 python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--json]
+python -m cris serve [--host] [--port]
+python -m cris ai download|embed|topics|suggest|status      # cần CRIS_AI_PROVIDER=local
 ```
 
 ## 🚀 Cài đặt nhanh (Quick start)
@@ -122,14 +128,28 @@ docker compose run --rm app quality --json
 ```
 
 Mỗi yêu cầu tới kho nguồn được giãn cách **0,35 giây**; một lần đồng bộ đầy
-đủ toàn bộ kho mất khoảng **50 phút**. Xem [BUILDING.md](BUILDING.md) để
-chạy không dùng Docker (venv + `pip install -e ".[dev]"`).
+đủ toàn bộ kho (6 loại, đọc cả trang chi tiết) đo ngày 10/09/2026 mất khoảng
+**2 giờ**. Xem [BUILDING.md](BUILDING.md) để chạy không dùng Docker (venv +
+`pip install -e ".[dev]"`).
+
+Giao diện web và AI (venv, xem BUILDING.md §6–7):
+
+```bash
+pip install -e ".[ai]" && python -m cris ai download   # một lần, 135 MB
+export CRIS_AI_PROVIDER=local
+python -m cris ai embed && python -m cris ai topics && python -m cris ai suggest
+python -m cris serve                                    # http://127.0.0.1:8000
+```
+
+Cần ít nhất một người dùng vai `rd_officer` trong `app_user`; chưa có thì trang trả
+`503` kèm câu SQL để tạo. Bản này chưa có đăng nhập thật — **không triển khai lên
+mạng công khai**.
 
 ## 📌 Trạng thái & Lộ trình (Status & Roadmap)
 
 - [x] Khảo sát kho nguồn và bộ BA 18 tệp
 - [x] Mô hình dữ liệu 0.1
-- [x] Lát cắt S + N chạy từ dòng lệnh, 208 test
+- [x] Lát cắt S + N chạy từ dòng lệnh, 209 test
 - [x] Hồ sơ nguồn mở
 - [ ] Nhập Excel khoa (S-06)
 - [x] Giao diện hàng đợi xác nhận và tra cứu
@@ -142,10 +162,13 @@ chạy không dùng Docker (venv + `pip install -e ".[dev]"`).
 
 | | Tài liệu | Nội dung |
 |---|---|---|
+| 🎯 | [docs/BRD.md](docs/BRD.md) | Yêu cầu nghiệp vụ: 6 vấn đề đo được, YN-01..10, ràng buộc cuộc thi |
+| 📐 | [docs/SRS.md](docs/SRS.md) | Đặc tả phần mềm: FR theo giai đoạn, tích hợp AI, ma trận truy vết YN → FR → UC → US |
+| 🤖 | [docs/ai.md](docs/ai.md) | AI làm gì và không làm gì, ba nhà cung cấp, mô hình, thuật toán, giới hạn |
+| 🏷️ | [docs/release-notes/v0.1.0.md](docs/release-notes/v0.1.0.md) | Ghi chú phát hành bản dự thi |
 | 📋 | [docs/ba/00-README.md](docs/ba/00-README.md) | Bộ tài liệu phân tích nghiệp vụ (BA) — 18 tệp |
 | 🗄️ | [docs/ba/17-mo-hinh-du-lieu.md](docs/ba/17-mo-hinh-du-lieu.md) | Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 |
-| 🗺️ | [docs/superpowers/plans/2026-09-10-lat-cat-s-n.md](docs/superpowers/plans/2026-09-10-lat-cat-s-n.md) | Kế hoạch triển khai lát cắt S + N |
-| 📦 | [docs/superpowers/plans/2026-09-10-ho-so-nguon-mo.md](docs/superpowers/plans/2026-09-10-ho-so-nguon-mo.md) | Kế hoạch hồ sơ nguồn mở |
+| 🗺️ | [docs/superpowers/plans/](docs/superpowers/plans/) | Kế hoạch triển khai từng lát cắt: S + N, hồ sơ nguồn mở, giao diện hàng đợi, K, AI |
 | 🔧 | [BUILDING.md](BUILDING.md) | Dịch và chạy từ mã nguồn (Docker, venv) |
 | 📚 | [DEPENDENCIES.md](DEPENDENCIES.md) | Chính sách và danh mục thư viện |
 | ⚖️ | [docs/LICENSE_NOTICE.md](docs/LICENSE_NOTICE.md) | Lý do chọn giấy phép, ma trận tương thích, quy định header |
