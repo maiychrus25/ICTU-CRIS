@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/icut-cris-logo.svg" alt="ICTU-CRIS" width="320" />
+<img src="docs/images/icut-cris-mark.svg" alt="ICTU-CRIS" width="120" />
 
 # ICTU-CRIS
 
