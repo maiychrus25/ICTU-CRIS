@@ -10,10 +10,24 @@ def _cos(a, b):
     return sum(x * y for x, y in zip(a, b))
 
 
-def test_default_provider_is_none_and_does_not_import_onnxruntime():
-    p = P.get_provider({})
-    assert p.name == "none"
-    assert "onnxruntime" not in sys.modules
+def test_default_provider_is_none():
+    assert P.get_provider({}).name == "none"
+
+
+def test_core_package_does_not_import_ai_libraries():
+    """Gói lõi (web, CLI, provider none) không kéo onnxruntime/numpy vào tiến trình.
+
+    Chạy trong tiến trình con: test khác trong cùng phiên (ví dụ test `slow`) có thể
+    đã import các thư viện này, nên kiểm trong tiến trình hiện tại không có ý nghĩa.
+    """
+    import subprocess
+    code = ("import sys; from cris.ai import provider, embed; provider.get_provider({}); "
+            "import cris.web.wsgi, cris.cli; "
+            "print(sorted(m for m in ('onnxruntime','numpy','tokenizers') if m in sys.modules))")
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                         env={"CRIS_AI_PROVIDER": "none", "PATH": "/usr/bin:/bin"}, timeout=60)
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.strip() == "[]"
 
 
 def test_unknown_provider_name_is_rejected_with_valid_choices():

@@ -16,8 +16,8 @@
 ├─ /tra-cuu                Tìm công trình   ✅
 │  ├─ /tra-cuu/cong-trinh/[id]   Chi tiết công trình   ✅
 │  └─ /tra-cuu/giang-vien/[id]   Hồ sơ công bố của giảng viên   ✅
-├─ /doi-chieu              Đối chiếu đề tài dự kiến
-│  └─ /doi-chieu/[id]      Kết quả đối chiếu
+├─ /doi-chieu              Đối chiếu đề tài dự kiến   ✅
+│  └─ /doi-chieu/[id]      Kết quả đối chiếu   ✅
 ├─ /chat-luong-du-lieu     Báo cáo chất lượng dữ liệu   ✅
 ├─ /quan-tri               Quản trị
 │  ├─ /quan-tri/nguoi-dung

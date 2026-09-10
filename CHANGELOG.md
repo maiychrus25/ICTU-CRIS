@@ -7,7 +7,8 @@
 
 Chưa có trong bản này: đăng nhập và phân quyền thật (NFR-01, NFR-02 — giao
 diện hiện chạy với một người dùng mặc định, KHÔNG triển khai lên mạng công
-khai), nhập Excel khoa (S-06), kỳ báo cáo và phê duyệt (lát cắt K, D, R).
+khai), nhập Excel khoa (S-06), kê khai và phê duyệt (phần còn lại của lát cắt
+K, toàn bộ D và R), nhà cung cấp AI ngoài (giao diện `explain` đã có chỗ).
 
 ### Added
 
@@ -24,6 +25,26 @@ khai), nhập Excel khoa (S-06), kỳ báo cáo và phê duyệt (lát cắt K, 
   so với số kho tự công bố, `iter_archive` quét bù theo bộ lọc `?cohort=`
   (đồ án, luận văn, luận án) hoặc `?dept=` (bài báo) — các trục phân hoạch
   kho khác nhau nên chạm được phần bị bỏ sót (`cris/source/repository.py`).
+- **Tích hợp AI** (`cris/ai/`, [docs/ai.md](docs/ai.md)) — AI gợi ý, người quyết;
+  không có AI vẫn chạy đủ chức năng:
+  - Nhà cung cấp chọn bằng `CRIS_AI_PROVIDER`: `none` (mặc định), `fake` (kiểm
+    thử), `local` — mô hình `paraphrase-multilingual-MiniLM-L12-v2` ONNX 8-bit
+    (118 MB, 384 chiều, có tiếng Việt) chạy CPU qua `onnxruntime`, tải một lần
+    và kiểm SHA-256. Thư viện AI là extra tuỳ chọn `pip install -e ".[ai]"`;
+    gói lõi vẫn chỉ phụ thuộc `psycopg`.
+  - Đối chiếu đề tài `/doi-chieu`: tìm công trình gần về nghĩa trên tiêu đề +
+    tóm tắt + từ khoá, bảng so sánh theo bốn khía cạnh (giống / khác / chưa đủ
+    thông tin), không hiện điểm phần trăm tổng hợp, luôn ghi "không phải toàn
+    văn"; `provider=none` chạy đường lui khớp từ khoá có cảnh báo.
+  - Gợi ý cho hàng đợi tác giả (xếp hạng ứng viên theo chủ đề các công trình
+    đã xác nhận) và hàng đợi nghi trùng (tương đồng tóm tắt); trục chủ đề từ
+    gom cụm 10.951 từ khoá làm bộ lọc `/tra-cuu?topic=`.
+  - Rào chắn có test: mã AI chỉ ghi vào bảng `ai_*` (migration `0007`), không
+    đổi `work`, `author_link`, `duplicate_group`, `field_provenance`.
+  - CLI `python -m cris ai download|embed|topics|suggest|status`.
+- Lược đồ kỳ báo cáo (lát cắt K, task 1): `period`, `declaration` (duy nhất
+  theo kỳ + công trình + đơn vị), `evidence`, `declaration_event`; mở/đóng/huỷ
+  kỳ gắn bộ quy tắc tại thời điểm mở (`cris/period.py`, migration `0006`).
 - Giao diện web cho hàng đợi xác nhận và tra cứu — **không thêm thư viện nào**,
   viết bằng WSGI thuần stdlib (`wsgiref`), chạy bằng `python -m cris serve`:
   - Hàng đợi liên kết tác giả (SC-08): nhóm theo tên thô, sắp theo số công trình
@@ -39,9 +60,10 @@ khai), nhập Excel khoa (S-06), kỳ báo cáo và phê duyệt (lát cắt K, 
 - Bộ tài liệu phân tích nghiệp vụ (BA) bản 1.0 — 18 tệp, `docs/ba/`.
 - Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 —
   `docs/ba/17-mo-hinh-du-lieu.md`.
-- Migrations `0001`–`0005` (khởi tạo lược đồ, ràng buộc duy nhất
+- Migrations `0001`–`0007` (khởi tạo lược đồ, ràng buộc duy nhất
   `source_record`, ràng buộc DOI, view tra cứu).
-- 139 test pytest chạy trên PostgreSQL 16 thật, không mock cơ sở dữ liệu.
+- 204 test pytest chạy trên PostgreSQL 16 thật, không mock cơ sở dữ liệu;
+  thêm 3 test `slow` chạy mô hình AI thật (`pytest -m slow`).
 - Hồ sơ nguồn mở: `LICENSE` (Apache-2.0), `NOTICE`, `DEPENDENCIES.md`,
   `docs/LICENSE_NOTICE.md`, `CODE_OF_CONDUCT.md`, mẫu issue
   (`.github/ISSUE_TEMPLATE/`), mẫu PR, CI (`pytest -v` trên PostgreSQL 16
