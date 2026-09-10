@@ -5,8 +5,9 @@
 
 ## [Unreleased]
 
-Chưa có trong bản này: giao diện web (hàng đợi xác nhận, tra cứu dữ liệu —
-hiện chỉ chạy được từ dòng lệnh), nhập Excel khoa (S-06).
+Chưa có trong bản này: đăng nhập và phân quyền thật (NFR-01, NFR-02 — giao
+diện hiện chạy với một người dùng mặc định, KHÔNG triển khai lên mạng công
+khai), nhập Excel khoa (S-06), kỳ báo cáo và phê duyệt (lát cắt K, D, R).
 
 ### Added
 
@@ -23,13 +24,24 @@ hiện chỉ chạy được từ dòng lệnh), nhập Excel khoa (S-06).
   so với số kho tự công bố, `iter_archive` quét bù theo bộ lọc `?cohort=`
   (đồ án, luận văn, luận án) hoặc `?dept=` (bài báo) — các trục phân hoạch
   kho khác nhau nên chạm được phần bị bỏ sót (`cris/source/repository.py`).
-- CLI thống nhất: `python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--json]`.
+- Giao diện web cho hàng đợi xác nhận và tra cứu — **không thêm thư viện nào**,
+  viết bằng WSGI thuần stdlib (`wsgiref`), chạy bằng `python -m cris serve`:
+  - Hàng đợi liên kết tác giả (SC-08): nhóm theo tên thô, sắp theo số công trình
+    bị ảnh hưởng, xác nhận/bác bỏ/gán lại hàng loạt trong một transaction.
+  - Hàng đợi nghi trùng (SC-07): so sánh từng trường cạnh nhau cho mọi thành
+    viên, người dùng chọn bản sống sót và giá trị giữ lại cho từng trường mâu
+    thuẫn. Nhóm khác sinh viên hiện cảnh báo đồ án nhóm và mặc định Giữ riêng.
+  - Tra cứu công trình, hồ sơ công bố giảng viên, báo cáo chất lượng dữ liệu
+    (SC-11, SC-12, SC-10). Trang chi tiết công trình hiện đủ ba cột: giá trị
+    đang dùng, giá trị gốc, và nguồn.
+  (`cris/web/`)
+- CLI thống nhất: `python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--json]|serve`.
 - Bộ tài liệu phân tích nghiệp vụ (BA) bản 1.0 — 18 tệp, `docs/ba/`.
 - Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 —
   `docs/ba/17-mo-hinh-du-lieu.md`.
 - Migrations `0001`–`0005` (khởi tạo lược đồ, ràng buộc duy nhất
   `source_record`, ràng buộc DOI, view tra cứu).
-- 99 test pytest chạy trên PostgreSQL 16 thật, không mock cơ sở dữ liệu.
+- 139 test pytest chạy trên PostgreSQL 16 thật, không mock cơ sở dữ liệu.
 - Hồ sơ nguồn mở: `LICENSE` (Apache-2.0), `NOTICE`, `DEPENDENCIES.md`,
   `docs/LICENSE_NOTICE.md`, `CODE_OF_CONDUCT.md`, mẫu issue
   (`.github/ISSUE_TEMPLATE/`), mẫu PR, CI (`pytest -v` trên PostgreSQL 16
@@ -43,6 +55,9 @@ hiện chỉ chạy được từ dòng lệnh), nhập Excel khoa (S-06).
   của một bản ghi trôi giữa các lần đồng bộ; băm cả nó thì mỗi lần chạy lại
   sinh một loạt phiên bản giả cho bản ghi không hề đổi nội dung
   (`cris/sync.py`).
+- `count(DISTINCT ...) OVER (...)` trong hàng đợi tác giả: PostgreSQL không
+  hỗ trợ `DISTINCT` trong window function nên mọi lần mở hàng đợi đều lỗi 500.
+  Thay bằng subquery gộp rồi nối lại theo tên thô (`cris/web/views_queue.py`).
 
 ## [0.1.0] - Chưa phát hành
 

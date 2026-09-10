@@ -94,7 +94,33 @@ pytest -v
   (`postgresql://cris:cris@localhost:5432/cris_test`) nếu không đặt biến môi
   trường; `.env.example` đã có sẵn giá trị này.
 
-## 6. Lưu ý khi đồng bộ (Sync notes)
+## 6. Chạy giao diện web (Running the web interface)
+
+Sau khi đã `migrate` và có dữ liệu, mở giao diện hàng đợi xác nhận và tra cứu:
+
+```bash
+python -m cris serve                      # mặc định http://127.0.0.1:8000
+python -m cris serve --host 0.0.0.0 --port 8080
+```
+
+Giao diện gồm: hàng đợi liên kết tác giả (`/doi-soat/tac-gia`), hàng đợi nghi
+trùng (`/doi-soat/trung-lap`), tra cứu công trình (`/tra-cuu`), hồ sơ công bố
+giảng viên, và báo cáo chất lượng dữ liệu (`/chat-luong-du-lieu`).
+
+Mọi quyết định đều được ghi kèm người thực hiện, nên cần ít nhất một người dùng
+có vai trò `rd_officer`. Chưa có thì trang trả về `503` kèm hướng dẫn:
+
+```sql
+INSERT INTO app_user(email, display_name, roles)
+VALUES ('ten@ictu.edu.vn', 'Tên hiển thị', ARRAY['rd_officer']);
+```
+
+**Chưa có đăng nhập thật.** Bản này chạy với một người dùng mặc định (hoặc header
+`X-CRIS-User: <id>`); xác thực và phân quyền theo đơn vị là NFR-01 và NFR-02,
+chưa triển khai. Máy chủ dùng `wsgiref` — máy chủ phát triển, **không triển khai
+lên mạng công khai**.
+
+## 7. Lưu ý khi đồng bộ (Sync notes)
 
 - Mỗi yêu cầu tới kho nguồn được giãn cách **0,35 giây**
   (`DELAY` trong `cris/source/repository.py`) để tránh gây tải cho máy chủ
@@ -104,7 +130,7 @@ pytest -v
   liệu cho `sync` (`giang-vien`, `bai-bao`, `luan-an`, `luan-van`, `do-an`,
   `hoc-lieu-so`) hoặc dùng `--no-details` để bỏ qua bước đọc trang chi tiết.
 
-## 7. Đã kiểm chứng (Verified)
+## 8. Đã kiểm chứng (Verified)
 
 Các lệnh sau đã chạy thành công từ image `app` dịch bằng `docker compose
 build app`, không cần thư mục mã nguồn trên máy chạy:
