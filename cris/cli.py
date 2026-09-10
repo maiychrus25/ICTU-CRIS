@@ -17,6 +17,8 @@ def main(argv=None):
     ais = ai.add_subparsers(dest="ai_cmd", required=True)
     e = ais.add_parser("embed"); e.add_argument("--all", action="store_true", help="tính lại toàn bộ, không chỉ phần đổi")
     ais.add_parser("status"); ais.add_parser("download")
+    tp = ais.add_parser("topics"); tp.add_argument("--k", type=int, default=40, help="số cụm mong muốn")
+    ais.add_parser("suggest")
     sv = sub.add_parser("serve"); sv.add_argument("--host", default="127.0.0.1"); sv.add_argument("--port", type=int, default=8000)
     a = ap.parse_args(argv)
     if a.cmd == "serve":
@@ -54,6 +56,13 @@ def main(argv=None):
             elif a.ai_cmd == "embed":
                 prog = lambda done, total: print(f"  {done}/{total}", file=sys.stderr) if done % 200 == 0 or done == total else None
                 print(ai_embed.build_embeddings(conn, prov, only_missing=not a.all, progress=prog))
+            elif a.ai_cmd == "topics":
+                from cris.ai import topics as ai_topics
+                print(ai_topics.build_topics(conn, prov, k=a.k))
+            elif a.ai_cmd == "suggest":
+                from cris.ai import suggest as ai_suggest
+                print({"author_link": ai_suggest.suggest_author_links(conn, prov),
+                       "duplicate": ai_suggest.suggest_duplicates(conn, prov)})
     elif a.cmd == "quality":
         r = quality.report(conn)
         print(json.dumps(r, ensure_ascii=False, indent=None if a.json else 2))

@@ -94,8 +94,14 @@ def search_works(req):
     doc_type = (req.query.get("doc_type") or "").strip()
     year_raw = (req.query.get("year") or "").strip()
     unit = (req.query.get("unit") or "").strip()
+    topic_raw = (req.query.get("topic") or "").strip()
     page = _page_num(req.query.get("page"))
     year = int(year_raw) if year_raw.isdigit() else None
+
+    with req.conn.cursor() as cur:
+        cur.execute("SELECT id, label FROM ai_topic ORDER BY size DESC, label")
+        topics = cur.fetchall()
+    topic_ids = {t["id"] for t in topics}
 
     from_sql = (
         "FROM v_work_current w "
@@ -121,6 +127,12 @@ def search_works(req):
         else:
             where.append("u.code = %s")
             params.append(unit)
+    if topic_raw.isdigit() and int(topic_raw) in topic_ids:
+        where.append(
+            "EXISTS (SELECT 1 FROM regexp_split_to_table(lower(w.keywords_raw), '[,;]') kw "
+            "JOIN ai_topic_keyword tk ON btrim(kw) = tk.keyword WHERE tk.topic_id = %s)"
+        )
+        params.append(int(topic_raw))
     where_sql = " AND ".join(where) if where else "TRUE"
 
     with req.conn.cursor() as cur:
@@ -143,12 +155,24 @@ def search_works(req):
         filters["year"] = year_raw
     if unit:
         filters["unit"] = unit
+    if topic_raw:
+        filters["topic"] = topic_raw
     base_url = "/tra-cuu?" + urlencode(filters) if filters else "/tra-cuu"
 
     opts = "".join(
         f'<option value="{e(k)}"{" selected" if doc_type == k else ""}>{e(v)}</option>'
         for k, v in DOC_TYPE_LABELS.items()
     )
+    topic_field = ""
+    if topics:
+        topic_opts = "".join(
+            f'<option value="{e(t["id"])}"{" selected" if topic_raw == str(t["id"]) else ""}>{e(t["label"])}</option>'
+            for t in topics
+        )
+        topic_field = (
+            f'<label>Chủ đề (AI) <select name="topic"><option value="">Tất cả</option>'
+            f"{topic_opts}</select></label>"
+        )
     form = f"""
     <form method="get" action="/tra-cuu" class="search-form">
       <label>Từ khoá (tiêu đề hoặc tên tác giả)
@@ -159,6 +183,7 @@ def search_works(req):
       </label>
       <label>Năm <input type="text" name="year" value="{e(year_raw)}"></label>
       <label>Đơn vị (mã) <input type="text" name="unit" value="{e(unit)}"></label>
+      {topic_field}
       <button type="submit">Tìm</button>
     </form>
     """

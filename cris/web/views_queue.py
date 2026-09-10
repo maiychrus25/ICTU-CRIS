@@ -123,7 +123,7 @@ def _fetch(req, state, q, page):
             SELECT l.id AS link_id, l.confidence, l.degree_conflict,
                    m.raw_name, w.id AS work_id, w.title,
                    p.display_name AS candidate_name,
-                   g.group_work_count
+                   g.group_work_count, ai.payload AS ai_payload
             FROM author_link l
             JOIN author_mention m ON m.id = l.mention_id
             JOIN work w ON w.id = m.work_id
@@ -137,6 +137,12 @@ def _fetch(req, state, q, page):
                 WHERE {where_sql_g}
                 GROUP BY m2.raw_name
             ) g ON g.raw_name = m.raw_name
+            -- Gợi ý AI (FR-AI-06), chỉ đọc ai_suggestion — không đổi luồng quyết định.
+            LEFT JOIN LATERAL (
+                SELECT payload FROM ai_suggestion
+                WHERE kind='author_link' AND target_id=l.id
+                ORDER BY built_at DESC LIMIT 1
+            ) ai ON true
             WHERE {where_sql}
             ORDER BY g.group_work_count DESC, m.raw_name, w.id, l.id
             LIMIT %(limit)s OFFSET %(offset)s
@@ -177,6 +183,13 @@ def _select_cell(link_id, group_idx, is_group_head, group_work_count):
     return f"{cb}<br>{group_cb}"
 
 
+def _ai_suggestion_cell(payload):
+    """Gợi ý AI (FR-AI-06): thứ hạng và lý do, hoặc '—' nếu chưa có gợi ý."""
+    if not payload:
+        return '<span class="muted">—</span>'
+    return f"#{e(payload.get('rank'))} — {e(payload.get('reason'))}"
+
+
 def _rows_html(rows):
     out = []
     last_raw_name = object()
@@ -194,6 +207,7 @@ def _rows_html(rows):
                 e(r["candidate_name"]),
                 badge(r["confidence"], CONFIDENCE_BADGE_KIND.get(r["confidence"], "default")),
                 badge("Mâu thuẫn học vị", "danger") if r["degree_conflict"] else "",
+                _ai_suggestion_cell(r["ai_payload"]),
             ]
         )
     return out
@@ -255,7 +269,7 @@ def list_queue(req):
             f"</form>"
         )
         body_parts.append(_decision_controls())
-        headers = ["Chọn", "Tên thô", "Công trình", "Ứng viên đề xuất", "Độ tin cậy", "Cảnh báo"]
+        headers = ["Chọn", "Tên thô", "Công trình", "Ứng viên đề xuất", "Độ tin cậy", "Cảnh báo", "Gợi ý AI"]
         body_parts.append(table(headers, _rows_html(rows)))
         body_parts.append(pager(page, total, PER_PAGE, _base_url(state, q)))
 
