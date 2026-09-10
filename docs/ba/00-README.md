@@ -37,6 +37,7 @@ Tài liệu cấp trên (BRD, SRS) chưa lập. Bộ BA này viết trên cơ s�
 | 14 | Yêu cầu phi chức năng | [14-nfr.md](14-nfr.md) | |
 | 15 | Quy tắc triển khai + việc cần xác nhận | [15-project-rules.md](15-project-rules.md) | |
 | 16 | Kịch bản khảo sát người dùng | [16-kich-ban-khao-sat.md](16-kich-ban-khao-sat.md) | 3 tầng: phòng, khoa, giảng viên; trả lời §15.3 |
+| 17 | Mô hình dữ liệu | [17-mo-hinh-du-lieu.md](17-mo-hinh-du-lieu.md) | Bản 0.1, lát cắt S + N + T-01/T-02; 14 bảng, 4 view, bộ kiểm thử PR-06 |
 
 ## Quy ước
 

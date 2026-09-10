@@ -104,7 +104,7 @@ Gom toàn bộ `[CẦN XÁC NHẬN]` rải trong bộ tài liệu. Nên đi theo
 | BRD — yêu cầu nghiệp vụ | Chưa lập. Nên lập sau buổi khảo sát xác nhận §15.3 |
 | SRS — đặc tả phần mềm, kèm ma trận truy vết BR → FR → UC → US | Chưa lập |
 | Bộ BA (16 tệp này) | Bản 1.0, ngày 10/09/2026 |
-| Mô hình dữ liệu | Chưa lập. Phụ thuộc Q-07..Q-10 |
+| Mô hình dữ liệu | Bản 0.1 cho lát cắt S + N + T-01/T-02 — [17-mo-hinh-du-lieu.md](17-mo-hinh-du-lieu.md). Phần kỳ, kê khai, báo cáo chờ Q-07..Q-10 và tài liệu còn nợ ở §15.6 |
 | Khảo sát nguồn dữ liệu | Có — [khao-sat-nguon/](../../khao-sat-nguon/README.md) |
 | Kiểm chứng giả định bằng số đo | Có — [kiem-chung-gia-dinh-de-tai.md](../../khao-sat-nguon/kiem-chung-gia-dinh-de-tai.md) |
 | Kế hoạch triển khai ĐATN ĐHCQ K21 (Khoa CNTT, 26/02/2026) | Có — [docs/KH triển khai ĐATN_DHCQ_K21.docx](../KH%20triển%20khai%20ĐATN_DHCQ_K21.docx). Quy trình thật đầu tiên trong repo, chỉ cho luồng đồ án |
