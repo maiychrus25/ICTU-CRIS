@@ -1,3 +1,5 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
 import os
 import pathlib
 from contextlib import contextmanager

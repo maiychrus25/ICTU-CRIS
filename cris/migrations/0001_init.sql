@@ -1,3 +1,5 @@
+-- Copyright (c) 2026 ICTU-CRIS contributors
+-- SPDX-License-Identifier: Apache-2.0
 CREATE TABLE app_user (
   id bigserial PRIMARY KEY,
   email text NOT NULL UNIQUE,

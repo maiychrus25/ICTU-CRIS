@@ -1,3 +1,5 @@
+-- Copyright (c) 2026 ICTU-CRIS contributors
+-- SPDX-License-Identifier: Apache-2.0
 CREATE VIEW v_work_current AS
   SELECT w.*,
          EXISTS (SELECT 1 FROM field_provenance p WHERE p.work_id = w.id AND p.set_kind IN ('manual','merge')) AS has_manual

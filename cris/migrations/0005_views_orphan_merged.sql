@@ -1,3 +1,5 @@
+-- Copyright (c) 2026 ICTU-CRIS contributors
+-- SPDX-License-Identifier: Apache-2.0
 DROP VIEW v_data_quality;
 DROP VIEW v_person_publications;
 DROP VIEW v_work_unit;

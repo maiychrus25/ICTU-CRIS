@@ -1,3 +1,5 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
 import json
 
 def log(conn, actor_id, action, entity, entity_id, before=None, after=None, sync_run_id=None):
