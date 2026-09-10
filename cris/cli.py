@@ -13,7 +13,12 @@ def main(argv=None):
     s = sub.add_parser("sync"); s.add_argument("paths", nargs="*", default=list(R.DOC_TYPES)); s.add_argument("--no-details", action="store_true")
     sub.add_parser("people"); sub.add_parser("normalize"); sub.add_parser("link"); sub.add_parser("dedup")
     qp = sub.add_parser("quality"); qp.add_argument("--json", action="store_true")
+    sv = sub.add_parser("serve"); sv.add_argument("--host", default="127.0.0.1"); sv.add_argument("--port", type=int, default=8000)
     a = ap.parse_args(argv)
+    if a.cmd == "serve":
+        from cris.web.wsgi import serve
+        serve(a.host, a.port)
+        return
     conn = db.connect()
     if a.cmd == "migrate":
         print(db.migrate(conn))
