@@ -9,6 +9,8 @@ khao-sat-nguon/out/media_sample.json
 khao-sat-nguon/out/_pdf_urls.json
 khao-sat-nguon/out/_baibao_by_dept.json
 
+.venv/
+.env
 __pycache__/
 *.pyc
 .DS_Store
