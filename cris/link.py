@@ -71,6 +71,12 @@ def decide_link(conn, link_id, decision, actor_id, reason=None, person_id=None):
     with tx(conn), conn.cursor() as cur:
         cur.execute("SELECT * FROM author_link WHERE id=%s", (link_id,))
         before = cur.fetchone()
+        # Không có bản ghi thì dừng ngay với thông điệp đọc được. Trước đây các
+        # nhánh reject/reassign vẫn chạy tiếp rồi nổ ở bước ghi nhật ký bằng
+        # AttributeError/TypeError — vẫn cuốn lô về, nhưng người dùng không hiểu
+        # id nào sai.
+        if before is None:
+            raise ValueError(f"liên kết không tồn tại: {link_id}")
         if decision == "confirm":
             cur.execute("UPDATE author_link SET state='DaXacNhan', decided_by=%s, decided_at=now() WHERE id=%s AND state IN ('ChoXacNhan','DaNoiTuDong')", (actor_id, link_id))
             if cur.rowcount == 0:
@@ -84,8 +90,14 @@ def decide_link(conn, link_id, decision, actor_id, reason=None, person_id=None):
             if not reason:
                 raise ValueError("lý do bắt buộc khi bác bỏ")
             cur.execute("UPDATE author_link SET state='DaBacBo', decided_by=%s, decided_at=now(), reason=%s WHERE id=%s", (actor_id, reason, link_id))
+            if cur.rowcount == 0:
+                raise ValueError(f"không bác bỏ được liên kết: {link_id}")
         elif decision == "reassign":
+            if person_id is None:
+                raise ValueError("gán lại cần person_id")
             cur.execute("UPDATE author_link SET state='DaBacBo', decided_by=%s, decided_at=now(), reason=%s WHERE id=%s", (actor_id, reason or "chọn người khác", link_id))
+            if cur.rowcount == 0:
+                raise ValueError(f"không gán lại được liên kết: {link_id}")
             cur.execute("""INSERT INTO author_link(mention_id, person_id, confidence, basis, state, decided_by, decided_at)
                            VALUES (%s,%s,'ten_mot_phan','{"manual": true}','DaXacNhan',%s,now())
                            ON CONFLICT (mention_id, person_id) DO UPDATE SET

@@ -138,3 +138,24 @@ def test_orcid_links_only_when_verified(conn):
     q(conn, "UPDATE person SET orcid_verified=false WHERE id=%s", p); q(conn, "DELETE FROM author_link")
     link.link_by_orcid(conn, m, "0000-0001-2345-6789")
     assert q(conn, "SELECT state FROM author_link")[0]["state"] == "ChoXacNhan"
+
+
+def test_decide_link_unknown_id_gives_a_readable_error(conn, user_id):
+    """id không tồn tại phải báo rõ, không nổ AttributeError/TypeError ở bước audit."""
+    for decision, kw in (("confirm", {}), ("reject", {"reason": "x"}), ("reassign", {"person_id": 1})):
+        with pytest.raises(ValueError) as ei:
+            link.decide_link(conn, 999999, decision, user_id, **kw)
+        assert "999999" in str(ei.value) or "chỉ xác nhận được" in str(ei.value)
+        conn.rollback()
+
+
+def test_reassign_without_person_id_is_refused(conn, user_id):
+    """Phải dựng liên kết thật: id không tồn tại sẽ dừng ở kiểm tra tồn tại trước."""
+    w = mk_work(conn)
+    mk_person(conn, "Nguyễn Văn An", email="a1@x")
+    mk_person(conn, "Nguyễn Văn An", email="a2@x")
+    mk_mention(conn, w, "Nguyễn Văn An")
+    link.link_pending(conn)
+    lid = q(conn, "SELECT id FROM author_link ORDER BY id LIMIT 1")[0]["id"]
+    with pytest.raises(ValueError, match="person_id"):
+        link.decide_link(conn, lid, "reassign", user_id)

@@ -9,15 +9,15 @@
 *Hệ thống đồng bộ, chuẩn hoá và đối soát dữ liệu công bố khoa học cho Trường Công nghệ Thông tin và Truyền thông, Đại học Thái Nguyên.*
 
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=for-the-badge)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/maiychrus25/ICUT-CRIS/ci.yml?style=for-the-badge&label=CI)](https://github.com/maiychrus25/ICUT-CRIS/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/maiychrus25/CRIS/ci.yml?style=for-the-badge&label=CI)](https://github.com/maiychrus25/CRIS/actions/workflows/ci.yml)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg?style=for-the-badge)](pyproject.toml)
 ![PostgreSQL 16](https://img.shields.io/badge/postgresql-16-blue.svg?style=for-the-badge)
 [![Docker Ready](https://img.shields.io/badge/docker-ready-2496ED.svg?style=for-the-badge)](BUILDING.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](CONTRIBUTING.md)
 
-![GitHub stars](https://img.shields.io/github/stars/maiychrus25/ICUT-CRIS?style=flat-square)
-![GitHub issues](https://img.shields.io/github/issues/maiychrus25/ICUT-CRIS?style=flat-square)
-![GitHub last commit](https://img.shields.io/github/last-commit/maiychrus25/ICUT-CRIS?style=flat-square)
+![GitHub stars](https://img.shields.io/github/stars/maiychrus25/CRIS?style=flat-square)
+![GitHub issues](https://img.shields.io/github/issues/maiychrus25/CRIS?style=flat-square)
+![GitHub last commit](https://img.shields.io/github/last-commit/maiychrus25/CRIS?style=flat-square)
 
 </div>
 
@@ -154,7 +154,7 @@ chạy không dùng Docker (venv + `pip install -e ".[dev]"`).
 ## 🐛 Quản lý lỗi & Đóng góp (Bug tracker & Contributing)
 
 Báo lỗi hoặc đề xuất tính năng qua
-[GitHub Issues](https://github.com/maiychrus25/ICUT-CRIS/issues), dùng mẫu
+[GitHub Issues](https://github.com/maiychrus25/CRIS/issues), dùng mẫu
 trong [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/). Xem
 [CONTRIBUTING.md](CONTRIBUTING.md) cho quy trình, chuẩn mã và
 [Conventional Commits](https://www.conventionalcommits.org/) cho thông điệp
