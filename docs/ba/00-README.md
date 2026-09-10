@@ -16,7 +16,7 @@ Dự án: **ICTU-CRIS** — hệ thống hỗ trợ tổng hợp, đối soát v
 | Trả lời khảo sát đợt 1 (10/09/2026), ghi tại [15-project-rules.md](15-project-rules.md) §15.6 | Ba tầng phòng, khoa, giảng viên; xác nhận trình tự duyệt, thêm cấp lãnh đạo trường, tách đơn vị chủ trì, quy tắc năm công bố, nguồn chính là Excel khoa gửi |
 | [Kế hoạch triển khai lát cắt S + N](../superpowers/plans/2026-09-10-lat-cat-s-n.md) (10/09/2026) | Quyết định phạm vi bản đầu (Q-24): S + N + T-01/T-02; đã triển khai thành mã nguồn `cris/` |
 
-Tài liệu cấp trên (BRD, SRS) chưa lập. Bộ BA này viết trên cơ sở hai tài liệu định hướng ở trên; mọi giả định chưa xác nhận được đánh dấu `[CẦN XÁC NHẬN]` và gom lại ở [15-project-rules.md](15-project-rules.md).
+Tài liệu cấp trên: [BRD](../BRD.md) (yêu cầu nghiệp vụ `YN-01..10`) và [SRS](../SRS.md) (đặc tả `FR-*`, ma trận truy vết `YN → FR → UC → US`). Bộ BA này viết trên cơ sở hai tài liệu định hướng ở trên; mọi giả định chưa xác nhận được đánh dấu `[CẦN XÁC NHẬN]` và gom lại ở [15-project-rules.md](15-project-rules.md).
 
 ## Sản phẩm
 

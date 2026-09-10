@@ -15,3 +15,6 @@ __pycache__/
 *.pyc
 .DS_Store
 *.egg-info/
+
+# Tài liệu thể lệ cuộc thi — giữ ở máy, không đưa vào repo công khai
+docs/THONG BAO*.pdf
