@@ -11,6 +11,18 @@
   trình và hồ sơ giảng viên, hàng đợi liên kết tác giả, hàng đợi nghi trùng,
   đối chiếu đề tài, chất lượng dữ liệu — lớp mỏng gọi vào tầng nghiệp vụ hiện
   có (`cris/api/`).
+- `GET /api/stats` (tổng quan cho lãnh đạo): công trình theo năm × loại, theo
+  đơn vị, top giảng viên, hàng đợi và tỉ lệ đã liên kết tác giả
+  (`cris/api/routes/stats.py`).
+- `GET /api/works.csv` và `GET /api/persons/{id}/publications.csv` (SC-05,
+  UX-07): xuất danh sách công trình đã lọc ra CSV UTF-8 có BOM, tối đa 20.000
+  dòng (`cris/api/routes/export.py`).
+- `GET /api/audit` (SC-08): nhật ký thao tác đọc từ `audit_log`, nhãn tiếng
+  Việt theo hành động, lọc theo thực thể và người thao tác
+  (`cris/api/routes/audit.py`).
+- `GET/POST /api/periods` và `POST /api/periods/{id}/close|cancel`: mở, đóng
+  nộp, huỷ kỳ báo cáo và xem tiến độ theo đơn vị qua `cris/period.py`
+  (`cris/api/routes/periods.py`).
 
 ### Changed
 

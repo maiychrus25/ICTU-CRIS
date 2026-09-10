@@ -49,9 +49,9 @@ def _fmt_value(val):
     return str(val)
 
 
-@router.get("/works", response_model=WorkList)
-def list_works(conn: Conn, q: str = "", doc_type: str = "", year: int | None = None,
-               unit: str = "", topic: int | None = None, page: int = Query(1, ge=1)):
+def _works_query(q: str, doc_type: str, year: int | None, unit: str, topic: int | None):
+    """Dựng `from_sql`/`where_sql`/`params` cho bộ lọc công trình dùng chung giữa
+    tra cứu (`list_works`) và xuất CSV (`routes/export.py`)."""
     from_sql = ("FROM v_work_current w "
                 "LEFT JOIN author_mention m ON m.work_id = w.id AND m.position > 0 "
                 "LEFT JOIN v_work_unit vu ON vu.work_id = w.id "
@@ -74,6 +74,13 @@ def list_works(conn: Conn, q: str = "", doc_type: str = "", year: int | None = N
                      "JOIN ai_topic_keyword tk ON btrim(kw) = tk.keyword WHERE tk.topic_id = %s)")
         params.append(topic)
     where_sql = " AND ".join(where) if where else "TRUE"
+    return from_sql, where_sql, params
+
+
+@router.get("/works", response_model=WorkList)
+def list_works(conn: Conn, q: str = "", doc_type: str = "", year: int | None = None,
+               unit: str = "", topic: int | None = None, page: int = Query(1, ge=1)):
+    from_sql, where_sql, params = _works_query(q, doc_type, year, unit, topic)
     with conn.cursor() as cur:
         cur.execute(f"SELECT count(DISTINCT w.id) AS n {from_sql} WHERE {where_sql}", params)
         total = cur.fetchone()["n"]

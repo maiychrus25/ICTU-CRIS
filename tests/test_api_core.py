@@ -39,7 +39,9 @@ def test_health_and_openapi(client):
     paths = set(spec["paths"])
     for p in ("/api/works", "/api/works/{wid}", "/api/persons/{pid}", "/api/queue/authors",
               "/api/queue/authors/decide", "/api/queue/duplicates", "/api/queue/duplicates/{gid}",
-              "/api/queue/duplicates/{gid}/decide", "/api/compare", "/api/compare/{qid}", "/api/quality", "/api/about", "/api/topics"):
+              "/api/queue/duplicates/{gid}/decide", "/api/compare", "/api/compare/{qid}", "/api/quality", "/api/about", "/api/topics",
+              "/api/stats", "/api/works.csv", "/api/persons/{pid}/publications.csv", "/api/audit",
+              "/api/periods", "/api/periods/{pid}/progress", "/api/periods/{pid}/close", "/api/periods/{pid}/cancel"):
         assert p in paths, p
 
 

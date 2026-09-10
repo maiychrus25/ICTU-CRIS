@@ -247,3 +247,110 @@ class AboutOut(BaseModel):
     works_by_type: dict[str, int]
     ai: dict[str, Any]
     limits: list[str]
+
+
+# ---------- tổng quan / thống kê ----------
+class YearTypeRow(BaseModel):
+    year: int
+    bai_bao: int = 0
+    do_an: int = 0
+    luan_van: int = 0
+    luan_an: int = 0
+    hoc_lieu: int = 0
+
+
+class UnknownYearRow(BaseModel):
+    bai_bao: int = 0
+    do_an: int = 0
+    luan_van: int = 0
+    luan_an: int = 0
+    hoc_lieu: int = 0
+
+
+class UnitWorks(BaseModel):
+    unit_id: int
+    code: str
+    name: str
+    works: int
+
+
+class TopPerson(BaseModel):
+    person_id: int
+    display_name: str
+    unit_code: str | None = None
+    works: int
+
+
+class StatsQueues(BaseModel):
+    authors_pending: int
+    dup_groups_open: int
+
+
+class StatsCoverage(BaseModel):
+    works_with_link_pct: float
+    works_without_unit: int
+
+
+class StatsOut(BaseModel):
+    by_year_type: list[YearTypeRow]
+    unknown_year: UnknownYearRow
+    by_unit: list[UnitWorks]
+    top_persons: list[TopPerson]
+    queues: StatsQueues
+    coverage: StatsCoverage
+    last_sync: LastSync | None
+
+
+# ---------- nhật ký thao tác ----------
+class AuditRow(BaseModel):
+    id: int
+    at: datetime
+    actor_name: str | None = None
+    action: str
+    action_label: str
+    entity: str
+    entity_id: int
+    before: dict[str, Any] | None = None
+    after: dict[str, Any] | None = None
+
+
+class AuditList(BaseModel):
+    items: list[AuditRow]
+    page: Page
+
+
+# ---------- kỳ báo cáo ----------
+class PeriodOut(BaseModel):
+    id: int
+    code: str
+    name: str
+    scope: dict[str, Any]
+    criteria: str | None = None
+    state: str
+    opens_at: datetime | None = None
+    due_at: datetime
+    created_at: datetime
+
+
+class PeriodOpenIn(BaseModel):
+    code: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    scope: dict[str, Any]
+    criteria: str | None = None
+    due_at: datetime
+
+
+class PeriodUnitProgress(BaseModel):
+    unit_id: int
+    unit_code: str
+    unit_name: str
+    counts: dict[str, int]
+    total: int
+
+
+class PeriodProgress(BaseModel):
+    period_id: int
+    state: str
+    due_at: datetime | None = None
+    days_remaining: int | None = None
+    units: list[PeriodUnitProgress]
