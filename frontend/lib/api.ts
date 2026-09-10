@@ -40,9 +40,18 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   } else if (/^\/api\/works\/\d+$/.test(url.pathname)) data = workDetailsFixture[id];
   else if (/^\/api\/persons\/\d+$/.test(url.pathname)) data = id === personFixture.id ? personFixture : undefined;
   else if (url.pathname === "/api/topics") data = topicsFixture;
-  else if (url.pathname === "/api/queue/authors" && !init?.method) data = authorQueueFixture;
+  else if (url.pathname === "/api/queue/authors" && !init?.method) {
+    const state = url.searchParams.get("state") ?? "ChoXacNhan";
+    const q = url.searchParams.get("q")?.toLocaleLowerCase("vi") ?? "";
+    const items = state === "ChoXacNhan" ? authorQueueFixture.items.filter((row) => !q || row.raw_name.toLocaleLowerCase("vi").includes(q)) : [];
+    data = { ...authorQueueFixture, state, items, page: { ...authorQueueFixture.page, total: items.length } };
+  }
   else if (url.pathname === "/api/queue/authors/decide") data = { ok: true, processed: (JSON.parse(String(init?.body)) as DecideAuthorsIn).link_ids };
-  else if (url.pathname === "/api/queue/duplicates") data = duplicateGroupsFixture;
+  else if (url.pathname === "/api/queue/duplicates") {
+    const state = url.searchParams.get("state") ?? "NghiTrung";
+    const items = state === "all" ? duplicateGroupsFixture.items : duplicateGroupsFixture.items.filter((group) => group.state === state);
+    data = { items, page: { ...duplicateGroupsFixture.page, total: items.length } };
+  }
   else if (/^\/api\/queue\/duplicates\/\d+$/.test(url.pathname) && !init?.method) data = { ...duplicateDetailFixture, id };
   else if (/^\/api\/queue\/duplicates\/\d+\/decide$/.test(url.pathname)) data = { ok: true, processed: [Number(url.pathname.split("/").at(-2))] };
   else if (url.pathname === "/api/compare" && init?.method === "POST") data = { ...compareFixture, query_id: Date.now(), input: JSON.parse(String(init.body)) };

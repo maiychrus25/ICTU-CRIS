@@ -13,6 +13,7 @@ import { useMemo } from "react";
 import { Pager } from "@/components/pager";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 export const dataTableFeatures = tableFeatures({ rowSortingFeature, sortedRowModel: createSortedRowModel(), rowSelectionFeature });
 export type DataTableColumn<TData extends object> = ColumnDef<typeof dataTableFeatures, TData>;
@@ -24,10 +25,12 @@ interface DataTableProps<TData extends object> {
   getRowId?: (row: TData) => string;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  getRowClassName?: (row: TData, index: number) => string | undefined;
+  onRowClick?: (row: TData) => void;
   page?: { page: number; perPage: number; total: number; onPageChange: (page: number) => void };
 }
 
-export function DataTable<TData extends object>({ columns, data, emptyMessage = "Không có dữ liệu phù hợp.", getRowId, rowSelection, onRowSelectionChange, page }: DataTableProps<TData>) {
+export function DataTable<TData extends object>({ columns, data, emptyMessage = "Không có dữ liệu phù hợp.", getRowId, rowSelection, onRowSelectionChange, getRowClassName, onRowClick, page }: DataTableProps<TData>) {
   const selectable = rowSelection !== undefined && onRowSelectionChange !== undefined;
   const selectionColumn = useMemo<DataTableColumn<TData>>(() => ({
     id: "select", enableSorting: false,
@@ -44,7 +47,7 @@ export function DataTable<TData extends object>({ columns, data, emptyMessage = 
           const sorted = header.column.getIsSorted();
           return <TableHead key={header.id}>{header.isPlaceholder ? null : header.column.getCanSort() ? <button type="button" className="inline-flex items-center gap-1.5" onClick={header.column.getToggleSortingHandler()}><table.FlexRender header={header} />{sorted === "asc" ? <ArrowUp className="size-3.5" /> : sorted === "desc" ? <ArrowDown className="size-3.5" /> : <ChevronsUpDown className="size-3.5 text-muted-foreground" />}</button> : <table.FlexRender header={header} />}</TableHead>;
         })}</TableRow>)}</TableHeader>
-        <TableBody>{table.getRowModel().rows.length ? table.getRowModel().rows.map((row) => <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>{row.getAllCells().map((cell) => <TableCell key={cell.id}><table.FlexRender cell={cell} /></TableCell>)}</TableRow>) : <TableRow><TableCell colSpan={resolvedColumns.length} className="h-28 text-center text-muted-foreground">{emptyMessage}</TableCell></TableRow>}</TableBody>
+        <TableBody>{table.getRowModel().rows.length ? table.getRowModel().rows.map((row) => <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined} className={cn(getRowClassName?.(row.original, row.index), onRowClick && "cursor-pointer")} tabIndex={onRowClick ? 0 : undefined} onClick={onRowClick ? () => onRowClick(row.original) : undefined} onKeyDown={onRowClick ? (event) => { if (event.key === "Enter") onRowClick(row.original); } : undefined}>{row.getAllCells().map((cell) => <TableCell key={cell.id}><table.FlexRender cell={cell} /></TableCell>)}</TableRow>) : <TableRow><TableCell colSpan={resolvedColumns.length} className="h-28 text-center text-muted-foreground">{emptyMessage}</TableCell></TableRow>}</TableBody>
       </Table>
       {page && <Pager {...page} />}
     </div>
