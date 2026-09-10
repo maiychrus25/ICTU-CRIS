@@ -280,7 +280,7 @@ git commit -m "ci: workflow pytest với Postgres; mẫu issue, PR; quy tắc �
 
 - [ ] **Step 5: Kiểm tra không có tên sự kiện bên ngoài**
 
-Run: `git ls-files | xargs grep -niE "[o]lp|[o]lympic|cuộc th[i]|[c]ontest|[p]roteus" || true`
+Run: `git ls-files -z | xargs -0 grep -niE "[o]lp|[o]lympic|cuộc th[i]|[c]ontest|[p]roteus" || true`
 Expected: không có kết quả.
 
 - [ ] **Step 6: Commit**
