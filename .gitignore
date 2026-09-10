@@ -21,3 +21,4 @@ docs/THONG BAO*.pdf
 
 # cấu hình triển khai thật
 deploy/.env
+dist/
