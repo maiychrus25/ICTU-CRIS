@@ -24,7 +24,7 @@
 │  ├─ /quan-tri/danh-muc
 │  ├─ /quan-tri/quy-tac
 │  └─ /quan-tri/dong-bo
-└─ /ve                     Về hệ thống: nguồn dữ liệu, mức dữ liệu, giới hạn
+└─ /ve                     Về hệ thống: nguồn dữ liệu, mức dữ liệu, giới hạn   ✅
 ```
 
 ✅ = đã triển khai trong bản 0.1.0 (lát cắt giao diện, `cris/web/`). Các đường

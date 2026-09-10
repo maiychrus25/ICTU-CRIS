@@ -62,7 +62,7 @@ K, toàn bộ D và R), nhà cung cấp AI ngoài (giao diện `explain` đã c�
   `docs/ba/17-mo-hinh-du-lieu.md`.
 - Migrations `0001`–`0007` (khởi tạo lược đồ, ràng buộc duy nhất
   `source_record`, ràng buộc DOI, view tra cứu).
-- 204 test pytest chạy trên PostgreSQL 16 thật, không mock cơ sở dữ liệu;
+- 208 test pytest chạy trên PostgreSQL 16 thật, không mock cơ sở dữ liệu;
   thêm 3 test `slow` chạy mô hình AI thật (`pytest -m slow`).
 - Hồ sơ nguồn mở: `LICENSE` (Apache-2.0), `NOTICE`, `DEPENDENCIES.md`,
   `docs/LICENSE_NOTICE.md`, `CODE_OF_CONDUCT.md`, mẫu issue

@@ -153,16 +153,18 @@ Kiểm thử mô hình thật: `pytest -m slow` (tự bỏ qua nếu chưa tải
 
 ## 9. Đã kiểm chứng (Verified)
 
-Các lệnh sau đã chạy thành công từ image `app` dịch bằng `docker compose
-build app`, không cần thư mục mã nguồn trên máy chạy:
+Ngày 10/09/2026, trên máy phát triển (CPU 4 nhân, không GPU), qua image `python:3.12-slim`
+mount thư mục mã nguồn và PostgreSQL 16 từ `docker compose`:
 
-```
-$ docker compose run --rm app migrate
-[]
+| Việc | Kết quả |
+|---|---|
+| `pip install -e ".[dev]"` rồi `pytest -q -m "not slow"` | 208 passed, 3 skipped (test `slow` tự bỏ qua khi chưa có mô hình) |
+| `pip install -e ".[dev,ai]"` + mô hình đã tải, `pytest -q -m slow` | 3 passed in 9,3 s — 384 chiều, cùng chủ đề gần hơn khác chủ đề, xuyên ngôn ngữ Việt–Anh, 64 đoạn < 30 s |
+| `python -m cris ai download` (kiểm SHA-256) rồi `ensure_model(download=False)` | nhận tệp đã có, không tải lại, không ghi |
+| `CRIS_AI_PROVIDER=none python -c "import cris.web.wsgi, cris.cli"` | `onnxruntime`, `numpy`, `tokenizers` không nằm trong `sys.modules` |
+| `python -m cris serve` rồi gọi 13 route bằng `curl` | trang có dữ liệu 200; id không tồn tại 404; DB chưa có `rd_officer` 503 kèm câu SQL hướng dẫn |
+| `python -m cris migrate` trên DB trống | áp `0001`–`0007` liền một lượt |
+| Đồng bộ toàn kho `python -m cris sync` | giảng viên 410, luận án 11, học liệu 2, luận văn 323, bài báo 1.907 — tất cả `status=ok`, không cảnh báo lệch số lượng (đồ án: xem CHANGELOG bản kế) |
 
-$ docker compose run --rm app quality --json
-{"works": 0, ... "last_sync": {...}}
-```
-
-`migrate` trả về danh sách rỗng vì mọi migration đã được áp dụng từ trước;
-`quality --json` in báo cáo chất lượng hiện tại của cơ sở dữ liệu.
+`migrate` trả về danh sách rỗng khi mọi migration đã được áp dụng; `quality --json` in
+báo cáo chất lượng hiện tại của cơ sở dữ liệu.

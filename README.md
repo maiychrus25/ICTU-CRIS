@@ -90,7 +90,7 @@ hoá** (`normalize`) → **nối và gộp tác giả** (`people`, `link`, `dedu
 | Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3 | Không ORM — truy vấn SQL trực tiếp |
 | CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0005` |
 | Đóng gói | Docker Compose | Image chạy được ngoài thư mục mã nguồn |
-| Kiểm thử | pytest 8 trên PostgreSQL thật | 204 test, không mock cơ sở dữ liệu |
+| Kiểm thử | pytest 8 trên PostgreSQL thật | 208 test, không mock cơ sở dữ liệu |
 | CI | GitHub Actions | `pytest -v` trên PostgreSQL 16 |
 | Quy tắc | Bảng `rule_set` có phiên bản | Chuẩn hoá tên, ánh xạ loại bài, khoá gộp |
 
@@ -129,7 +129,7 @@ chạy không dùng Docker (venv + `pip install -e ".[dev]"`).
 
 - [x] Khảo sát kho nguồn và bộ BA 18 tệp
 - [x] Mô hình dữ liệu 0.1
-- [x] Lát cắt S + N chạy từ dòng lệnh, 204 test
+- [x] Lát cắt S + N chạy từ dòng lệnh, 208 test
 - [x] Hồ sơ nguồn mở
 - [ ] Nhập Excel khoa (S-06)
 - [x] Giao diện hàng đợi xác nhận và tra cứu

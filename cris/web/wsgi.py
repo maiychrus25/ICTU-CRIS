@@ -244,6 +244,7 @@ def serve(host="127.0.0.1", port=8000):
 # Nạp các module view ở CUỐI tệp, sau khi `route` đã được định nghĩa: mỗi module
 # `import ... route` ngược lại wsgi, nên đặt sớm hơn sẽ vòng lặp nhập. Đây là
 # nhập lấy tác dụng phụ — chính hành vi nhập làm đầy ROUTES.
+from cris.web import views_about as _views_about      # noqa: E402,F401
 from cris.web import views_compare as _views_compare  # noqa: E402,F401
 from cris.web import views_dedup as _views_dedup      # noqa: E402,F401
 from cris.web import views_quality as _views_quality  # noqa: E402,F401

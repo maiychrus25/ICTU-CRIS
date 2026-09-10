@@ -25,6 +25,7 @@ NAV_ITEMS = [
     ("/tra-cuu", "Tra cứu"),
     ("/chat-luong-du-lieu", "Chất lượng dữ liệu"),
     ("/doi-chieu", "Đối chiếu đề tài"),
+    ("/ve", "Về hệ thống"),
 ]
 
 
