@@ -16,6 +16,7 @@ AI trong ICTU-CRIS **gợi ý**; **người quyết** (BR-18). Ba chỗ có AI, 
 | **Gợi ý hàng đợi tác giả** `/doi-soat/tac-gia` | 8 % bài báo nối được tác giả ở nguồn; nhiều ca trùng tên khác người | Xếp hạng ứng viên theo tương đồng chủ đề với các công trình người đó đã được xác nhận | Chuyên viên bấm xác nhận / bác bỏ / gán lại — đúng luồng cũ, có ghi ai bấm |
 | **Gợi ý hàng đợi nghi trùng** `/doi-soat/trung-lap` | 43 nhóm đồ án trùng tiêu đề, 34 là đồ án nhóm hợp lệ | Hiện tương đồng tóm tắt giữa các thành viên như một thông tin thêm | Gợi ý mặc định "Giữ riêng" cho nhóm khác sinh viên **không đổi**; người quyết gộp hay giữ |
 | **Trục chủ đề** `/tra-cuu?topic=` | 10.951 từ khoá không kiểm soát | Gom từ khoá thành cụm, nhãn cụm là từ khoá phổ biến nhất | Dùng làm bộ lọc; không thay từ khoá gốc |
+| **Rà soát trùng đề tài theo khoá** `/doi-chieu/ra-soat` | `dang_ky_do_an` không có ở nguồn nên không rà được lúc đăng ký; đề tài đồ án lặp lại qua các năm là nỗi đau của giảng viên hướng dẫn | Với đồ án của một khoá, tìm láng giềng ngữ nghĩa ở các khoá khác, chia mức `cao`/`vua`/`thap` theo cosine toàn văn bản | Chuyên viên/giảng viên xem bảng, tự quyết định có phải trùng hay không — không có hành động gộp/xoá nào tự động |
 
 AI **không** làm: kết luận đạo văn, khẳng định tính mới, tự gộp bản ghi, tự nối tác giả,
 tự đổi bất kỳ trường dữ liệu nghiệp vụ nào. Mã trong `cris/ai/` chỉ ghi vào bảng
@@ -41,6 +42,7 @@ python -m cris migrate          # bảng ai_* (migration 0007) — bắt buộc 
 python -m cris ai embed         # vector cho toàn bộ công trình
 python -m cris ai topics        # trục chủ đề (mặc định 40 cụm, --k để đổi)
 python -m cris ai suggest       # gợi ý cho hai hàng đợi
+python -m cris ai screen --cohort K18   # rà soát trùng đề tài của khoá K18 với các khoá khác
 python -m cris ai status        # provider, mô hình, số vector đã có
 ```
 
@@ -88,8 +90,43 @@ bằng đo được.
   mặc định.
 - **Trục chủ đề**: k-means (k-means++, ≤ 50 vòng) trên vector từ khoá; k tự giảm nếu ít
   từ khoá hơn k; nhãn cụm = từ khoá tần suất cao nhất.
+- **Rà soát trùng đề tài theo khoá**: với mỗi đồ án của khoá đang rà, top-k cosine trong
+  cùng `doc_type` (mặc định 3), loại láng giềng cùng khoá; mức khía cạnh `bai_toan` chia
+  theo đúng hai ngưỡng 0,55/0,35 (đổi tên nhãn: `cao`/`vua`/`thap` thay vì `giống`/`khác`/
+  `chưa đủ` của đối chiếu đề tài, để không lẫn hai thang đo); ba khía cạnh còn lại luôn là
+  `khong_du_du_lieu` vì không có mô tả khía cạnh riêng để so — chỉ có tiêu đề/tóm tắt/từ
+  khoá của chính công trình.
 
-## 5. Giới hạn — nói trước để không ai hiểu nhầm
+## 5. Rà soát trùng đề tài theo khoá
+
+`/doi-chieu/ra-soat` (`cris/ai/screen.py`, `python -m cris ai screen --cohort K18`,
+`GET /api/ai/screen`, `GET /api/ai/screen/cohorts`).
+
+**Mục đích**: `dang_ky_do_an` không có ở nguồn, nên không rà được đề tài trùng lúc đăng
+ký — thay vào đó rà theo lô sau khi đồ án của một khoá đã có trong kho, so với các khoá
+trước. Đúng nỗi đau "đề tài lặp lại qua các năm" mà giảng viên hướng dẫn gặp phải.
+
+**Cách chạy**:
+
+```bash
+python -m cris ai embed                 # cần vector trước — screen chỉ rà công trình đã embed
+python -m cris ai screen --cohort K18   # --k đổi số láng giềng mỗi công trình (mặc định 3)
+```
+
+Ghi `ai_suggestion(kind='topic_overlap', target_id=<work_id>, payload={cohort, neighbours:
+[{work_id, title, cohort, score, aspects}]})`, UPSERT theo `UNIQUE(kind, target_id,
+model)` — chạy lại không nhân đôi dòng. `GET /api/ai/screen?cohort=&min=cao|vua|thap&page=`
+đọc lại gợi ý đã ghi (không tự chạy AI), lọc theo khoá và theo mức cao nhất của `bai_toan`
+trong các láng giềng; `GET /api/ai/screen/cohorts` liệt kê số công trình đã rà/đã gắn cờ
+theo từng khoá.
+
+**Giới hạn**: chỉ so trên tóm tắt (như mọi chức năng AI khác trong dự án — xem mục 5 bên
+dưới); chỉ khía cạnh `bai_toan` có mức tính được (theo cosine toàn văn bản), ba khía cạnh
+còn lại luôn `khong_du_du_lieu` vì không có mô tả khía cạnh riêng để tách; **AI gợi ý,
+người quyết** — không có hành động gộp, xoá hay đổi trạng thái nào chạy tự động từ kết
+quả rà soát, kể cả khi mức là `cao`.
+
+## 6. Giới hạn — nói trước để không ai hiểu nhầm
 
 1. **Chỉ so trên tóm tắt.** Kho không có toàn văn: 39/40 PDF là tóm tắt một trang do máy
    sinh. Mọi kết quả đối chiếu đều ghi dòng *"So trên tiêu đề, tóm tắt và từ khoá — không
@@ -104,22 +141,23 @@ bằng đo được.
 6. **Gợi ý tác giả chỉ có khi người đó đã có công trình xác nhận** — đúng là điểm yếu ở
    giai đoạn đầu, khi liên kết còn thưa; nó tốt dần theo số quyết định của người dùng.
 
-## 6. Kiểm thử
+## 7. Kiểm thử
 
 - Test đơn vị dùng provider `fake` (xác định, không tải gì): đối chiếu, khía cạnh, đường
-  lui, gom cụm, gợi ý, rào chắn "AI không đổi dữ liệu nghiệp vụ".
+  lui, gom cụm, gợi ý, rà soát trùng đề tài theo khoá, rào chắn "AI không đổi dữ liệu
+  nghiệp vụ" (`tests/test_ai_screen.py`).
 - Test mô hình thật `tests/test_ai_local_slow.py`, đánh dấu `slow`: 384 chiều, cùng chủ
   đề gần hơn khác chủ đề, xuyên ngôn ngữ Việt–Anh, 64 đoạn dưới 30 giây. Tự bỏ qua khi
   chưa tải mô hình; CI chạy `-m "not slow"`.
 - Chạy: `pytest -q` (nhanh) · `pytest -m slow` (cần mô hình).
 
-## 7. Bảng dữ liệu AI
+## 8. Bảng dữ liệu AI
 
 | Bảng | Nội dung |
 |---|---|
 | `ai_embedding` | `work_id`, `model`, `dim`, `vector`, `text_hash`, `built_at` — một dòng cho mỗi (công trình, mô hình) |
 | `ai_topic`, `ai_topic_keyword` | cụm chủ đề và từ khoá thuộc cụm, kèm trọng số tần suất |
-| `ai_suggestion` | gợi ý cho hàng đợi: `kind` (`author_link` / `duplicate`), `target_id`, `payload` |
+| `ai_suggestion` | gợi ý cho hàng đợi: `kind` (`author_link` / `duplicate` / `topic_overlap`), `target_id`, `payload` |
 | `ai_query` | lịch sử đối chiếu đề tài: đầu vào, kết quả, provider, người chạy — để xem lại và gửi giảng viên |
 
 Xoá toàn bộ dấu vết AI mà không ảnh hưởng nghiệp vụ: `TRUNCATE ai_query, ai_suggestion,

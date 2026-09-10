@@ -23,6 +23,11 @@
 - `GET/POST /api/periods` và `POST /api/periods/{id}/close|cancel`: mở, đóng
   nộp, huỷ kỳ báo cáo và xem tiến độ theo đơn vị qua `cris/period.py`
   (`cris/api/routes/periods.py`).
+- Rà soát trùng đề tài theo khoá (lát cắt E5): `cris/ai/screen.py`
+  (`screen_cohort`), lệnh `python -m cris ai screen --cohort <mã>`,
+  `GET /api/ai/screen` và `GET /api/ai/screen/cohorts` — so đồ án của một
+  khoá với các khoá khác, ghi gợi ý `ai_suggestion(kind='topic_overlap')`,
+  không đổi dữ liệu nghiệp vụ.
 
 ### Changed
 

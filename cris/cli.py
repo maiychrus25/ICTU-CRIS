@@ -19,6 +19,8 @@ def main(argv=None):
     ais.add_parser("status"); ais.add_parser("download")
     tp = ais.add_parser("topics"); tp.add_argument("--k", type=int, default=40, help="số cụm mong muốn")
     ais.add_parser("suggest")
+    sc = ais.add_parser("screen", help="rà soát trùng đề tài của một khoá với các khoá khác")
+    sc.add_argument("--cohort", required=True); sc.add_argument("--k", type=int, default=3)
     sv = sub.add_parser("serve"); sv.add_argument("--host", default="127.0.0.1"); sv.add_argument("--port", type=int, default=8000)
     sv.add_argument("--legacy", action="store_true", help="chạy UI HTML cũ (WSGI) thay vì API FastAPI")
     a = ap.parse_args(argv)
@@ -68,6 +70,10 @@ def main(argv=None):
                 from cris.ai import suggest as ai_suggest
                 print({"author_link": ai_suggest.suggest_author_links(conn, prov),
                        "duplicate": ai_suggest.suggest_duplicates(conn, prov)})
+            elif a.ai_cmd == "screen":
+                from cris.ai import screen as ai_screen
+                r = ai_screen.screen_cohort(conn, prov, cohort=a.cohort, k=a.k)
+                print(f"screened={r['screened']} flagged={r['flagged']}")
     elif a.cmd == "quality":
         r = quality.report(conn)
         print(json.dumps(r, ensure_ascii=False, indent=None if a.json else 2))

@@ -16,6 +16,7 @@ from cris.api.routes import (
     periods,
     quality,
     queue,
+    screen,
     search,
     stats,
 )
@@ -35,7 +36,7 @@ def create_app(static_dir: str | os.PathLike | None = None) -> FastAPI:
     origins = [o for o in (os.environ.get("CRIS_CORS_ORIGINS") or "http://localhost:3000,http://127.0.0.1:3000").split(",") if o]
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
     for r in (search.router, queue.router, compare.router, quality.router,
-              stats.router, export.router, audit.router, periods.router):
+              stats.router, export.router, audit.router, periods.router, screen.router):
         app.include_router(r)
 
     @app.get("/api/health", tags=["he-thong"])

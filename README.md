@@ -106,7 +106,7 @@ CLI thống nhất:
 ```
 python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--json]
 python -m cris serve [--host] [--port]
-python -m cris ai download|embed|topics|suggest|status      # cần CRIS_AI_PROVIDER=local
+python -m cris ai download|embed|topics|suggest|screen|status      # cần CRIS_AI_PROVIDER=local
 ```
 
 ## 🚀 Cài đặt nhanh (Quick start)
@@ -141,6 +141,7 @@ Giao diện web và AI (venv, xem BUILDING.md §6–7):
 pip install -e ".[ai]" && python -m cris ai download   # một lần, 135 MB
 export CRIS_AI_PROVIDER=local
 python -m cris ai embed && python -m cris ai topics && python -m cris ai suggest
+python -m cris ai screen --cohort K18                   # rà soát trùng đề tài đồ án khoá K18
 python -m cris serve                                    # http://127.0.0.1:8000
 ```
 

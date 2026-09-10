@@ -354,3 +354,32 @@ class PeriodProgress(BaseModel):
     due_at: datetime | None = None
     days_remaining: int | None = None
     units: list[PeriodUnitProgress]
+
+
+# ---------- rà soát trùng đề tài theo khoá ----------
+class ScreenNeighbour(BaseModel):
+    work_id: int
+    title: str | None
+    cohort: str | None
+    score: float
+    aspects: dict[str, str]
+
+
+class ScreenItem(BaseModel):
+    work_id: int
+    title: str | None
+    cohort: str | None
+    neighbours: list[ScreenNeighbour]
+    max_level: str
+
+
+class ScreenList(BaseModel):
+    items: list[ScreenItem]
+    page: Page
+    cohorts: list[str]
+
+
+class ScreenCohortSummary(BaseModel):
+    cohort: str
+    screened: int
+    flagged: int
