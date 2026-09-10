@@ -20,20 +20,13 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api";
+import { confidenceLabels, stateLabels } from "@/lib/labels";
 import { useAuthorQueue, useDecideAuthors } from "@/lib/queries";
 import type { AuthorQueueRow, DecideAuthorsIn } from "@/lib/types";
 
 const states = [
-  ["ChoXacNhan", "Chờ xác nhận"],
-  ["DaNoiTuDong", "Đã nối tự động"],
-  ["DaXacNhan", "Đã xác nhận"],
-  ["DaBacBo", "Đã bác bỏ"],
+  "ChoXacNhan", "DaNoiTuDong", "DaXacNhan", "DaBacBo",
 ] as const;
-
-function confidenceLabel(value: string) {
-  const normalized = value.toLocaleLowerCase("vi");
-  return normalized === "cao" ? "Cao" : normalized === "vua" ? "Vừa" : normalized === "thap" ? "Thấp" : value;
-}
 
 export default function AuthorQueuePage() {
   const queryClient = useQueryClient();
@@ -64,8 +57,8 @@ export default function AuthorQueuePage() {
   const columns = useMemo<DataTableColumn<AuthorQueueRow>[]>(() => [
     { accessorKey: "raw_name", header: "Tên thô", cell: ({ row }) => <div><p className="font-medium">{row.original.raw_name}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Nhóm {row.original.group_work_count} công trình</p></div> },
     { accessorKey: "work_title", header: "Công trình", cell: ({ row }) => <Link href={`/cong-trinh/?id=${row.original.work_id}`} className="block max-w-xs whitespace-normal font-medium text-primary hover:underline">{row.original.work_title ?? "Chưa có tiêu đề"}</Link> },
-    { accessorKey: "candidate_name", header: "Ứng viên", cell: ({ row }) => <Link href={`/giang-vien/?id=${row.original.candidate_person_id}`} className="font-medium text-primary hover:underline">{row.original.candidate_name}</Link> },
-    { accessorKey: "confidence", header: "Tin cậy", cell: ({ row }) => <Badge variant="outline" className={row.original.confidence.toLowerCase() === "cao" ? "border-status-success/30 bg-status-success/10 text-status-success" : "border-status-warning/30 bg-status-warning/10 text-status-warning"}>{confidenceLabel(row.original.confidence)}</Badge> },
+    { accessorKey: "candidate_name", header: "Ứng viên", cell: ({ row }) => <Link href={`/giang-vien/?id=${row.original.candidate_person_id}`} className="font-medium capitalize text-primary hover:underline">{row.original.candidate_name}</Link> },
+    { accessorKey: "confidence", header: "Tin cậy", cell: ({ row }) => <Badge variant="outline" className={["cao", "ten_day_du_duy_nhat", "orcid"].includes(row.original.confidence) ? "border-status-success/30 bg-status-success/10 text-status-success" : "border-status-warning/30 bg-status-warning/10 text-status-warning"}>{confidenceLabels[row.original.confidence] ?? row.original.confidence}</Badge> },
     { accessorKey: "degree_conflict", header: "Học vị", enableSorting: false, cell: ({ row }) => row.original.degree_conflict ? <span title="Học vị trong nguồn có dấu hiệu xung đột" className="inline-flex items-center gap-1 text-status-warning"><AlertTriangle className="size-4" /><span className="sr-only">Cảnh báo học vị</span></span> : <span className="text-muted-foreground">—</span> },
     { accessorKey: "group_work_count", header: "Cùng tên", cell: ({ row }) => <span className="tabular-nums">{row.original.group_work_count}</span> },
     { accessorKey: "ai_rank", header: "Gợi ý AI", enableSorting: false, cell: ({ row }) => row.original.ai_rank ? <div className="max-w-60 whitespace-normal"><Badge variant="outline" className="mb-1 text-muted-foreground"><Bot />gợi ý · hạng {row.original.ai_rank}</Badge><p className="text-xs leading-5 text-muted-foreground">{row.original.ai_reason ?? "Không có giải thích"}</p></div> : <span className="text-muted-foreground">—</span> },
@@ -92,7 +85,7 @@ export default function AuthorQueuePage() {
       <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <Tabs value={state} onValueChange={(value) => { setState(String(value)); setPage(1); setSelection({}); }}>
           <TabsList variant="line" className="max-w-full overflow-x-auto">
-            {states.map(([value, label], index) => <TabsTrigger key={value} value={value}>{label}<Badge variant="secondary" className="tabular-nums">{counts[index] ?? "…"}</Badge></TabsTrigger>)}
+            {states.map((value, index) => <TabsTrigger key={value} value={value}>{stateLabels[value]}<Badge variant="secondary" className="tabular-nums">{counts[index] ?? "…"}</Badge></TabsTrigger>)}
           </TabsList>
         </Tabs>
         <form className="flex w-full gap-2 xl:w-80" onSubmit={(event) => { event.preventDefault(); setQ(search.trim()); setPage(1); setSelection({}); }}>

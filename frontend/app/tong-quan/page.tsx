@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { docTypeColors, docTypeLabels } from "@/lib/labels";
+import { docTypeColors, docTypeLabels, getFieldValueLabel } from "@/lib/labels";
 import { useStats } from "@/lib/queries";
 
 const docTypes = ["bai_bao", "do_an", "luan_van", "luan_an", "hoc_lieu"] as const;
@@ -55,7 +55,7 @@ export default function OverviewPage() {
         <section aria-labelledby="unit-table-title"><h2 id="unit-table-title" className="mb-3 text-base font-semibold">Công trình theo đơn vị</h2>{stats.by_unit.length ? <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Mã</TableHead><TableHead>Đơn vị</TableHead><TableHead className="text-right">Công trình</TableHead></TableRow></TableHeader><TableBody>{stats.by_unit.map((unit) => <TableRow key={unit.unit_id}><TableCell className="font-medium">{unit.code}</TableCell><TableCell>{unit.name}</TableCell><TableCell className="text-right font-semibold tabular-nums">{unit.works.toLocaleString("vi-VN")}</TableCell></TableRow>)}</TableBody></Table></div> : <EmptyView description="Chưa có dữ liệu đơn vị. Hãy chờ lần đồng bộ tiếp theo." />}</section>
         <section aria-labelledby="top-persons-title"><h2 id="top-persons-title" className="mb-3 text-base font-semibold">10 giảng viên có nhiều công trình nhất</h2>{stats.top_persons.length ? <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Giảng viên</TableHead><TableHead>Đơn vị</TableHead><TableHead className="text-right">Công trình</TableHead></TableRow></TableHeader><TableBody>{stats.top_persons.map((person) => <TableRow key={person.person_id}><TableCell><Link href={`/giang-vien/?id=${person.person_id}`} className="font-medium text-primary hover:underline">{person.display_name}</Link></TableCell><TableCell>{person.unit_code ?? "—"}</TableCell><TableCell className="text-right font-semibold tabular-nums">{person.works.toLocaleString("vi-VN")}</TableCell></TableRow>)}</TableBody></Table></div> : <EmptyView description="Chưa có dữ liệu xếp hạng giảng viên. Hãy chờ lần đồng bộ tiếp theo." />}</section>
       </div>
-      <footer className="mt-7 border-t pt-4 text-xs text-muted-foreground">Dữ liệu đồng bộ lần cuối: <span className="tabular-nums">{formatDate(stats.last_sync?.finished_at)}</span>{stats.last_sync?.source ? ` · ${stats.last_sync.source}` : ""}</footer>
+      <footer className="mt-7 border-t pt-4 text-xs text-muted-foreground">Dữ liệu đồng bộ lần cuối: <span className="tabular-nums">{formatDate(stats.last_sync?.finished_at)}</span>{stats.last_sync?.source ? ` · ${getFieldValueLabel("source", stats.last_sync.source)}` : ""}</footer>
     </>
   );
 }

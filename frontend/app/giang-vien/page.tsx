@@ -16,7 +16,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { docTypeLabels } from "@/lib/labels";
+import { docTypeLabels, getFieldValueLabel } from "@/lib/labels";
 import { API_BASE } from "@/lib/api";
 import { usePerson } from "@/lib/queries";
 import type { PersonPublication } from "@/lib/types";
@@ -54,7 +54,7 @@ function PersonContent() {
       <section className="mb-7" aria-labelledby="year-chart-title"><div className="mb-3"><h2 id="year-chart-title" className="text-base font-semibold">Công trình theo năm</h2><p className="text-xs text-muted-foreground">Số công trình có liên kết với giảng viên theo năm công bố.</p></div>{yearlyData.length ? <div className="h-72 rounded-lg border bg-card p-4" role="img" aria-label="Biểu đồ cột số công trình theo năm"><ResponsiveContainer width="100%" height="100%"><BarChart data={yearlyData} margin={{ top: 8, right: 8, left: -18, bottom: 4 }}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="year" tickLine={false} axisLine={false} /><YAxis allowDecimals={false} tickLine={false} axisLine={false} /><Tooltip cursor={{ fill: "var(--muted)" }} /><Bar dataKey="count" name="Công trình" fill="var(--primary)" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div> : <EmptyView description="Chưa có số liệu theo năm để vẽ biểu đồ." />}</section>
 
       <section aria-labelledby="publications-title"><div className="mb-3"><h2 id="publications-title" className="text-base font-semibold">Danh sách công trình</h2><p className="text-xs text-muted-foreground">Mở từng công trình để xem dữ liệu và xuất xứ.</p></div><DataTable columns={columns} data={person.publications} getRowId={(row) => String(row.work_id)} emptyMessage="Giảng viên chưa có công trình được liên kết. Hãy kiểm tra hàng đợi tác giả." /></section>
-      <footer className="mt-7 border-t pt-4 text-xs text-muted-foreground">Dữ liệu đồng bộ lần cuối: <span className="tabular-nums">{formatDate(person.last_sync?.finished_at)}</span>{person.last_sync?.source ? ` · ${person.last_sync.source}` : ""}</footer>
+      <footer className="mt-7 border-t pt-4 text-xs text-muted-foreground">Dữ liệu đồng bộ lần cuối: <span className="tabular-nums">{formatDate(person.last_sync?.finished_at)}</span>{person.last_sync?.source ? ` · ${getFieldValueLabel("source", person.last_sync.source)}` : ""}</footer>
     </>
   );
 }

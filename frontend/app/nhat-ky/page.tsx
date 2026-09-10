@@ -13,7 +13,7 @@ import { ErrorView, LoadingView } from "@/components/state-views";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { entityLabels } from "@/lib/labels";
+import { entityLabels, labelDataCodes } from "@/lib/labels";
 import { useAudit } from "@/lib/queries";
 import type { AuditRow } from "@/lib/types";
 
@@ -23,7 +23,7 @@ function formatDate(value: string) {
 }
 
 function JsonPanel({ title, value }: { title: string; value: Record<string, unknown> | null }) {
-  return <div><h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3><pre className="min-h-32 overflow-auto whitespace-pre-wrap break-words rounded-lg border bg-muted/50 p-3 text-xs leading-5">{value ? JSON.stringify(value, null, 2) : "Không có dữ liệu"}</pre></div>;
+  return <div><h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3><pre className="min-h-32 overflow-auto whitespace-pre-wrap break-words rounded-lg border bg-muted/50 p-3 text-xs leading-5">{value ? JSON.stringify(labelDataCodes(value), null, 2) : "Không có dữ liệu"}</pre></div>;
 }
 
 function AuditContent() {

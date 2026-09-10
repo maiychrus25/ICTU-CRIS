@@ -16,6 +16,10 @@ test("trang gốc mở tổng quan với bốn chỉ số và biểu đồ", asy
 test("nhật ký lọc theo loại thực thể", async ({ page }) => {
   await page.goto("/nhat-ky/");
   await expect(page.getByText("Nhóm nghi trùng #301")).toBeVisible();
+  await page.getByRole("row", { name: /Xác nhận liên kết/ }).getByRole("button", { name: "Xem thay đổi" }).click();
+  await expect(page.getByRole("dialog")).toContainText('"state": "Chờ xác nhận"');
+  await expect(page.getByRole("dialog")).not.toContainText("ChoXacNhan");
+  await page.keyboard.press("Escape");
   await page.getByRole("combobox", { name: "Loại thực thể" }).click();
   await page.getByRole("option", { name: "Kỳ báo cáo" }).click();
   await expect(page.getByText("Kỳ báo cáo #401")).toBeVisible();

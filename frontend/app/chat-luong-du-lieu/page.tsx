@@ -10,7 +10,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { PageHeader } from "@/components/page-header";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { Button } from "@/components/ui/button";
-import { docTypeColors, docTypeLabels } from "@/lib/labels";
+import { docTypeColors, docTypeLabels, getFieldValueLabel } from "@/lib/labels";
 import { useQuality } from "@/lib/queries";
 
 function formatValue(value: unknown) {
@@ -42,7 +42,7 @@ export default function QualityPage() {
       </div>
 
       <section className="mt-7" aria-labelledby="works-type-chart-title"><div className="mb-3"><h2 id="works-type-chart-title" className="text-base font-semibold">Công trình theo loại tài liệu</h2><p className="text-xs text-muted-foreground">Phân bố dữ liệu hiện có trong hệ thống.</p></div>{chartData.length ? <div className="h-80 rounded-lg border bg-card p-4" role="img" aria-label="Biểu đồ số công trình theo loại tài liệu"><ResponsiveContainer width="100%" height="100%"><BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 16, left: 18, bottom: 4 }}><CartesianGrid strokeDasharray="3 3" horizontal={false} /><XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} /><YAxis dataKey="type" type="category" width={86} tickLine={false} axisLine={false} /><Tooltip cursor={{ fill: "var(--muted)" }} /><Bar dataKey="count" name="Công trình" radius={[0, 4, 4, 0]}>{chartData.map((item) => <Cell key={item.key} fill={docTypeColors[item.key] ?? "var(--primary)"} />)}</Bar></BarChart></ResponsiveContainer></div> : <EmptyView description="Chưa có dữ liệu theo loại tài liệu để vẽ biểu đồ." />}</section>
-      <footer className="mt-7 border-t pt-4 text-xs text-muted-foreground">Dữ liệu đồng bộ lần cuối: <span className="tabular-nums">{formatDate(quality.last_sync?.finished_at)}</span>{syncSource ? ` · ${syncSource}` : ""}</footer>
+      <footer className="mt-7 border-t pt-4 text-xs text-muted-foreground">Dữ liệu đồng bộ lần cuối: <span className="tabular-nums">{formatDate(quality.last_sync?.finished_at)}</span>{syncSource ? ` · ${getFieldValueLabel("source", syncSource)}` : ""}</footer>
     </>
   );
 }

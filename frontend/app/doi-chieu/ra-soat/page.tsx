@@ -17,21 +17,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { aspectLevelLabels, type AspectLevel } from "@/lib/labels";
 import { useScreen, useScreenCohorts } from "@/lib/queries";
 import type { ScreenCohortSummary, ScreenItem, ScreenLevel } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const scoreFormatter = new Intl.NumberFormat("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const levelConfig = {
-  cao: { label: "Cao", icon: AlertTriangle, className: "border-status-danger/25 bg-status-danger/10 text-status-danger" },
-  vua: { label: "Vừa", icon: CircleAlert, className: "border-status-warning/30 bg-status-warning/10 text-status-warning" },
-  thap: { label: "Thấp", icon: CircleMinus, className: "bg-muted text-muted-foreground" },
+  cao: { icon: AlertTriangle, className: "border-status-danger/25 bg-status-danger/10 text-status-danger" },
+  vua: { icon: CircleAlert, className: "border-status-warning/30 bg-status-warning/10 text-status-warning" },
+  thap: { icon: CircleMinus, className: "bg-muted text-muted-foreground" },
 } as const;
 
 function LevelBadge({ level }: { level: string }) {
   const config = levelConfig[level as ScreenLevel] ?? levelConfig.thap;
   const Icon = config.icon;
-  return <Badge variant="outline" className={cn("font-normal", config.className)}><Icon />{config.label}</Badge>;
+  return <Badge variant="outline" className={cn("font-normal", config.className)}><Icon />{aspectLevelLabels[level as AspectLevel] ?? level}</Badge>;
 }
 
 function cohortLabel(item: ScreenCohortSummary) {

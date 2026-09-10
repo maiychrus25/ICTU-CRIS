@@ -75,11 +75,19 @@ test("tổng quan, tra cứu, công trình và hồ sơ giảng viên dùng dữ
 test("bốn tab hàng đợi tác giả chỉ được đọc", async ({ page }) => {
   await page.goto("/doi-soat/tac-gia/");
   await assertHealthyPage(page);
+  await expect(page.getByText("Tên đầy đủ, nhiều ứng viên").first()).toHaveClass(/text-status-warning/);
+  await expect(page.getByText("ten_day_du_nhieu_ung_vien", { exact: true })).toHaveCount(0);
+  const candidate = page.locator('tbody a[href^="/giang-vien/?id="]').first();
+  await expect(candidate).toBeVisible();
+  await expect(candidate).toHaveCSS("text-transform", "capitalize");
   await capture(page, "hang-doi-tac-gia.png");
 
   for (const name of ["Chờ xác nhận", "Đã nối tự động", "Đã xác nhận", "Đã bác bỏ"]) {
     await page.getByRole("tab", { name: new RegExp(`^${name}`) }).click();
     await assertHealthyPage(page);
+    if (name === "Đã nối tự động") {
+      await expect(page.getByText("Tên đầy đủ, một ứng viên").first()).toHaveClass(/text-status-success/);
+    }
   }
 });
 
@@ -92,7 +100,16 @@ test("hàng đợi nghi trùng mở chi tiết nhưng không quyết định", a
   await page.locator("tbody tr").first().click();
   await expect(page).toHaveURL(/\/doi-soat\/trung-lap\/chi-tiet\/\?id=\d+/);
   await expect(page.getByRole("heading", { name: "So sánh bản ghi" })).toBeVisible();
+  await expect(page.locator("thead").getByText("Nghi trùng", { exact: true }).first()).toBeVisible();
   await assertHealthyPage(page);
+});
+
+test("chi tiết công trình gắn nhãn mã trạng thái và loại nơi công bố", async ({ page }) => {
+  await page.goto("/cong-trinh/?id=458");
+  await expect(page.getByText("Đã chuẩn hoá", { exact: true })).toBeVisible();
+  await expect(page.getByText("Tạp chí quốc tế", { exact: true })).toBeVisible();
+  await expect(page.getByText("DaChuanHoa", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("journal_intl", { exact: true })).toHaveCount(0);
 });
 
 test("đối chiếu đề tài thật hoàn tất trong 30 giây", async ({ page }) => {
