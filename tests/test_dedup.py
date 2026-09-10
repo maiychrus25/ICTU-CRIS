@@ -84,3 +84,54 @@ def test_keep_requires_reason_and_marks_giu_rieng(conn, user_id):
     assert q(conn, "SELECT state FROM duplicate_group")[0]["state"] == "GiuRieng"
     assert {w["state"] for w in q(conn, "SELECT state FROM work")} == {"GiuRieng"}
     assert dedup.find_duplicates(conn)["groups"] == 0    # đã quyết, không ghép lại
+
+def test_merge_rejects_non_mergeable_field(conn, user_id):
+    a = mk(conn, "bai_bao", "Injection", doi="10.1/inj")
+    mk(conn, "bai_bao", "Injection", doi="10.1/inj")
+    dedup.find_duplicates(conn)
+    gid = q(conn, "SELECT id FROM duplicate_group")[0]["id"]
+    with pytest.raises(ValueError):
+        dedup.decide_group(conn, gid, "merge", user_id, survivor_id=a,
+                            field_choices={"id; DROP TABLE work": a})
+
+def test_merge_title_updates_title_norm(conn, user_id):
+    a = mk(conn, "bai_bao", "Old Title", doi="10.1/tn")
+    b = mk(conn, "bai_bao", "New Title", doi="10.1/tn")
+    dedup.find_duplicates(conn)
+    gid = q(conn, "SELECT id FROM duplicate_group")[0]["id"]
+    dedup.decide_group(conn, gid, "merge", user_id, survivor_id=a, field_choices={"title": b})
+    w = q(conn, "SELECT title, title_norm FROM work WHERE id=%s", a)[0]
+    assert w["title"] == "New Title" and w["title_norm"] == rules.norm_title("New Title")
+
+def test_confirmed_survivor_is_regrouped_with_new_duplicate(conn, user_id):
+    a = mk(conn, "bai_bao", "Regroup", doi="10.1/regroup")
+    b = mk(conn, "bai_bao", "Regroup", doi="10.1/regroup")
+    dedup.find_duplicates(conn)
+    old_gid = q(conn, "SELECT id FROM duplicate_group")[0]["id"]
+    dedup.decide_group(conn, old_gid, "merge", user_id, survivor_id=a)
+    c = mk(conn, "bai_bao", "Regroup", doi="10.1/regroup")
+    out = dedup.find_duplicates(conn)
+    assert out["groups"] == 1
+    new_groups = q(conn, "SELECT id FROM duplicate_group WHERE id <> %s", old_gid)
+    assert len(new_groups) == 1
+    members = {r["work_id"] for r in q(conn, "SELECT work_id FROM duplicate_member WHERE group_id=%s", new_groups[0]["id"])}
+    assert members == {a, c}
+    ws = {w["id"]: w["state"] for w in q(conn, "SELECT id, state FROM work")}
+    assert ws[a] == "DaXacNhan" and ws[c] == "NghiTrung" and ws[b] == "DaGop"
+
+def test_diff_compares_against_all_other_members(conn):
+    a = mk(conn, "bai_bao", "Same Title Three", journal="J1")
+    mk(conn, "bai_bao", "same title three", journal="J1")
+    mk(conn, "bai_bao", "Same title three", journal="J2")
+    dedup.find_duplicates(conn)
+    diffs = {r["work_id"]: r["diff"] for r in q(conn, "SELECT work_id, diff FROM duplicate_member")}
+    assert "journal" in diffs[a]
+
+def test_decide_group_twice_raises(conn, user_id):
+    mk(conn, "do_an", "Dup", student="A B", cohort="K1")
+    mk(conn, "do_an", "Dup", student="A B", cohort="K1")
+    dedup.find_duplicates(conn)
+    gid = q(conn, "SELECT id FROM duplicate_group")[0]["id"]
+    dedup.decide_group(conn, gid, "keep", user_id, reason="r1")
+    with pytest.raises(ValueError):
+        dedup.decide_group(conn, gid, "keep", user_id, reason="r2")
