@@ -303,7 +303,7 @@ Nhưng có ba thứ **tái sử dụng được** cho hệ thống mới, không
 | Đơn vị của bài báo | 1.194/1.907 (63%) | Phân nhóm theo khoa |
 | Năm xuất bản | 1.907/1.907 (100%) | Chia kỳ báo cáo |
 
-**ORCID phủ 91% là phát hiện quan trọng.** Tài liệu không nhắc tới ORCID, nhưng đây là khoá
+**ORCID phủ 91% là phát hiện quan trọng** — với một dè dặt đo được sau đó: 10 cặp hồ sơ trùng ORCID ở nguồn (8 cặp cùng người lặp hồ sơ, 2 cặp khác người chung mã; xem lỗi #11 trong README khảo sát), nên ORCID là khoá nối *ưu tiên*, không phải khoá *tuyệt đối*. Tài liệu không nhắc tới ORCID, nhưng đây là khoá
 nối tác giả chuẩn quốc tế và đã có sẵn. Nó giải quyết trực tiếp bài toán ở mục 2 — chính xác
 hơn nhiều so với khớp tên — và còn cho phép đối soát với nguồn ngoài mà không cần đoán tên.
 

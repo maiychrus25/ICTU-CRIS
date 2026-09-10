@@ -101,6 +101,16 @@ Ngoài ra 5.644 tệp đính kèm, phần lớn là PDF toàn văn để công k
     `302 /tim-kiem/?q=UML` → trả cả đồ án lẫn luận văn. Trang tìm kiếm chung cũng
     bỏ qua tham số `type`.
 
+11. **10 cặp hồ sơ giảng viên trùng ORCID** (đo 10/09/2026 khi nhập 410 hồ sơ vào
+    ICTU-CRIS, ràng buộc `UNIQUE (orcid)`): 8 cặp là **cùng một người có hai hồ sơ**
+    (Nguyễn Thị Dung ×2 cặp, Lê Anh Tú, Ngô Phương Thùy, Nguyễn Thu Hương (88),
+    Nguyễn Thị Thanh Huyền, Nguyễn Thị Linh, Nguyễn Thị Thanh Thủy); 2 cặp là **hai
+    người khác nhau dùng chung một ORCID** (`0009-0001-3939-8656`: Bùi Thị Quyên và
+    Vi Thị Bích Ngọc; `0000-0002-7857-2602`: TS. Nguyễn Thanh Tùng và ThS. Nguyễn Thanh
+    Tùng — có thể cùng người đổi học vị, cần xác nhận). ORCID phủ 91 % nhưng không phải
+    khoá tin cậy tuyệt đối; trả lời một phần Q-14 trong bộ BA.
+    *Sửa:* gộp 8 hồ sơ lặp; hỏi hai cặp còn lại rồi sửa ORCID ở nguồn.
+
 ---
 
 ## Công cụ

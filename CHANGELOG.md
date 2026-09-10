@@ -70,6 +70,19 @@ K, toàn bộ D và R), nhà cung cấp AI ngoài (giao diện `explain` đã c�
   qua GitHub Actions).
 - `BUILDING.md` — hướng dẫn dịch và chạy từ mã nguồn (Docker và venv).
 
+### Đã biết (Known issues)
+
+- Chỉ số `mentions_placeholder` trên trang chất lượng dữ liệu **chỉ đếm sinh viên**
+  (`ICTU_STUDENT`, 302 lượt): bước chuẩn hoá không tạo lượt tên cho giảng viên hướng
+  dẫn ghi placeholder `ICTU_TEACHER`, nên 4.655 đồ án không có lượt tên mentor nào và
+  không xuất hiện trong chỉ số này. Con số thật của placeholder ở nguồn lớn hơn ~15 lần
+  (4.621 + 302). Sẽ bổ sung chỉ số "đồ án không có giảng viên hướng dẫn" ở bản kế.
+- Nhập hồ sơ giảng viên tạo 400/410 người: 10 hồ sơ bị từ chối vì trùng ORCID với hồ sơ
+  khác ở nguồn (8 cặp cùng người có hai hồ sơ, 2 cặp hai người chung một ORCID). Hệ
+  thống ghi lỗi thay vì gộp hay tạo trùng; hai cặp khác người cần người quyết.
+- Liên kết tác giả của luận văn chủ yếu vào hàng đợi (68,7 % chờ xác nhận, 5,6 % tự nối)
+  vì tên GVHD kèm học vị trùng nhiều ứng viên; đây là việc của hàng đợi, không phải lỗi.
+
 ### Fixed
 
 - Siêu dữ liệu tìm thấy (`_page`, `_backfill`) không còn được tính vào băm
