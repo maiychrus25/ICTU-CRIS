@@ -1,0 +1,448 @@
+<title>Khảo sát kho ICTU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --paper:#f5f7f9; --card:#ffffff; --card-2:#eef1f5;
+    --ink:#111a24; --ink-2:#3d4a58; --muted:#657485;
+    --rule:#dbe1e8; --rule-2:#c6cfd9;
+    --accent:#1c5cab; --accent-soft:#e7eefa;
+    --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --serious:#ec835a;
+    --bar:#256abf; --bar-soft:#cde2fb;
+    --shadow:0 1px 2px rgba(17,26,36,.06), 0 8px 24px -16px rgba(17,26,36,.28);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --paper:#0f141a; --card:#161d25; --card-2:#1c242e;
+      --ink:#e9edf2; --ink-2:#b6c1cd; --muted:#8494a4;
+      --rule:#28323d; --rule-2:#374453;
+      --accent:#5598e7; --accent-soft:#16263c;
+      --bar:#3987e5; --bar-soft:#1b3252;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --paper:#0f141a; --card:#161d25; --card-2:#1c242e;
+    --ink:#e9edf2; --ink-2:#b6c1cd; --muted:#8494a4;
+    --rule:#28323d; --rule-2:#374453;
+    --accent:#5598e7; --accent-soft:#16263c;
+    --bar:#3987e5; --bar-soft:#1b3252;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    font-size:16px; line-height:1.6; margin:0;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px 96px}
+  .prose{max-width:66ch}
+
+  /* ---------- header ---------- */
+  header.top{
+    border-bottom:1px solid var(--rule);
+    padding:56px 0 34px; margin-bottom:44px;
+  }
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:500;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 18px;
+  }
+  h1{
+    font-family:"Source Serif 4",Georgia,serif; font-weight:700;
+    font-size:clamp(34px,5.2vw,52px); line-height:1.08; letter-spacing:-.018em;
+    margin:0 0 18px; text-wrap:balance;
+  }
+  .standfirst{
+    font-family:"Source Serif 4",Georgia,serif; font-size:20px; line-height:1.5;
+    color:var(--ink-2); max-width:62ch; margin:0 0 28px;
+  }
+  .runline{
+    display:flex; flex-wrap:wrap; gap:8px 28px;
+    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted);
+  }
+  .runline b{font-weight:500; color:var(--ink-2)}
+
+  /* ---------- sections ---------- */
+  section{margin-bottom:64px; scroll-margin-top:20px}
+  h2{
+    font-family:"Source Serif 4",Georgia,serif; font-weight:700;
+    font-size:27px; letter-spacing:-.012em; line-height:1.2;
+    margin:0 0 6px; text-wrap:balance;
+  }
+  h2 .num{
+    font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:500;
+    color:var(--accent); margin-right:12px; vertical-align:2px;
+  }
+  .sectionsub{color:var(--muted); font-size:14.5px; margin:0 0 26px; max-width:64ch}
+  p{margin:0 0 16px}
+  a{color:var(--accent)}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:3px}
+  code,.mono{font-family:"IBM Plex Mono",monospace; font-size:.885em}
+  code{background:var(--card-2); padding:.1em .38em; border-radius:3px; color:var(--ink)}
+
+  /* ---------- tables ---------- */
+  .scroller{overflow-x:auto; margin-bottom:14px}
+  table{border-collapse:collapse; width:100%; font-size:14px; min-width:560px}
+  th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--rule); vertical-align:top}
+  thead th{
+    font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:500;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+    border-bottom:1px solid var(--rule-2); white-space:nowrap;
+  }
+  td.n,th.n{text-align:right; font-variant-numeric:tabular-nums; font-family:"IBM Plex Mono",monospace; white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  tr.sum td{border-top:1px solid var(--rule-2); font-weight:600; border-bottom:none}
+  .caption{font-size:12.5px; color:var(--muted); margin:0}
+
+  /* ---------- figure ---------- */
+  figure{margin:0 0 30px; background:var(--card); border:1px solid var(--rule); border-radius:8px; padding:22px 24px 18px; box-shadow:var(--shadow)}
+  figcaption{font-size:13px; color:var(--muted); margin-top:14px}
+  .figtitle{font-weight:600; font-size:15px; margin:0 0 3px}
+  .figsub{font-size:13px; color:var(--muted); margin:0 0 20px}
+
+  /* year bars */
+  .bars{display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:3px; align-items:end; height:190px; border-bottom:1px solid var(--rule-2); position:relative}
+  .bars .grid{position:absolute; left:0; right:0; border-top:1px dashed var(--rule); z-index:0}
+  .bcol{position:relative; height:100%; display:flex; align-items:flex-end; z-index:1; cursor:default}
+  .bcol i{display:block; width:100%; background:var(--bar); border-radius:3px 3px 0 0; transition:background .12s}
+  .bcol:hover i,.bcol:focus-visible i{background:var(--accent)}
+  .xlab{display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:3px; margin-top:7px}
+  .xlab span{font-family:"IBM Plex Mono",monospace; font-size:9.5px; color:var(--muted); text-align:center; writing-mode:vertical-rl; transform:rotate(180deg); justify-self:center}
+  .ylab{position:absolute; left:0; font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--muted); transform:translateY(-50%); background:var(--card); padding-right:6px}
+  .charthost{position:relative; padding-left:34px}
+  .tip{
+    position:absolute; z-index:5; pointer-events:none; opacity:0;
+    background:var(--ink); color:var(--paper); font-family:"IBM Plex Mono",monospace;
+    font-size:11.5px; padding:5px 9px; border-radius:5px; white-space:nowrap; transition:opacity .1s;
+  }
+
+  /* composition bar */
+  .comp{display:flex; gap:2px; height:44px; margin-bottom:16px}
+  .comp div{border-radius:2px; display:flex; align-items:center; justify-content:center}
+  .complegend{display:grid; gap:10px}
+  .complegend li{display:grid; grid-template-columns:auto auto 1fr; gap:11px; align-items:baseline; list-style:none; font-size:14px}
+  .swatch{width:11px; height:11px; border-radius:2px; align-self:center}
+  .complegend .cnt{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-weight:500; min-width:78px}
+  .complegend .lbl{color:var(--ink-2)}
+  ul.complegend{margin:0; padding:0}
+
+  /* ---------- findings ---------- */
+  .findings{display:grid; gap:14px; counter-reset:f}
+  .finding{
+    background:var(--card); border:1px solid var(--rule); border-radius:8px;
+    padding:20px 22px 18px; box-shadow:var(--shadow);
+    display:grid; grid-template-columns:34px 1fr; gap:0 16px;
+  }
+  .finding::before{
+    counter-increment:f; content:counter(f,decimal-leading-zero);
+    font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500;
+    color:var(--muted); padding-top:3px; grid-row:span 4;
+  }
+  .fhead{display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin-bottom:7px}
+  .fhead h3{font-family:"Source Serif 4",Georgia,serif; font-size:18.5px; font-weight:600; margin:0; letter-spacing:-.005em}
+  .chip{
+    font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600;
+    letter-spacing:.07em; text-transform:uppercase; padding:3px 8px; border-radius:3px;
+    border:1px solid; white-space:nowrap;
+  }
+  .chip.crit{color:var(--crit); border-color:var(--crit); background:color-mix(in srgb,var(--crit) 9%,transparent)}
+  .chip.hi{color:var(--serious); border-color:var(--serious); background:color-mix(in srgb,var(--serious) 12%,transparent)}
+  .chip.med{color:var(--muted); border-color:var(--rule-2); background:var(--card-2)}
+  .finding p{margin:0 0 9px; font-size:14.5px; color:var(--ink-2); max-width:74ch}
+  .ev{
+    font-family:"IBM Plex Mono",monospace; font-size:12.5px; line-height:1.65;
+    background:var(--card-2); border-left:2px solid var(--rule-2);
+    padding:9px 13px; border-radius:0 4px 4px 0; margin:0 0 10px;
+    overflow-x:auto; white-space:pre-wrap; word-break:break-word; color:var(--ink);
+  }
+  .fix{font-size:14px; margin:0; color:var(--ink-2)}
+  .fix b{font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--accent); margin-right:9px}
+
+  /* ---------- deliverables ---------- */
+  .files{display:grid; gap:0; border:1px solid var(--rule); border-radius:8px; overflow:hidden; background:var(--card); box-shadow:var(--shadow)}
+  .file{display:grid; grid-template-columns:minmax(190px,auto) 1fr; gap:6px 22px; padding:13px 20px; border-bottom:1px solid var(--rule); font-size:14px; align-items:baseline}
+  .file:last-child{border-bottom:none}
+  .file .fn{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:500; color:var(--ink)}
+  .file .fd{color:var(--muted); font-size:13.5px}
+  @media (max-width:620px){
+    .file{grid-template-columns:1fr}
+    .finding{grid-template-columns:1fr}
+    .finding::before{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">Khảo sát kỹ thuật · repository.ictu.edu.vn</p>
+  <h1>Khảo sát kho ICTU</h1>
+  <p class="standfirst">Kho tư liệu số của Trường Công nghệ Thông tin &amp; Truyền thông – Đại học Thái Nguyên chạy trên WordPress, không phải DSpace. Không có API công khai cho tài liệu học thuật. Toàn bộ 8.034 bản ghi vẫn trích xuất được — và quá trình đó phơi ra bốn lỗi dữ liệu đang hiển thị công khai.</p>
+  <div class="runline">
+    <span><b>Ngày khảo sát</b> 09–10/09/2026</span>
+    <span><b>Phạm vi</b> chỉ đọc, GET công khai</span>
+    <span><b>Tốc độ</b> ~3 req/s</span>
+    <span><b>robots.txt</b> Disallow: (trống)</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="num">01</span>Kho có gì</h2>
+  <p class="sectionsub">Bảy loại nội dung, trong đó sáu loại là custom post type do đơn vị tự viết. Số liệu dưới đây là kết quả trích xuất thực tế, đối chiếu với con số site tự công bố ở thanh &ldquo;Hiển thị … trong tổng số …&rdquo;.</p>
+
+  <div class="scroller">
+  <table>
+    <thead>
+      <tr>
+        <th>Loại nội dung</th><th>Đường dẫn</th>
+        <th class="n">Site báo</th><th class="n">Lấy được</th>
+        <th>Trường dữ liệu chính</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Đồ án tốt nghiệp</td><td class="mono">/do-an/</td><td class="n">5.375</td><td class="n">5.375</td><td>sinh viên · khoá · GVHD · từ khoá · PDF</td></tr>
+      <tr><td>Bài báo khoa học</td><td class="mono">/bai-bao/</td><td class="n">1.907</td><td class="n">1.907</td><td>tác giả · tạp chí · năm · loại · DOI</td></tr>
+      <tr><td>Giảng viên</td><td class="mono">/giang-vien/</td><td class="n">410</td><td class="n">410</td><td>học hàm/vị · email · ORCID · Scholar</td></tr>
+      <tr><td>Luận văn thạc sĩ</td><td class="mono">/luan-van/</td><td class="n">323</td><td class="n">323</td><td>học viên · lớp/khoá · GVHD · tóm tắt</td></tr>
+      <tr><td>Luận án tiến sĩ</td><td class="mono">/luan-an/</td><td class="n">11</td><td class="n">11</td><td>NCS · lớp/khoá · GVHD · tóm tắt</td></tr>
+      <tr><td>Cẩm nang số</td><td class="mono">/cam-nang-so/</td><td class="n">6</td><td class="n">6</td><td>hướng dẫn Turnitin, Zotero, format</td></tr>
+      <tr><td>Học liệu số</td><td class="mono">/hoc-lieu-so/</td><td class="n">2</td><td class="n">2</td><td>năm · nhóm giảng viên · từ khoá</td></tr>
+      <tr class="sum"><td>Tổng bản ghi</td><td></td><td class="n">8.034</td><td class="n">8.034</td><td>+ 5.644 tệp đính kèm (phần lớn PDF toàn văn)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="caption">Tệp toàn văn để công khai, không chặn: mẫu 40 bản ghi cho thấy 98% đồ án và 92% luận văn có PDF tải trực tiếp.</p>
+</section>
+
+<section>
+  <figure>
+    <p class="figtitle">Bài báo khoa học theo năm xuất bản</p>
+    <p class="figsub">1.907 bài, 2004–2026. Đỉnh 2023 với 294 bài; 25 bài không ghi năm, không nằm trong biểu đồ.</p>
+    <div class="charthost">
+      <div class="bars" id="bars"></div>
+      <div class="xlab" id="xlab"></div>
+      <div class="tip" id="tip"></div>
+    </div>
+    <figcaption>Công bố tăng mạnh từ 2020 và giữ mức trên 250 bài/năm trong bốn năm liên tiếp. Cột 2026 phản ánh dữ liệu tính đến tháng 9.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2><span class="num">02</span>Bề mặt API</h2>
+  <p class="sectionsub">Site chạy WordPress 7.1, theme GeneratePress, plugin SEO Yoast. Tên site đặt là &ldquo;DSpace&rdquo; nhưng không có phần mềm DSpace nào ở đây — nghĩa là cũng không có OAI-PMH, không REST API DSpace, không định danh handle.</p>
+
+  <div class="prose">
+    <p>WP REST API mở, nhưng sáu custom post type học thuật đều đăng ký với <code>show_in_rest = false</code>. Qua <code>/wp-json/</code> chỉ lấy được bài viết thường, tệp đính kèm và cẩm nang số. Toàn bộ tài liệu học thuật phải đọc từ HTML.</p>
+  </div>
+
+  <div class="scroller">
+  <table>
+    <thead><tr><th>Đường dẫn</th><th>Tham số</th><th>Trả về</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">/wp-json/wp/v2/media</td><td class="mono">per_page, page, _fields</td><td>5.644 tệp — JSON, dùng được ngay</td></tr>
+      <tr><td class="mono">/wp-json/wp/v2/cam-nang-so</td><td class="mono">per_page, _fields</td><td>6 hướng dẫn — JSON</td></tr>
+      <tr><td class="mono">/{loại}/</td><td class="mono">?pg=N</td><td>HTML, 20/trang (10 với luận văn &amp; luận án)</td></tr>
+      <tr><td class="mono">/bai-bao/</td><td class="mono">?dept= &nbsp;?type=</td><td>lọc theo đơn vị và loại bài — hoạt động</td></tr>
+      <tr><td class="mono">/do-an/ /luan-van/ /luan-an/</td><td class="mono">?cohort=</td><td>lọc theo khoá — hoạt động</td></tr>
+      <tr><td class="mono">/tim-kiem/</td><td class="mono">?q= &nbsp;?pg=</td><td>tìm toàn văn, có phân tách theo loại tài liệu</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="caption">Không có endpoint AJAX, không nonce, không rate limit ghi nhận được. Trang phản hồi ~0,25 s. Toàn bộ 400 trang danh mục kéo hết trong khoảng 4 phút.</p>
+</section>
+
+<section>
+  <h2><span class="num">03</span>Phát hiện</h2>
+  <p class="sectionsub">Xếp theo mức độ ảnh hưởng tới người dùng cuối. Bốn mục đầu là lỗi dữ liệu hoặc lỗi logic đang hiển thị trên trang công khai.</p>
+
+  <div class="findings">
+
+    <div class="finding">
+      <div class="fhead">
+        <span class="chip crit">Nghiêm trọng</span>
+        <h3>4.621 đồ án ghi giảng viên hướng dẫn là <span class="mono">ICTU_TEACHER</span></h3>
+      </div>
+      <p>86% toàn bộ kho đồ án hiển thị đúng chuỗi placeholder này ở mục &ldquo;Giảng viên hướng dẫn&rdquo; trên trang chi tiết công khai. Cùng lỗi: 302 đồ án ghi sinh viên là <span class="mono">ICTU_STUDENT</span>, và cả 11 luận án tiến sĩ ghi GVHD là <span class="mono">ICTU</span>. Đây là dữ liệu chưa được ánh xạ khi nhập, không phải lỗi hiển thị.</p>
+      <pre class="ev">/do-an/xay-dung-website-thuong-mai-dien-tu-gioi-thieu-dien-thoai-di-dong/
+  Sinh viên thực hiện   Phạm Thị Ngọc Phương
+  Khoá                  18
+  Giảng viên hướng dẫn  ICTU_TEACHER</pre>
+      <p class="fix"><b>Cách sửa</b>Đối chiếu lại nguồn nhập gốc để khôi phục tên GVHD. Trong lúc chưa có dữ liệu, ẩn hẳn dòng &ldquo;Giảng viên hướng dẫn&rdquo; khi giá trị khớp <code>ICTU_TEACHER</code> / <code>ICTU_STUDENT</code> — placeholder kỹ thuật không nên lọt ra giao diện.</p>
+    </div>
+
+    <div class="finding">
+      <div class="fhead">
+        <span class="chip crit">Nghiêm trọng</span>
+        <h3>Phân trang làm 11 đồ án không bao giờ duyệt tới được</h3>
+      </div>
+      <p>Trang 27 và trang 28 của <code>/do-an/</code> trùng nhau đúng 11 mục, dù số thứ tự vẫn đánh liên tục 521–540 rồi 541–560. Duyệt hết 269 trang chỉ thu được 5.364 bản ghi phân biệt trên tổng số 5.375. 11 bản ghi còn lại vẫn tồn tại — chỉ lấy được qua bộ lọc <code>?cohort=</code>, không lấy được bằng cách lật trang.</p>
+      <pre class="ev">tổng lượt render qua 269 trang : 5.375
+URL phân biệt                  : 5.364
+giao pg27 ∩ pg28               : 11  ← lặp
+giao pg26 ∩ pg28               : 0
+giao pg28 ∩ pg29               : 0</pre>
+      <p class="fix"><b>Cách sửa</b>Truy vấn sắp xếp theo một cột không duy nhất, nên <code>LIMIT/OFFSET</code> trả kết quả không ổn định ở chỗ có giá trị bằng nhau. Thêm khoá phụ duy nhất vào mệnh đề sắp xếp, ví dụ <code>orderby =&gt; ['meta_value' =&gt; 'DESC', 'ID' =&gt; 'DESC']</code>. Danh sách 11 URL bị bỏ sót đã kèm trong bàn giao.</p>
+    </div>
+
+    <div class="finding">
+      <div class="fhead">
+        <span class="chip crit">Nghiêm trọng</span>
+        <h3>Bộ lọc &ldquo;Năm XB&rdquo; của bài báo hỏng hoàn toàn</h3>
+      </div>
+      <p>Form lọc ở <code>/bai-bao/</code> gửi tham số tên <code>year</code>. Đây là query var dành riêng của WordPress cho lưu trữ theo ngày, nên WP chặn trước và chuyển hướng sang trang lưu trữ năm. Chọn bất kỳ năm nào ở dropdown đều dẫn tới trang 404. Hai bộ lọc còn lại trên cùng form vẫn chạy bình thường.</p>
+      <pre class="ev">GET /bai-bao/?year=2025
+  → 301 Location: /2025/
+  → 404 Not Found
+
+GET /bai-bao/?dept=CNTT   → 200  (363 bài báo, đã lọc)  ✓
+GET /bai-bao/?type=Scopus → 200  (414 bài báo, đã lọc)  ✓</pre>
+      <p class="fix"><b>Cách sửa</b>Đổi tên tham số sang chuỗi không đụng hàng, ví dụ <code>nam_xb</code> — đã thử và không bị chuyển hướng. Đăng ký thêm qua <code>query_vars</code> nếu muốn đọc bằng <code>get_query_var()</code>.</p>
+    </div>
+
+    <div class="finding">
+      <div class="fhead">
+        <span class="chip hi">Cao</span>
+        <h3>Trường &ldquo;Loại bài&rdquo; là ô văn bản tự do với 48 giá trị</h3>
+      </div>
+      <p>1.907 bài báo dùng 48 chuỗi khác nhau cho một trường lẽ ra phải là danh mục đóng. Ô này còn nhồi hai chiều dữ liệu độc lập vào nhau: nguồn chỉ mục (Scopus, WoS, DOAJ, kỷ yếu hội thảo) và điểm Hội đồng Giáo sư (0,5 · 0,75 · 1,0). Hệ quả là không thống kê được theo chỉ mục lẫn theo điểm.</p>
+      <pre class="ev">cùng nghĩa, năm cách viết : "0,5"  "0.5"  "0,5đ"  "0,5 điểm"  "TC 0,5 điểm"
+lỗi gõ                    : "KYHTGQ" (đảo chữ)   "KYHTQT." (thừa dấu chấm)
+                            "SCIE, ESCI" / "SCIE,ESCI"   "WoS-Q1" / "WoS Q1"
+bỏ trống                  : "Chưa xác định" × 285</pre>
+      <p class="fix"><b>Cách sửa</b>Tách thành ba trường: chỉ mục (nhiều giá trị), loại nơi công bố, điểm. Bộ chuẩn hoá kèm theo đã gom 48 giá trị thô về 7 chỉ mục + 4 loại nơi công bố + 3 mức điểm, chỉ còn 15,2% cần rà tay — mà 285/290 trong số đó vốn đã là &ldquo;Chưa xác định&rdquo; ở nguồn.</p>
+    </div>
+
+    <div class="finding">
+      <div class="fhead">
+        <span class="chip hi">Cao</span>
+        <h3>Liên kết giảng viên đứt ở phần lớn tài liệu</h3>
+      </div>
+      <p>Hồ sơ 410 giảng viên là tài sản tốt nhất của kho — có email, ORCID, Google Scholar, thống kê công bố. Nhưng chỉ 13% đồ án và 67% luận văn liên kết được tới hồ sơ đó; phần còn lại chỉ là chữ thường. Trang hồ sơ giảng viên vì thế đếm thiếu số đồ án đã hướng dẫn.</p>
+      <p style="margin-bottom:14px">Sau khi trừ đi nhóm placeholder ở mục 01, số tên thật chưa nối được chỉ còn 34 bản ghi trên 21 tên — hoàn toàn xử lý được bằng chuẩn hoá tên.</p>
+      <div class="comp" role="img" aria-label="Trong 5.364 đồ án: 4.621 ghi placeholder, 709 đã liên kết hồ sơ, 34 tên thật chưa liên kết">
+        <div style="flex:4621; background:var(--crit)"></div>
+        <div style="flex:709; background:var(--good)"></div>
+        <div style="flex:34; background:var(--warn)"></div>
+      </div>
+      <ul class="complegend">
+        <li><span class="swatch" style="background:var(--crit)"></span><span class="cnt">4.621 · 86,2%</span><span class="lbl">Placeholder <span class="mono">ICTU_TEACHER</span> — không có tên để nối</span></li>
+        <li><span class="swatch" style="background:var(--good)"></span><span class="cnt">709 · 13,2%</span><span class="lbl">Đã liên kết tới hồ sơ giảng viên</span></li>
+        <li><span class="swatch" style="background:var(--warn)"></span><span class="cnt">34 · 0,6%</span><span class="lbl">Tên thật nhưng chưa nối — sai lệch dấu, tiền tố học hàm/vị</span></li>
+      </ul>
+      <p class="fix" style="margin-top:16px"><b>Cách sửa</b>Chuẩn hoá khoá đối sánh: bỏ dấu, hạ chữ thường, cắt tiền tố <code>TS</code> / <code>ThS</code> / <code>PGS.TS</code>. Cách này khớp được các biến thể như <span class="mono">"T.s Nguyễn Văn Tảo"</span> và <span class="mono">"Ths. Nông Thị Hoa"</span>. Một bản ghi có hai người trong cùng ô — <span class="mono">"Phạm Thanh Giang, Trần Duy Minh"</span> — cần tách trước khi nối.</p>
+    </div>
+
+    <div class="finding">
+      <div class="fhead">
+        <span class="chip med">Trung bình</span>
+        <h3>Cột &ldquo;Từ khoá&rdquo; của bài báo trống 99%</h3>
+      </div>
+      <p>Bảng danh sách bài báo dành hẳn một cột cho từ khoá, nhưng chỉ 14 trên 1.907 bài có dữ liệu. Cột rỗng chiếm chiều ngang mà không mang thông tin gì, trong khi 96% bài có tên tạp chí và 68% có số volume đang phải chen nhau trong một cột hẹp hơn.</p>
+      <p class="fix"><b>Cách sửa</b>Bổ sung từ khoá, hoặc bỏ cột và trả chiều ngang cho tạp chí. Đối chiếu: đồ án và luận văn đều có từ khoá phủ 100%.</p>
+    </div>
+
+    <div class="finding">
+      <div class="fhead">
+        <span class="chip med">Trung bình</span>
+        <h3>Trang giảng viên tải 935 KB trong một lần</h3>
+      </div>
+      <p><code>/giang-vien/</code> render cả 410 hồ sơ vào một tài liệu HTML rồi lọc bằng JavaScript phía trình duyệt. So sánh: các trang danh mục khác nặng 50–88 KB. Trên mạng di động đây là khác biệt thấy rõ.</p>
+      <p class="fix"><b>Cách sửa</b>Phân trang phía máy chủ như các loại khác, hoặc tải theo lô khi cuộn. Dữ liệu lọc đã nằm sẵn ở thuộc tính <code>data-name</code> / <code>data-rank</code> / <code>data-degree</code> nên phần tìm kiếm tại chỗ vẫn giữ nguyên được.</p>
+    </div>
+
+    <div class="finding">
+      <div class="fhead">
+        <span class="chip med">Trung bình</span>
+        <h3>Nhãn phân loại sinh ra mã màu CSS không hợp lệ</h3>
+      </div>
+      <p>Nhãn màu ở cột &ldquo;Loại bài&rdquo; ghép mã màu với hai ký tự alpha. Cách ghép này chỉ đúng với mã hex 6 ký tự; khi rơi vào màu mặc định 3 ký tự <code>#555</code> thì kết quả là hex 5 ký tự — trình duyệt bỏ qua, nhãn mất nền và mất viền.</p>
+      <pre class="ev">&lt;span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;"&gt;
+                                          ^^^^^^                ^^^^^^
+                                     5 ký tự — không hợp lệ</pre>
+      <p class="fix"><b>Cách sửa</b>Đổi màu mặc định sang <code>#555555</code>, hoặc dùng <code>rgb(85 85 85 / 9%)</code> thay cho ghép chuỗi hex.</p>
+    </div>
+
+    <div class="finding">
+      <div class="fhead">
+        <span class="chip med">Trung bình</span>
+        <h3>REST API để lộ tên đăng nhập quản trị</h3>
+      </div>
+      <p>Endpoint người dùng mở công khai, trả về tên đăng nhập thật của tài khoản quản trị. Đây là nửa đầu của một cặp thông tin đăng nhập, thường được dùng làm bước chuẩn bị cho tấn công dò mật khẩu. Trường <code>url</code> còn giữ nguyên đường dẫn máy cục bộ từ lúc phát triển.</p>
+      <pre class="ev">GET /wp-json/wp/v2/users
+[{"id":1,"name":"hvninh","url":"http://localhost/repository", …}]</pre>
+      <p class="fix"><b>Cách sửa</b>Chặn <code>/wp-json/wp/v2/users</code> với khách chưa đăng nhập qua <code>rest_authentication_errors</code>, và xoá đường dẫn localhost trong hồ sơ. Nên kèm giới hạn số lần đăng nhập sai.</p>
+    </div>
+
+    <div class="finding">
+      <div class="fhead">
+        <span class="chip med">Trung bình</span>
+        <h3>Ô tìm kiếm trong danh mục làm mất ngữ cảnh loại tài liệu</h3>
+      </div>
+      <p>Mỗi trang danh mục có ô tìm kiếm riêng đặt tên <code>s</code> — cũng là query var dành riêng của WordPress, giống lỗi ở mục 03. Tìm trong &ldquo;Bài báo&rdquo; sẽ nhảy sang trang tìm kiếm chung và trả về cả đồ án lẫn luận văn. Trang tìm kiếm chung cũng bỏ qua tham số <code>type</code>, nên không thu hẹp lại được.</p>
+      <pre class="ev">GET /bai-bao/?s=UML
+  → 302 /tim-kiem/?q=UML
+  → 35 kết quả  (Bài báo: 11 | Đồ án: 24)   ← mất bộ lọc loại tài liệu</pre>
+      <p class="fix"><b>Cách sửa</b>Đổi tên ô tìm kiếm trong danh mục sang <code>q</code> để trang tự xử lý, và cho <code>/tim-kiem/</code> đọc tham số <code>type</code> mà giao diện vốn đã ngầm hứa qua phần đếm theo loại.</p>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>Bàn giao</h2>
+  <p class="sectionsub">Toàn bộ nằm trong <span class="mono">~/Documents/ictu-repository-audit/</span>. Chỉ dùng thư viện chuẩn Python, không cần cài thêm.</p>
+
+  <div class="files">
+    <div class="file"><span class="fn">harvest.py</span><span class="fd">Trích xuất cả 6 loại nội dung. Ba bộ phân tích cho ba kiểu đánh dấu khác nhau: bảng, thẻ, và microdata. Giãn cách 0,35 s mỗi yêu cầu.</span></div>
+    <div class="file"><span class="fn">normalize.py</span><span class="fd">Chuẩn hoá trường &ldquo;Loại bài&rdquo;: 48 giá trị thô về schema có cấu trúc, kèm cờ đánh dấu bản ghi cần rà tay.</span></div>
+    <div class="file"><span class="fn">out/*.jsonl</span><span class="fd">8.034 bản ghi, một dòng JSON mỗi bản ghi, giữ nguyên tiếng Việt có dấu.</span></div>
+    <div class="file"><span class="fn">out/*.csv</span><span class="fd">Cùng dữ liệu, đã làm phẳng, mã hoá UTF-8 BOM để mở thẳng bằng Excel.</span></div>
+    <div class="file"><span class="fn">out/_doan_unreachable.json</span><span class="fd">11 URL đồ án bị phân trang bỏ sót, đã thu hồi và gộp lại vào dataset.</span></div>
+    <div class="file"><span class="fn">out/_gvhd_linkage.json</span><span class="fd">21 tên GVHD chưa nối được với hồ sơ giảng viên, kèm số bản ghi mỗi tên.</span></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+  var data = [
+    [2004,1],[2005,3],[2006,4],[2007,8],[2008,10],[2009,12],[2010,13],[2011,7],
+    [2012,17],[2013,17],[2014,13],[2015,34],[2016,44],[2017,65],[2018,53],[2019,59],
+    [2020,135],[2021,256],[2022,269],[2023,294],[2024,259],[2025,187],[2026,122]
+  ];
+  var max = 300, bars = document.getElementById('bars'), xlab = document.getElementById('xlab'), tip = document.getElementById('tip');
+  [0,100,200,300].forEach(function(v){
+    var g = document.createElement('div'); g.className = 'grid';
+    g.style.bottom = (v/max*100) + '%'; bars.appendChild(g);
+    var y = document.createElement('span'); y.className = 'ylab'; y.textContent = v;
+    y.style.bottom = (v/max*100) + '%'; y.style.position = 'absolute'; y.style.left = '-34px';
+    g.appendChild(y);
+  });
+  data.forEach(function(d){
+    var c = document.createElement('div'); c.className = 'bcol'; c.tabIndex = 0;
+    c.setAttribute('aria-label', d[0] + ': ' + d[1] + ' bài báo');
+    var i = document.createElement('i'); i.style.height = (d[1]/max*100) + '%';
+    c.appendChild(i); bars.appendChild(c);
+    var s = document.createElement('span'); s.textContent = d[0]; xlab.appendChild(s);
+    function show(){
+      tip.textContent = d[0] + ' · ' + d[1] + ' bài';
+      tip.style.opacity = '1';
+      var host = bars.parentElement.getBoundingClientRect(), r = c.getBoundingClientRect();
+      var x = r.left - host.left + r.width/2 - tip.offsetWidth/2;
+      tip.style.left = Math.max(0, Math.min(x, host.width - tip.offsetWidth)) + 'px';
+      tip.style.top = (r.top - host.top - tip.offsetHeight - 7) + 'px';
+    }
+    function hide(){ tip.style.opacity = '0'; }
+    c.addEventListener('mouseenter', show); c.addEventListener('mouseleave', hide);
+    c.addEventListener('focus', show); c.addEventListener('blur', hide);
+  });
+})();
+</script>

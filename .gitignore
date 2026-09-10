@@ -1,0 +1,14 @@
+# Dữ liệu thô kéo từ repository.ictu.edu.vn — GIỮ Ở LOCAL, KHÔNG ĐẨY LÊN
+# Chứa email, số điện thoại và ngày sinh của 410 giảng viên.
+# Các trường này công khai ở từng hồ sơ riêng trên trang nguồn, nhưng gom thành
+# tệp tải hàng loạt là mức phơi bày khác, và đẩy lên GitHub thì không rút lại được.
+# Tái tạo bằng: cd khao-sat-nguon && python3 harvest.py archives && python3 gv_detail.py
+khao-sat-nguon/out/*.jsonl
+khao-sat-nguon/out/*.csv
+khao-sat-nguon/out/media_sample.json
+khao-sat-nguon/out/_pdf_urls.json
+khao-sat-nguon/out/_baibao_by_dept.json
+
+__pycache__/
+*.pyc
+.DS_Store
