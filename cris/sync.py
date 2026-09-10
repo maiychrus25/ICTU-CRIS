@@ -6,8 +6,21 @@ from cris import audit
 from cris.db import tx
 from cris.source import repository as R
 
+def _content(obj):
+    """Bỏ khoá bắt đầu bằng "_": đó là siêu dữ liệu tìm thấy, không phải nội dung.
+
+    Số trang (`_page`) và nhãn quét bù (`_backfill`) trôi giữa các lần đồng bộ vì
+    kho nguồn sắp xếp không ổn định. Băm cả chúng thì mỗi lần chạy lại sinh một
+    loạt phiên bản giả cho bản ghi không hề đổi nội dung.
+    """
+    if isinstance(obj, dict):
+        return {k: _content(v) for k, v in obj.items() if not k.startswith("_")}
+    if isinstance(obj, list):
+        return [_content(v) for v in obj]
+    return obj
+
 def _hash(raw):
-    return hashlib.sha256(json.dumps(raw, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+    return hashlib.sha256(json.dumps(_content(raw), ensure_ascii=False, sort_keys=True).encode()).hexdigest()
 
 def run_sync(conn, *, source, scope, doc_type, records, expected, full, triggered_by=None):
     with tx(conn), conn.cursor() as cur:
