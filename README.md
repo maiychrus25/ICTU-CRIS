@@ -17,7 +17,8 @@ Trạng thái: **giai đoạn phân tích nghiệp vụ**. Chưa có mã nguồn
 
 1. [docs/ba/00-README.md](docs/ba/00-README.md) — mục lục bộ BA, quy ước mã trace
 2. [khao-sat-nguon/kiem-chung-gia-dinh-de-tai.md](khao-sat-nguon/kiem-chung-gia-dinh-de-tai.md) — số đo thực tế trên dữ liệu nguồn
-3. [docs/ba/15-project-rules.md](docs/ba/15-project-rules.md) §15.3 — 19 câu hỏi cần xác nhận trước khi chốt thiết kế
+3. [docs/ba/15-project-rules.md](docs/ba/15-project-rules.md) §15.3 — 28 câu hỏi cần xác nhận, §15.6 — kết quả khảo sát đợt 1
+4. [docs/KH triển khai ĐATN_DHCQ_K21.docx](docs/KH%20triển%20khai%20ĐATN_DHCQ_K21.docx) — kế hoạch đồ án đang chạy của Khoa CNTT, quy trình thật đầu tiên trong repo
 
 ## Ba số liệu chi phối thiết kế
 
@@ -31,7 +32,7 @@ Trạng thái: **giai đoạn phân tích nghiệp vụ**. Chưa có mã nguồn
 
 ## Giới hạn của bản này
 
-Chưa có buổi khảo sát nào với người dùng thật. Toàn bộ luồng quy trình trong bộ BA là **mô hình đề xuất để mang đi xác nhận**, không phải quy trình nội bộ đã kiểm chứng. Phần có cơ sở vững là các số đo trên dữ liệu nguồn và những quy tắc nghiệp vụ suy ra trực tiếp từ đó.
+Đã có trả lời khảo sát đợt 1 bằng văn bản từ phòng, khoa và giảng viên (10/09/2026, xem [docs/ba/15-project-rules.md](docs/ba/15-project-rules.md) §15.6). Trình tự duyệt đã được xác nhận và bổ sung cấp lãnh đạo trường. Chưa nhận được file báo cáo mẫu, biểu mẫu khoa và văn bản quy tắc thống kê, nên mô hình dữ liệu và mẫu báo cáo vẫn chờ. Phần có cơ sở vững là các số đo trên dữ liệu nguồn và những quy tắc nghiệp vụ suy ra trực tiếp từ đó.
 
 ## Dữ liệu
 

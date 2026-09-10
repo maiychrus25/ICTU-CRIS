@@ -2,14 +2,17 @@
 
 ## 2.1 Kỳ báo cáo (Period)
 
-| Giai đoạn | Phòng KH-CN & HTQT | Hệ thống | Văn phòng khoa | Lãnh đạo khoa |
-|---|---|---|---|---|
-| Mở kỳ | Đặt phạm vi, tiêu chí, hạn nộp | Sinh bản ghi kỳ, gửi thông báo tới các khoa | Nhận thông báo | Nhận thông báo |
-| Thu thập | Theo dõi bảng tiến độ theo khoa | Đồng bộ kho, dựng gợi ý theo khoa | Lập hồ sơ | — |
-| Đóng nộp | Đóng cổng nộp | Khoá thao tác lập mới, giữ quyền sửa theo yêu cầu trả về | — | — |
-| Đối soát | Kiểm tra, gộp trùng toàn trường | Đề xuất gộp, tính lại số liệu | Xử lý yêu cầu điều chỉnh | Duyệt lại nếu danh sách đổi |
-| Chốt | Xác nhận tập hồ sơ | Khoá phiên bản, sinh mã phiên bản | — | — |
-| Phát hành | Xuất báo cáo | Sinh tệp kèm danh sách đối chứng | — | — |
+| Giai đoạn | Phòng KH-CN & HTQT | Hệ thống | Văn phòng khoa | Lãnh đạo khoa | Lãnh đạo trường |
+|---|---|---|---|---|---|
+| Mở kỳ | Đặt phạm vi, tiêu chí, hạn nộp, mẫu báo cáo, quy tắc năm công bố | Sinh bản ghi kỳ, gửi thông báo tới các khoa | Nhận thông báo | Nhận thông báo | — |
+| Thu thập | Theo dõi bảng tiến độ theo khoa | Đồng bộ kho, dựng gợi ý theo khoa, nhập tệp Excel khoa gửi | Lập hồ sơ | — | — |
+| Đóng nộp | Đóng cổng nộp | Khoá thao tác lập mới, giữ quyền sửa theo yêu cầu trả về | — | — | — |
+| Đối soát | Kiểm tra, gộp trùng toàn trường; trả về khoa, không tự sửa trường khoa xác nhận | Đề xuất gộp, tính lại số liệu | Xử lý yêu cầu điều chỉnh | Duyệt lại nếu danh sách đổi | — |
+| Chốt | Xác nhận tập hồ sơ | Khoá phiên bản, sinh mã phiên bản | — | — | — |
+| Trình ký | Trình báo cáo chính thức | Đóng gói tệp theo mẫu kỳ | — | — | Phê duyệt hoặc trả lại |
+| Phát hành | Xuất báo cáo | Sinh tệp kèm danh sách đối chứng, ghi phiên bản | — | — | — |
+
+Báo cáo nội bộ bỏ qua giai đoạn Trình ký (BR-24).
 
 ## 2.2 Hồ sơ kê khai (Declaration)
 

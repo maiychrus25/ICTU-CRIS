@@ -9,14 +9,18 @@ stateDiagram-v2
     DangMo --> DaDongNop: Hết hạn / đóng thủ công
     DaDongNop --> DangDoiSoat: Bắt đầu đối soát
     DangDoiSoat --> DaChot: Chốt dữ liệu
-    DaChot --> DaPhatHanh: Xuất báo cáo
+    DaChot --> ChoTruongDuyet: Trình ký (báo cáo chính thức)
+    ChoTruongDuyet --> DaPhatHanh: Lãnh đạo trường phê duyệt
+    ChoTruongDuyet --> DangDoiSoat: Lãnh đạo trường trả lại (mở lại, phiên bản mới)
+    DaChot --> DaPhatHanh: Xuất báo cáo nội bộ
     DaChot --> DangDoiSoat: Mở lại (sinh phiên bản mới)
+    DaPhatHanh --> DangDoiSoat: Phát hiện sai sau phát hành (mở lại, phiên bản mới)
     DangMo --> Huy: Huỷ kỳ
     ChuanBi --> Huy: Huỷ kỳ
     DaPhatHanh --> [*]
 ```
 
-Quy tắc: sau `DaChot`, số liệu không đổi. Mọi điều chỉnh phải qua `Mở lại`, và sinh **phiên bản báo cáo mới**, giữ nguyên phiên bản cũ — thực hiện yêu cầu *"điều chỉnh bằng phiên bản mới"*.
+Quy tắc: sau `DaChot`, số liệu không đổi. Mọi điều chỉnh phải qua `Mở lại`, và sinh **phiên bản báo cáo mới**, giữ nguyên phiên bản cũ — thực hiện yêu cầu *"điều chỉnh bằng phiên bản mới"*. Mỗi phiên bản mới ghi: số cũ, số mới, lý do đổi, và danh sách báo cáo đã dùng phiên bản cũ (BR-25). Trạng thái `ChoTruongDuyet` chỉ áp dụng cho báo cáo chính thức gửi cấp trên (BR-24).
 
 ## 3.2 Hồ sơ kê khai (Declaration)
 
@@ -73,14 +77,14 @@ stateDiagram-v2
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Nhap: Sinh viên nhập mô tả
+    [*] --> Nhap: GVHD hoặc sinh viên nhập mô tả
     Nhap --> DaDoiChieu: Chạy đối chiếu
     DaDoiChieu --> Nhap: Chỉnh mô tả, chạy lại
-    DaDoiChieu --> DaNop: Gửi giảng viên/bộ môn
-    DaNop --> CanChinh: Có nhận xét yêu cầu chỉnh
+    DaDoiChieu --> DaNop: Đính vào đề cương gửi bộ môn
+    DaNop --> CanChinh: Bộ môn yêu cầu chỉnh
     CanChinh --> Nhap
-    DaNop --> DaTiepNhan: Được đồng ý trình
+    DaNop --> DaTiepNhan: Bộ môn duyệt đề cương
     DaTiepNhan --> [*]
 ```
 
-Hệ thống dừng ở `DaTiepNhan`. Quyết định phê duyệt đề tài thuộc quy trình đào tạo, ngoài phạm vi.
+Hệ thống dừng ở `DaTiepNhan`. Việc duyệt đề cương, nộp về khoa và các mốc sau của kế hoạch ĐATN thuộc quy trình đào tạo, ngoài phạm vi.

@@ -77,7 +77,9 @@ Không phải yêu cầu, mà là giới hạn phải ghi vào tài liệu để
 
 | Ràng buộc | Ảnh hưởng |
 |---|---|
-| Kho không có toàn văn — PDF là tóm tắt 1 trang do máy sinh | Không có chức năng dẫn chứng theo trang; đối chiếu chỉ ở mức tóm tắt |
-| 4.621/5.375 đồ án ghi GVHD là `ICTU_TEACHER` | Thống kê hướng dẫn đồ án chỉ đúng trên 14% kho cho tới khi nguồn được sửa |
-| Kho không có trường đơn vị công tác hay quốc gia của tác giả | Chưa làm được thống kê hợp tác quốc tế |
+| Kho công khai không có toàn văn — PDF là tóm tắt 1 trang do máy sinh. Khảo sát đợt 1: quyển hoàn chỉnh lưu ở khoa và/hoặc thư viện, cho tra file mềm hay không tuỳ quyền truy cập và bản quyền, không mặc định công khai | Đối chiếu ở mức tóm tắt là mặc định; toàn văn là tuỳ chọn có phân quyền nếu thư viện cấp; không hứa dẫn chứng theo trang |
+| 4.621/5.375 đồ án ghi GVHD là `ICTU_TEACHER` | Thống kê hướng dẫn đồ án chỉ đúng trên 14% kho cho tới khi nguồn được sửa. Bảng đăng ký đồ án theo khoá của khoa (Google Sheets, Drive, thư viện) là nguồn khôi phục, xem S-08; cần được cấp quyền đọc |
+| Kho không có trường đơn vị công tác hay quốc gia của tác giả | Phòng có nhu cầu thống kê hợp tác quốc tế (khảo sát đợt 1) nhưng phải định nghĩa trước (Q-28); T-10 chỉ làm được khi có dữ liệu cơ quan tác giả từ nhập tay hoặc nguồn chỉ mục ngoài |
 | Nguồn có lỗi phân trang bỏ sót bản ghi | Bắt buộc có bước đối soát số lượng (NFR-16) |
+| Kho chỉ có bài báo, đồ án, luận văn, luận án; phòng quản lý 9 nhóm công trình gồm đề tài, sách, giáo trình, sáng chế | Nếu phạm vi gồm các nhóm ngoài kho (Q-25), dữ liệu đến từ Excel khoa gửi qua S-06, không qua đồng bộ |
+| Mẫu báo cáo khác nhau giữa các kỳ và giữa cấp trên với nội bộ | Mẫu là cấu hình của kỳ (A-07); không có một mẫu cố định trong mã |

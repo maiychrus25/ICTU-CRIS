@@ -28,8 +28,8 @@ Nội dung thẻ khác nhau theo vai trò: `faculty_officer` thấy hồ sơ c�
 |---|---|
 | Actor | `rd_officer` (đầy đủ), vai trò khoa (thu gọn theo phạm vi) |
 | Thành phần | Thẻ thông tin kỳ: phạm vi, tiêu chí, quy tắc thống kê đang áp dụng, hạn nộp · Bảng tiến độ theo khoa: đã gửi / chưa gửi / bị trả lại, thanh tiến độ, ngày còn lại · Hàng đợi kiểm tra · Khối chốt dữ liệu |
-| Hành động | Mở / đóng nộp kỳ · Nhắc hạn · Mở hàng đợi · Chốt dữ liệu · Mở lại kỳ · Xuất báo cáo |
-| Ràng buộc | Nút **Chốt dữ liệu** chỉ bật khi không còn hồ sơ ở trạng thái `ChoPhongKiemTra`. Bấm chốt hiện hộp xác nhận nêu rõ số hồ sơ, số công trình duy nhất và mã phiên bản sẽ sinh |
+| Hành động | Mở / đóng nộp kỳ · Nhắc hạn · Mở hàng đợi · Chốt dữ liệu · Trình lãnh đạo trường ký (báo cáo chính thức) · Mở lại kỳ · Xuất báo cáo theo mẫu kỳ |
+| Ràng buộc | Nút **Chốt dữ liệu** chỉ bật khi không còn hồ sơ ở trạng thái `ChoPhongKiemTra`. Bấm chốt hiện hộp xác nhận nêu rõ số hồ sơ, số công trình duy nhất và mã phiên bản sẽ sinh. Nút **Trình ký** chỉ hiện khi mẫu của kỳ là mẫu gửi cấp trên; khi mở lại kỳ, hộp xác nhận bắt buộc nhập lý do và hiện danh sách báo cáo đã phát hành từ phiên bản hiện tại (BR-25) |
 
 ## SC-04 Danh sách hồ sơ kê khai (`/ho-so`)
 
@@ -116,9 +116,9 @@ Nội dung thẻ khác nhau theo vai trò: `faculty_officer` thấy hồ sơ c�
 
 | Mục | Nội dung |
 |---|---|
-| Actor | `student`, `lecturer` |
-| Thành phần | Biểu mẫu nhập: tên đề tài, vấn đề giải quyết, đối tượng, phương pháp, dữ liệu dự kiến · Nút chạy đối chiếu |
-| Ràng buộc | Ghi rõ ngay trên biểu mẫu: kết quả là tài liệu tham khảo cho giảng viên xem xét, không phải kết luận về tính mới hay đạo văn |
+| Actor | `lecturer` (chính, khi chuẩn bị đề cương), `student` (khi tìm hướng trước lúc liên hệ GVHD) |
+| Thành phần | Biểu mẫu nhập: hướng đề tài (chọn từ danh mục khoa), tên đề tài, vấn đề giải quyết, đối tượng, phương pháp, dữ liệu dự kiến · Sinh viên và lớp (tuỳ chọn, để đặt tên tệp xuất theo quy tắc `Mã định hướng.Mã sinh viên.Họ tên.Lớp`) · Nút chạy đối chiếu |
+| Ràng buộc | Ghi rõ ngay trên biểu mẫu: kết quả là tài liệu tham khảo cho giảng viên xem xét, không phải kết luận về tính mới hay đạo văn. Dùng ở giai đoạn chọn đề tài, trước hạn nộp đề cương; không thay thế kiểm tra đạo văn cuối kỳ của khoa |
 
 ## SC-14 Kết quả đối chiếu (`/doi-chieu/[id]`)
 
@@ -126,5 +126,5 @@ Nội dung thẻ khác nhau theo vai trò: `faculty_officer` thấy hồ sơ c�
 |---|---|
 | Actor | `student`, `lecturer` |
 | Thành phần | Danh sách công trình liên quan · Với mỗi công trình: **bảng so sánh theo khía cạnh** (bài toán, đối tượng, phạm vi, phương pháp) với ba trạng thái: giống / khác / chưa đủ thông tin để so · Nhãn mức dữ liệu: "so trên tiêu đề, tóm tắt và từ khoá" |
-| Hành động | Chỉnh mô tả và chạy lại · Gửi giảng viên · Xuất bảng đối chiếu |
+| Hành động | Chỉnh mô tả và chạy lại · Xuất bảng đối chiếu để đính vào đề cương · Sinh viên gửi cho GVHD |
 | Ràng buộc | **Không hiển thị một điểm số phần trăm tương đồng tổng hợp.** Một con số duy nhất tạo cảm giác kết luận; bảng theo khía cạnh buộc người đọc tự đánh giá |
