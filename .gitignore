@@ -14,3 +14,4 @@ khao-sat-nguon/out/_baibao_by_dept.json
 __pycache__/
 *.pyc
 .DS_Store
+*.egg-info/
