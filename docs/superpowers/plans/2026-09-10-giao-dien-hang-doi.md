@@ -16,20 +16,30 @@ SC-11 (tra cứu), SC-12 (hồ sơ công bố giảng viên).
 2. **Không sửa tầng nghiệp vụ.** `cris/link.py`, `cris/dedup.py`, `cris/normalize.py`,
    `cris/people.py`, `cris/sync.py` giữ nguyên. Web chỉ gọi vào chúng. Nếu thấy cần
    sửa, dừng lại và ghi vào phần "Phát hiện", không tự sửa.
-3. **Mọi quyết định phải ghi `actor_id`.** `decide_link` và `decide_group` đã nhận
+3. **`decide_link` và `decide_group` tự `commit()` sau mỗi lần gọi.** Gọi trong
+   vòng lặp thì mỗi id commit riêng, trái yêu cầu "cả lô trong một transaction".
+   Không được sửa tầng nghiệp vụ, nên phải bọc kết nối để hoãn `commit` và cho
+   `rollback` xuyên xuống.
+4. **Mọi quyết định phải ghi `actor_id`.** `decide_link` và `decide_group` đã nhận
    tham số này; web phải truyền người dùng thật, không truyền `None`.
-4. **Không tự động hoá quyết định.** Không có route nào gộp bản ghi hay xác nhận liên
+5. **Không tự động hoá quyết định.** Không có route nào gộp bản ghi hay xác nhận liên
    kết mà không có thao tác người (BR-18). Thao tác hàng loạt vẫn là người bấm.
-5. **Escape mọi giá trị đưa vào HTML.** Dữ liệu là tên người thật và tiêu đề từ nguồn
+6. **Escape mọi giá trị đưa vào HTML.** Dữ liệu là tên người thật và tiêu đề từ nguồn
    ngoài. Dùng `html.escape(..., quote=True)` cho mọi nội suy, không ngoại lệ.
-6. **Ghi–đọc tách bạch.** `GET` không đổi dữ liệu. Mọi thay đổi qua `POST`, sau đó
+7. **Ghi–đọc tách bạch.** `GET` không đổi dữ liệu. Mọi thay đổi qua `POST`, sau đó
    `303 See Other` về trang danh sách (post/redirect/get).
-7. **Test không được dựng server.** Gọi thẳng WSGI callable với `environ` giả. Test
+8. **Test không được dựng server.** Gọi thẳng WSGI callable với `environ` giả. Test
    chạm DB dùng fixture `conn` sẵn có trong `tests/conftest.py`.
-8. **Header SPDX** trên mọi tệp `.py` mới, đúng dạng `tests/test_spdx.py` quét.
-9. **Tiếng Việt có dấu** trong nhãn giao diện; mã và tên biến tiếng Anh, khớp phần
+9. **Header SPDX** trên mọi tệp `.py` mới, đúng dạng `tests/test_spdx.py` quét.
+10. **Tiếng Việt có dấu** trong nhãn giao diện; mã và tên biến tiếng Anh, khớp phần
    còn lại của `cris/`.
-10. **Thông điệp commit tiếng Anh**, conventional-commit, **không có trailer**
+11. **Không chạy test song song trên cùng cơ sở dữ liệu.** `tests/conftest.py`
+    dùng `TRUNCATE ... RESTART IDENTITY CASCADE` ở mỗi test, nên hai lượt `pytest`
+    chạy đồng thời trên cùng `cris_test` sẽ xoá dữ liệu của nhau và sinh lỗi giả.
+    Mỗi tác vụ song song cần một database riêng, hoặc phải chạy tuần tự.
+12. **Chạy pytest ở tiền cảnh.** Lượt chạy trong Docker mất 1–2 phút; đẩy xuống
+    nền rồi kết thúc lượt sẽ mất kết quả.
+13. **Thông điệp commit tiếng Anh**, conventional-commit, **không có trailer**
     `Co-Authored-By` hay bất kỳ dòng ghi công AI nào.
 
 ## Cấu trúc tệp
@@ -107,7 +117,10 @@ Thêm `cris/web/__main__.py` và lệnh CLI:
 - `form_list` trả nhiều giá trị cùng tên.
 
 **Nghiệm thu Task 1:** `pytest -q` xanh toàn bộ (99 test cũ + test mới).
-`python -m cris serve` chạy được, `curl localhost:8000/` trả 200.
+`python -m cris serve` chạy được. Lưu ý `ROUTES` còn rỗng ở bước này vì `wsgi.py`
+cố ý chưa import các `views_*` (việc đó thuộc Task 5, để Task 2–4 không tranh nhau
+sửa cùng một chỗ), nên `curl localhost:8000/` trả **404 có layout** — đúng thiết
+kế. Chỉ thành 200 sau khi Task 5 ráp import vào.
 
 ---
 
@@ -181,7 +194,8 @@ Ràng buộc giao diện — quan trọng nhất của task này:
   *"nhiều khả năng là đồ án nhóm"* và **mặc định đề xuất Giữ riêng** (BR-08). Đo
   09/2026: 34 trên 43 nhóm đồ án trùng tiêu đề là đồ án nhóm — gộp theo tiêu đề sẽ
   xoá 52 bản ghi thật.
-- `GiuRieng` bắt buộc có `reason`.
+- Quyết định giữ riêng (`decision="keep"`; trạng thái kết quả là `GiuRieng`)
+  bắt buộc có `reason`. `decide_group` nhận `merge` | `keep` | `skip`.
 - Nhóm ghép theo DOI xếp trên nhóm ghép theo tiêu đề.
 
 **Test**:
@@ -190,7 +204,7 @@ Ràng buộc giao diện — quan trọng nhất của task này:
 - Trang chi tiết hiện đủ số thành viên và đánh dấu đúng trường khác nhau.
 - Gộp với `field_choices` → giá trị chọn được giữ, bản gốc vẫn còn (BR-09).
 - Nhóm khác sinh viên → thân trang có cảnh báo đồ án nhóm và nút mặc định là Giữ riêng.
-- `GiuRieng` không lý do → không đổi gì.
+- `decision="keep"` không lý do → không đổi gì.
 - `gid` không tồn tại → `404`.
 
 ---
