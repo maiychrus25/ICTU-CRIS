@@ -83,6 +83,49 @@ def test_confirm_learns_name_variant(conn, user_id):
     w2 = mk_work(conn, "w2"); mk_mention(conn, w2, "Van Anh Nguyen")
     assert link.link_pending(conn)["auto"] == 1
 
+def test_confirm_rejected_link_raises(conn, user_id):
+    w = mk_work(conn); mk_person(conn, "Nguyễn Thị Vân Anh")
+    mk_mention(conn, w, "Van Anh Nguyen")
+    link.link_pending(conn)
+    lid = q(conn, "SELECT id FROM author_link")[0]["id"]
+    link.decide_link(conn, lid, "reject", user_id, reason="trùng tên")
+    with pytest.raises(ValueError):
+        link.decide_link(conn, lid, "confirm", user_id)
+    assert q(conn, "SELECT state FROM author_link WHERE id=%s", lid)[0]["state"] == "DaBacBo"
+
+def test_reassign_records_new_link_in_audit(conn, user_id):
+    w = mk_work(conn)
+    mk_person(conn, "Nguyễn Văn An", email="a1@x"); mk_person(conn, "Nguyễn Văn An", email="a2@x")
+    p3 = mk_person(conn, "Trần Văn Ba", email="a3@x")
+    mk_mention(conn, w, "Nguyễn Văn An")
+    link.link_pending(conn)
+    lid = q(conn, "SELECT id FROM author_link ORDER BY id LIMIT 1")[0]["id"]
+    link.decide_link(conn, lid, "reassign", user_id, person_id=p3)
+    new_row = q(conn, "SELECT id FROM author_link WHERE person_id=%s AND state='DaXacNhan'", p3)[0]
+    a = q(conn, "SELECT action, after FROM audit_log ORDER BY id DESC LIMIT 1")[0]
+    assert a["action"] == "link.reassign"
+    assert a["after"]["person_id"] == p3
+    assert a["after"]["new_link_id"] == new_row["id"]
+
+def test_reassign_overrides_earlier_rejection(conn, user_id):
+    w = mk_work(conn)
+    p_a = mk_person(conn, "Nguyễn Văn An", email="a1@x")
+    p_b = mk_person(conn, "Nguyễn Văn An", email="a2@x")
+    mk_mention(conn, w, "Nguyễn Văn An")
+    link.link_pending(conn)
+    rows = {r["person_id"]: r["id"] for r in q(conn, "SELECT id, person_id FROM author_link")}
+    link.decide_link(conn, rows[p_b], "reject", user_id, reason="trùng tên")
+    link.decide_link(conn, rows[p_a], "reassign", user_id, person_id=p_b)
+    final = {r["person_id"]: r for r in q(conn, "SELECT person_id, state, reason FROM author_link")}
+    assert final[p_b]["state"] == "DaXacNhan" and final[p_b]["reason"] is None
+    assert final[p_a]["state"] == "DaBacBo"
+
+def test_conflict_treats_unranked_degrees_as_distinct():
+    assert link._conflict("KS", "CN") is True
+    assert link._conflict("PGS", "PGS.TS") is False
+    assert link._conflict("TS", "PGS.TS") is True
+    assert link._conflict(None, "TS") is False
+
 def test_orcid_links_only_when_verified(conn):
     w = mk_work(conn)
     p = mk_person(conn, "Trần X", orcid="0000-0001-2345-6789", verified=True)
