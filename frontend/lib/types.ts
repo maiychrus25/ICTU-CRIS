@@ -82,5 +82,35 @@ export interface AboutOut {
   source_url: string; repo_url: string; last_sync: LastSync | null; works: number;
   works_by_type: Record<string, number>; ai: AboutAI; limits: string[];
 }
+export interface YearTypeRow {
+  year: number; bai_bao: number; do_an: number; luan_van: number; luan_an: number; hoc_lieu: number;
+}
+export type UnknownYearRow = Omit<YearTypeRow, "year">;
+export interface UnitWorks { unit_id: number; code: string; name: string; works: number }
+export interface TopPerson { person_id: number; display_name: string; unit_code: string | null; works: number }
+export interface StatsOut {
+  by_year_type: YearTypeRow[]; unknown_year: UnknownYearRow; by_unit: UnitWorks[];
+  top_persons: TopPerson[]; queues: { authors_pending: number; dup_groups_open: number };
+  coverage: { works_with_link_pct: number; works_without_unit: number }; last_sync: LastSync | null;
+}
+export interface AuditRow {
+  id: number; at: string; actor_name: string | null; action: string; action_label: string;
+  entity: string; entity_id: number; before: Record<string, unknown> | null; after: Record<string, unknown> | null;
+}
+export interface AuditList { items: AuditRow[]; page: PageInfo }
+export interface AuditFilters { entity?: string; entity_id?: number; actor?: number; page?: number }
+export interface PeriodOut {
+  id: number; code: string; name: string; scope: Record<string, unknown>; criteria: string | null;
+  state: string; opens_at: string | null; due_at: string; created_at: string;
+}
+export interface PeriodOpenIn {
+  code: string; name: string; scope: Record<string, unknown>; criteria?: string | null; due_at: string;
+}
+export interface PeriodUnitProgress {
+  unit_id: number; unit_code: string; unit_name: string; counts: Record<string, number>; total: number;
+}
+export interface PeriodProgress {
+  period_id: number; state: string; due_at: string | null; days_remaining: number | null; units: PeriodUnitProgress[];
+}
 export interface HealthOut { status: "ok" }
 export interface WorkFilters { q?: string; doc_type?: string; year?: number; unit?: string; topic?: number; page?: number }

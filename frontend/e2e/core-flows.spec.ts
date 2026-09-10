@@ -3,6 +3,35 @@
 
 import { expect, test } from "@playwright/test";
 
+test("trang gốc mở tổng quan với bốn chỉ số và biểu đồ", async ({ page }) => {
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/tong-quan\/$/, { timeout: 15_000 });
+  await expect(page.getByText("Tổng công trình 5 năm", { exact: true })).toBeVisible();
+  await expect(page.getByText("Công trình có liên kết tác giả", { exact: true })).toBeVisible();
+  await expect(page.getByText("Liên kết tác giả chờ xác nhận", { exact: true })).toBeVisible();
+  await expect(page.getByText("Nhóm nghi trùng đang mở", { exact: true })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Biểu đồ cột chồng công trình theo năm và loại tài liệu" })).toBeVisible();
+});
+
+test("nhật ký lọc theo loại thực thể", async ({ page }) => {
+  await page.goto("/nhat-ky/");
+  await expect(page.getByText("Nhóm nghi trùng #301")).toBeVisible();
+  await page.getByRole("combobox", { name: "Loại thực thể" }).click();
+  await page.getByRole("option", { name: "Kỳ báo cáo" }).click();
+  await expect(page.getByText("Kỳ báo cáo #401")).toBeVisible();
+  await expect(page.getByText("Nhóm nghi trùng #301")).toBeHidden();
+});
+
+test("mở kỳ báo cáo bị chặn khi thiếu mã", async ({ page }) => {
+  await page.goto("/ky-bao-cao/");
+  await page.getByRole("button", { name: "Mở kỳ mới" }).click();
+  const dialog = page.getByRole("dialog");
+  const code = dialog.getByLabel("Mã kỳ *");
+  await dialog.getByRole("button", { name: "Mở kỳ", exact: true }).click();
+  await expect(dialog).toBeVisible();
+  expect(await code.evaluate((element: HTMLInputElement) => element.validity.valid)).toBe(false);
+});
+
 test("tra cứu và mở bảng xuất xứ công trình", async ({ page }) => {
   await page.goto("/tra-cuu/");
   await page.getByLabel("Từ khoá").fill("Xây dựng website quản lý thư viện");

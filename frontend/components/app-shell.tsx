@@ -4,8 +4,8 @@
 "use client";
 
 import {
-  BarChart3, BookOpenCheck, CopyCheck, Info, Menu, Moon, Scale, Search,
-  Sun, UserRoundCheck,
+  BarChart3, BookOpenCheck, CalendarRange, CopyCheck, Info, LayoutDashboard, Menu, Moon,
+  Scale, ScrollText, Search, Sun, UserRoundCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,19 +17,26 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { cn } from "@/lib/utils";
 
 const navigation = [
+  { href: "/tong-quan/", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/tra-cuu/", label: "Tra cứu", icon: Search },
   { href: "/doi-chieu/", label: "Đối chiếu đề tài", icon: Scale },
   { href: "/doi-soat/tac-gia/", label: "Hàng đợi tác giả", icon: UserRoundCheck },
   { href: "/doi-soat/trung-lap/", label: "Hàng đợi nghi trùng", icon: CopyCheck },
+  { href: "/ky-bao-cao/", label: "Kỳ báo cáo", icon: CalendarRange },
   { href: "/chat-luong-du-lieu/", label: "Chất lượng dữ liệu", icon: BarChart3 },
+  { href: "/nhat-ky/", label: "Nhật ký", icon: ScrollText },
   { href: "/ve/", label: "Về hệ thống", icon: Info },
 ];
 
 const routeTitles = [
+  ["/ky-bao-cao/chi-tiet", "Chi tiết kỳ báo cáo"],
   ["/doi-soat/trung-lap/chi-tiet", "Chi tiết nhóm nghi trùng"],
   ["/doi-soat/trung-lap", "Hàng đợi nghi trùng"],
   ["/doi-soat/tac-gia", "Hàng đợi tác giả"],
   ["/chat-luong-du-lieu", "Chất lượng dữ liệu"],
+  ["/ky-bao-cao", "Kỳ báo cáo"],
+  ["/nhat-ky", "Nhật ký"],
+  ["/tong-quan", "Tổng quan"],
   ["/cong-trinh", "Chi tiết công trình"],
   ["/giang-vien", "Hồ sơ giảng viên"],
   ["/doi-chieu", "Đối chiếu đề tài"],
@@ -39,7 +46,7 @@ const routeTitles = [
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <Link href="/tra-cuu/" className="flex h-16 items-center gap-3 px-4 text-sidebar-foreground">
+    <Link href="/tong-quan/" className="flex h-16 items-center gap-3 px-4 text-sidebar-foreground">
       <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"><BookOpenCheck className="size-5" /></span>
       {!compact && <span><strong className="block text-sm tracking-wide">ICTU-CRIS</strong><span className="block text-[11px] text-muted-foreground">Thông tin nghiên cứu</span></span>}
     </Link>

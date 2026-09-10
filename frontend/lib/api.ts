@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-  aboutFixture, authorQueueFixture, compareFixture, duplicateDetailFixture, duplicateGroupsFixture,
-  healthFixture, personFixture, qualityFixture, topicsFixture, workDetailsFixture, worksFixture,
+  aboutFixture, auditFixture, authorQueueFixture, compareFixture, duplicateDetailFixture, duplicateGroupsFixture,
+  healthFixture, periodProgressFixture, periodsFixture, personFixture, qualityFixture, statsFixture,
+  topicsFixture, workDetailsFixture, worksFixture,
 } from "@/lib/fixtures";
 import type {
-  AboutOut, AuthorQueueList, CompareIn, CompareOut, DecideAuthorsIn, DecideDupIn, DecideResult,
-  DupGroupDetail, DupGroupList, HealthOut, PersonProfile, QualityOut, Topic, WorkDetail, WorkFilters, WorkList,
+  AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DecideAuthorsIn, DecideDupIn,
+  DecideResult, DupGroupDetail, DupGroupList, HealthOut, PeriodOpenIn, PeriodOut, PeriodProgress,
+  PersonProfile, QualityOut, StatsOut, Topic, WorkDetail, WorkFilters, WorkList,
 } from "@/lib/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 const MOCK = process.env.NEXT_PUBLIC_MOCK === "1";
 
 export class ApiError extends Error {
@@ -58,6 +60,24 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   else if (/^\/api\/compare\/\d+$/.test(url.pathname)) data = { ...compareFixture, query_id: id };
   else if (url.pathname === "/api/quality") data = qualityFixture;
   else if (url.pathname === "/api/about") data = aboutFixture;
+  else if (url.pathname === "/api/stats") data = statsFixture;
+  else if (url.pathname === "/api/audit") {
+    const entity = url.searchParams.get("entity");
+    const entityId = url.searchParams.get("entity_id");
+    const items = auditFixture.items.filter((row) => (!entity || row.entity === entity) && (!entityId || row.entity_id === Number(entityId)));
+    data = { items, page: { ...auditFixture.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
+  }
+  else if (url.pathname === "/api/periods" && !init?.method) data = periodsFixture;
+  else if (url.pathname === "/api/periods" && init?.method === "POST") {
+    const body = JSON.parse(String(init.body)) as PeriodOpenIn;
+    data = { ...body, id: 404, criteria: body.criteria ?? null, state: "DangMo", opens_at: new Date().toISOString(), created_at: new Date().toISOString() };
+  }
+  else if (/^\/api\/periods\/\d+\/progress$/.test(url.pathname)) data = periodProgressFixture[Number(url.pathname.split("/").at(-2))];
+  else if (/^\/api\/periods\/\d+\/(close|cancel)$/.test(url.pathname)) {
+    const periodId = Number(url.pathname.split("/").at(-2));
+    const period = periodsFixture.find((item) => item.id === periodId);
+    data = period ? { ...period, state: url.pathname.endsWith("/close") ? "DaDongNop" : "Huy" } : undefined;
+  }
   else if (url.pathname === "/api/health") data = healthFixture;
 
   if (data === undefined) throw new ApiError(404, "Không tìm thấy dữ liệu yêu cầu.");
@@ -72,7 +92,7 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({ detail: response.statusText }));
-    throw new ApiError(response.status, typeof body.detail === "string" ? body.detail : response.statusText);
+    throw new ApiError(response.status, typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail ?? response.statusText));
   }
   return response.json() as Promise<T>;
 }
@@ -91,5 +111,12 @@ export const api = {
   getComparison: (id: number) => apiRequest<CompareOut>(`/api/compare/${id}`),
   getQuality: () => apiRequest<QualityOut>("/api/quality"),
   getAbout: () => apiRequest<AboutOut>("/api/about"),
+  getStats: (years = 5) => apiRequest<StatsOut>(`/api/stats${queryString({ years })}`),
+  getAudit: (filters: AuditFilters = {}) => apiRequest<AuditList>(`/api/audit${queryString({ entity: filters.entity, entity_id: filters.entity_id, actor: filters.actor, page: filters.page })}`),
+  getPeriods: () => apiRequest<PeriodOut[]>("/api/periods"),
+  getPeriodProgress: (id: number) => apiRequest<PeriodProgress>(`/api/periods/${id}/progress`),
+  openPeriod: (input: PeriodOpenIn) => apiRequest<PeriodOut>("/api/periods", { method: "POST", body: JSON.stringify(input) }),
+  closePeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/close`, { method: "POST" }),
+  cancelPeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/cancel`, { method: "POST" }),
   getHealth: () => apiRequest<HealthOut>("/api/health"),
 };

@@ -6,9 +6,19 @@ export const docTypeLabels: Record<string, string> = {
   hoc_lieu: "Học liệu", giang_vien: "Giảng viên", dang_ky_do_an: "Đăng ký đồ án",
 };
 
+export const docTypeColors: Record<string, string> = {
+  bai_bao: "#2563eb", do_an: "#0891b2", luan_van: "#7c3aed", luan_an: "#c2410c", hoc_lieu: "#64748b",
+};
+
 export const stateLabels: Record<string, string> = {
   DaNoiTuDong: "Đã nối tự động", ChoXacNhan: "Chờ xác nhận", DaXacNhan: "Đã xác nhận",
   DaBacBo: "Đã bác bỏ", NghiTrung: "Nghi trùng", DaGop: "Đã gộp", GiuRieng: "Giữ riêng",
+  ChuanBi: "Chuẩn bị", DangMo: "Đang mở", DaDongNop: "Đã đóng nộp", Huy: "Đã huỷ",
+};
+
+export const entityLabels: Record<string, string> = {
+  author_link: "Liên kết tác giả", duplicate_group: "Nhóm nghi trùng", period: "Kỳ báo cáo",
+  source_record: "Bản ghi nguồn", author_mention: "Lượt tên",
 };
 
 export const roleLabels: Record<string, string> = {

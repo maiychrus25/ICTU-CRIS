@@ -3,13 +3,11 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { LoadingView } from "@/components/state-views";
 
 export default function HomePage() {
-  const router = useRouter();
-  useEffect(() => { router.replace("/tra-cuu/"); }, [router]);
-  return <LoadingView label="Đang chuyển đến trang tra cứu…" />;
+  useEffect(() => { window.location.replace("/tong-quan/"); }, []);
+  return <LoadingView label="Đang chuyển đến trang tổng quan…" />;
 }

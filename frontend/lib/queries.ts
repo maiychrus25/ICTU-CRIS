@@ -4,7 +4,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
-import type { CompareIn, DecideAuthorsIn, DecideDupIn, WorkFilters } from "@/lib/types";
+import type { AuditFilters, CompareIn, DecideAuthorsIn, DecideDupIn, PeriodOpenIn, WorkFilters } from "@/lib/types";
 
 export const useWorks = (filters: WorkFilters) => useQuery({ queryKey: ["works", filters], queryFn: () => api.getWorks(filters) });
 export const useWork = (id: number | null) => useQuery({ queryKey: ["work", id], queryFn: () => api.getWork(id!), enabled: id !== null });
@@ -19,4 +19,11 @@ export const useComparison = (id: number | null) => useQuery({ queryKey: ["compa
 export const useCreateComparison = () => useMutation({ mutationFn: (input: CompareIn) => api.compare(input) });
 export const useQuality = () => useQuery({ queryKey: ["quality"], queryFn: api.getQuality });
 export const useAbout = () => useQuery({ queryKey: ["about"], queryFn: api.getAbout });
+export const useStats = () => useQuery({ queryKey: ["stats", 5], queryFn: () => api.getStats(5) });
+export const useAudit = (filters: AuditFilters) => useQuery({ queryKey: ["audit", filters], queryFn: () => api.getAudit(filters) });
+export const usePeriods = () => useQuery({ queryKey: ["periods"], queryFn: api.getPeriods });
+export const usePeriodProgress = (id: number | null) => useQuery({ queryKey: ["period-progress", id], queryFn: () => api.getPeriodProgress(id!), enabled: id !== null });
+export const useOpenPeriod = () => useMutation({ mutationFn: (input: PeriodOpenIn) => api.openPeriod(input) });
+export const useClosePeriod = (id: number) => useMutation({ mutationFn: () => api.closePeriod(id) });
+export const useCancelPeriod = (id: number) => useMutation({ mutationFn: () => api.cancelPeriod(id) });
 export const useHealth = () => useQuery({ queryKey: ["health"], queryFn: api.getHealth });

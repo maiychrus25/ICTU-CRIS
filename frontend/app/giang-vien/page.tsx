@@ -3,7 +3,7 @@
 
 "use client";
 
-import { ExternalLink, Mail, TimerReset } from "lucide-react";
+import { Download, ExternalLink, Mail, TimerReset } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo } from "react";
@@ -14,8 +14,10 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { StatusBadge } from "@/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { docTypeLabels } from "@/lib/labels";
+import { API_BASE } from "@/lib/api";
 import { usePerson } from "@/lib/queries";
 import type { PersonPublication } from "@/lib/types";
 
@@ -43,7 +45,7 @@ function PersonContent() {
 
   return (
     <>
-      <PageHeader title={person.display_name} description={person.degree ?? "Giảng viên"} />
+      <PageHeader title={person.display_name} description={person.degree ?? "Giảng viên"} action={<Button render={<a href={`${API_BASE}/api/persons/${person.id}/publications.csv`} title="Mở được bằng Excel (UTF-8)" />} variant="outline"><Download />Tải CSV</Button>} />
       <div className="mb-6 flex flex-wrap gap-x-5 gap-y-2 text-sm">{person.orcid && <a href={person.orcid.startsWith("http") ? person.orcid : `https://orcid.org/${person.orcid}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:underline">ORCID {person.orcid}<ExternalLink className="size-3.5" /></a>}{person.email && <a href={`mailto:${person.email}`} className="inline-flex items-center gap-1.5 text-primary hover:underline"><Mail className="size-3.5" />{person.email}</a>}</div>
       {person.pending_count > 0 && <Alert className="mb-6 border-status-warning/30 bg-status-warning/10"><TimerReset /><AlertTitle>Có {person.pending_count} công trình đang chờ xác nhận liên kết</AlertTitle><AlertDescription><Link href="/doi-soat/tac-gia/">Mở hàng đợi tác giả để rà soát</Link></AlertDescription></Alert>}
 

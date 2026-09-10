@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type {
-  AboutOut, AuthorQueueList, CompareOut, DupGroupDetail, DupGroupList, HealthOut,
-  PersonProfile, QualityOut, Topic, WorkDetail, WorkList, WorkSummary,
+  AboutOut, AuditList, AuthorQueueList, CompareOut, DupGroupDetail, DupGroupList, HealthOut,
+  PeriodOut, PeriodProgress, PersonProfile, QualityOut, StatsOut, Topic, WorkDetail, WorkList, WorkSummary,
 } from "@/lib/types";
 
 export const workItems: WorkSummary[] = [
@@ -134,6 +134,59 @@ export const aboutFixture: AboutOut = {
     "Đối chiếu đề tài dựa trên siêu dữ liệu và tóm tắt, không phải toàn văn.",
     "Dữ liệu phụ thuộc chất lượng và thời điểm đồng bộ của nguồn gốc.",
   ],
+};
+
+export const statsFixture: StatsOut = {
+  by_year_type: [
+    { year: 2025, bai_bao: 86, do_an: 174, luan_van: 24, luan_an: 5, hoc_lieu: 18 },
+    { year: 2024, bai_bao: 79, do_an: 162, luan_van: 21, luan_an: 4, hoc_lieu: 20 },
+    { year: 2023, bai_bao: 71, do_an: 148, luan_van: 19, luan_an: 6, hoc_lieu: 17 },
+    { year: 2022, bai_bao: 65, do_an: 136, luan_van: 18, luan_an: 3, hoc_lieu: 15 },
+    { year: 2021, bai_bao: 58, do_an: 129, luan_van: 16, luan_an: 4, hoc_lieu: 13 },
+  ],
+  unknown_year: { bai_bao: 3, do_an: 12, luan_van: 2, luan_an: 0, hoc_lieu: 1 },
+  by_unit: [
+    { unit_id: 1, code: "CNTT", name: "Khoa Công nghệ thông tin", works: 426 },
+    { unit_id: 2, code: "KHMT", name: "Khoa Khoa học máy tính", works: 318 },
+    { unit_id: 3, code: "HTTT", name: "Khoa Hệ thống thông tin kinh tế", works: 247 },
+  ],
+  top_persons: [
+    { person_id: 1, display_name: "TS. Nguyễn Văn A", unit_code: "CNTT", works: 42 },
+    { person_id: 2, display_name: "PGS.TS. Trần Thị Bình", unit_code: "KHMT", works: 38 },
+    { person_id: 3, display_name: "TS. Lê Văn Hoàng", unit_code: "HTTT", works: 35 },
+  ],
+  queues: { authors_pending: 36, dup_groups_open: 12 },
+  coverage: { works_with_link_pct: 83.3, works_without_unit: 27 },
+  last_sync: { id: 18, source: "Kho dữ liệu ICTU", scope: "Toàn bộ dữ liệu", status: "success", started_at: "2026-09-10T01:00:00Z", finished_at: "2026-09-10T01:04:12Z" },
+};
+
+export const auditFixture: AuditList = {
+  page: { page: 1, per_page: 50, total: 5 },
+  items: [
+    { id: 501, at: "2026-09-11T08:22:00Z", actor_name: "Nguyễn Minh Anh", action: "link.confirm", action_label: "Xác nhận liên kết", entity: "author_link", entity_id: 201, before: { state: "ChoXacNhan" }, after: { state: "DaXacNhan", person_id: 1 } },
+    { id: 502, at: "2026-09-11T07:45:00Z", actor_name: "Trần Thu Hà", action: "dup.keep", action_label: "Giữ riêng", entity: "duplicate_group", entity_id: 301, before: { state: "NghiTrung" }, after: { state: "GiuRieng", reason: "Đồ án nhóm" } },
+    { id: 503, at: "2026-09-10T09:10:00Z", actor_name: "Phạm Quang Minh", action: "period.open", action_label: "Mở kỳ báo cáo", entity: "period", entity_id: 401, before: null, after: { state: "DangMo", code: "BC-2026" } },
+    { id: 504, at: "2026-09-10T06:30:00Z", actor_name: null, action: "source_record.new_version", action_label: "Nguồn có phiên bản mới", entity: "source_record", entity_id: 88, before: { version: 1 }, after: { version: 2 } },
+    { id: 505, at: "2026-09-09T04:20:00Z", actor_name: "Đỗ Thu Hà", action: "mention.orphaned", action_label: "Lượt tên mất nguồn", entity: "author_mention", entity_id: 102, before: { work_id: 1 }, after: null },
+  ],
+};
+
+export const periodsFixture: PeriodOut[] = [
+  { id: 401, code: "BC-2026", name: "Báo cáo công trình năm 2026", scope: { doc_types: ["bai_bao"] }, criteria: "Công trình công bố trong năm 2026", state: "DangMo", opens_at: "2026-09-01T00:00:00Z", due_at: "2026-09-30T16:59:59Z", created_at: "2026-08-28T02:00:00Z" },
+  { id: 402, code: "BC-2025", name: "Báo cáo công trình năm 2025", scope: { doc_types: ["bai_bao", "hoc_lieu"] }, criteria: null, state: "DaDongNop", opens_at: "2025-09-01T00:00:00Z", due_at: "2025-09-30T16:59:59Z", created_at: "2025-08-27T02:00:00Z" },
+  { id: 403, code: "KH-2027", name: "Kế hoạch báo cáo năm 2027", scope: { doc_types: ["bai_bao"] }, criteria: null, state: "ChuanBi", opens_at: null, due_at: "2027-01-31T16:59:59Z", created_at: "2026-09-08T02:00:00Z" },
+];
+
+export const periodProgressFixture: Record<number, PeriodProgress> = {
+  401: { period_id: 401, state: "DangMo", due_at: "2026-09-30T16:59:59Z", days_remaining: 19, units: [
+    { unit_id: 1, unit_code: "CNTT", unit_name: "Khoa Công nghệ thông tin", counts: { Nhap: 8, ChoBoSung: 3, Rut: 1 }, total: 24 },
+    { unit_id: 2, unit_code: "KHMT", unit_name: "Khoa Khoa học máy tính", counts: { Nhap: 5, ChoBoSung: 2, Rut: 0 }, total: 18 },
+    { unit_id: 3, unit_code: "HTTT", unit_name: "Khoa Hệ thống thông tin kinh tế", counts: { Nhap: 4, ChoBoSung: 1, Rut: 1 }, total: 15 },
+  ] },
+  402: { period_id: 402, state: "DaDongNop", due_at: "2025-09-30T16:59:59Z", days_remaining: -345, units: [
+    { unit_id: 1, unit_code: "CNTT", unit_name: "Khoa Công nghệ thông tin", counts: { Nhap: 10, ChoBoSung: 1, Rut: 2 }, total: 13 },
+  ] },
+  403: { period_id: 403, state: "ChuanBi", due_at: "2027-01-31T16:59:59Z", days_remaining: 142, units: [] },
 };
 
 export const healthFixture: HealthOut = { status: "ok" };
