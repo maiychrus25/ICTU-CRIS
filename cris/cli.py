@@ -21,6 +21,8 @@ def main(argv=None):
     ais.add_parser("suggest")
     sc = ais.add_parser("screen", help="rà soát trùng đề tài của một khoá với các khoá khác")
     sc.add_argument("--cohort", required=True); sc.add_argument("--k", type=int, default=3)
+    sc.add_argument("--high", type=float, default=None, help="ngưỡng mức 'cao' (mặc định SCREEN_THRESHOLDS[0]=0.90)")
+    sc.add_argument("--mid", type=float, default=None, help="ngưỡng mức 'vua' (mặc định SCREEN_THRESHOLDS[1]=0.80)")
     sv = sub.add_parser("serve"); sv.add_argument("--host", default="127.0.0.1"); sv.add_argument("--port", type=int, default=8000)
     sv.add_argument("--legacy", action="store_true", help="chạy UI HTML cũ (WSGI) thay vì API FastAPI")
     a = ap.parse_args(argv)
@@ -72,7 +74,9 @@ def main(argv=None):
                        "duplicate": ai_suggest.suggest_duplicates(conn, prov)})
             elif a.ai_cmd == "screen":
                 from cris.ai import screen as ai_screen
-                r = ai_screen.screen_cohort(conn, prov, cohort=a.cohort, k=a.k)
+                high = a.high if a.high is not None else ai_screen.SCREEN_THRESHOLDS[0]
+                mid = a.mid if a.mid is not None else ai_screen.SCREEN_THRESHOLDS[1]
+                r = ai_screen.screen_cohort(conn, prov, cohort=a.cohort, k=a.k, thresholds=(high, mid))
                 print(f"screened={r['screened']} flagged={r['flagged']}")
     elif a.cmd == "quality":
         r = quality.report(conn)

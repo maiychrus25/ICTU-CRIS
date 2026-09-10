@@ -46,6 +46,10 @@ def _counts(conn):
 
 SAME_TITLE = "Xây dựng website bán hàng trực tuyến"
 OTHER_TITLE = "Thiết kế hệ thống đèn chiếu sáng thông minh IoT"
+# Chung phần lớn từ với SAME_TITLE ("xây dựng", "bán hàng", "trực tuyến") nhưng đổi
+# "website" -> "ứng dụng": cosine đo được với FakeProvider ~0.8007 — vừa qua ngưỡng
+# MID=0.80 (mức "vua"), dưới HIGH=0.90 (mức "cao") — dùng để kiểm mức giữa và sắp xếp.
+MID_TITLE = "Xây dựng ứng dụng bán hàng trực tuyến"
 
 
 # ---------- cris.ai.screen.screen_cohort ----------
@@ -63,6 +67,8 @@ def test_same_title_across_cohorts_is_flagged(conn):
     row = q(conn, "SELECT payload FROM ai_suggestion WHERE kind='topic_overlap' AND target_id=%s", w18)[0]
     payload = row["payload"]
     assert payload["cohort"] == "K18"
+    assert payload["level"] == "cao"
+    assert payload["max_score"] == pytest.approx(1.0)
     neighbour_ids = {n["work_id"] for n in payload["neighbours"]}
     assert w17 in neighbour_ids
     n17 = next(n for n in payload["neighbours"] if n["work_id"] == w17)
@@ -74,7 +80,7 @@ def test_same_title_across_cohorts_is_flagged(conn):
 
 def test_dissimilar_work_is_not_flagged(conn):
     mk_work(conn, SAME_TITLE, abstract=SAME_TITLE, cohort="K17")
-    mk_work(conn, OTHER_TITLE, abstract=OTHER_TITLE, cohort="K18")
+    w18 = mk_work(conn, OTHER_TITLE, abstract=OTHER_TITLE, cohort="K18")
     p = FakeProvider()
     E.build_embeddings(conn, p)
     conn.commit()
@@ -82,6 +88,27 @@ def test_dissimilar_work_is_not_flagged(conn):
     out = S.screen_cohort(conn, p, cohort="K18")
     assert out["screened"] == 1
     assert out["flagged"] == 0
+
+    payload = q(conn, "SELECT payload FROM ai_suggestion WHERE kind='topic_overlap' AND target_id=%s", w18)[0]["payload"]
+    assert payload["level"] == "thap"
+    assert payload["max_score"] < 0.80
+
+
+def test_mid_similarity_is_vua_not_flagged(conn):
+    """MID_TITLE chia phần lớn từ với SAME_TITLE (~0.80, vừa qua MID) nhưng dưới HIGH
+    (0.90) — mức "vua": đáng chú ý nhưng chưa đủ để gắn cờ "cao"."""
+    mk_work(conn, SAME_TITLE, abstract=SAME_TITLE, cohort="K17")
+    w18 = mk_work(conn, MID_TITLE, abstract=MID_TITLE, cohort="K18")
+    p = FakeProvider()
+    E.build_embeddings(conn, p)
+    conn.commit()
+
+    out = S.screen_cohort(conn, p, cohort="K18")
+    assert out == {"screened": 1, "flagged": 0}
+
+    payload = q(conn, "SELECT payload FROM ai_suggestion WHERE kind='topic_overlap' AND target_id=%s", w18)[0]["payload"]
+    assert payload["level"] == "vua"
+    assert 0.80 <= payload["max_score"] < 0.90
 
 
 def test_same_cohort_neighbour_is_excluded(conn):
@@ -152,7 +179,8 @@ def test_api_screen_filters_by_cohort_and_min(client, conn, user_id):
     r = client.get("/api/ai/screen", params={"cohort": "K18"}).json()
     assert r["page"]["total"] == 1
     assert r["items"][0]["work_id"] == w18
-    assert r["items"][0]["max_level"] == "cao"
+    assert r["items"][0]["level"] == "cao"
+    assert r["items"][0]["max_score"] == pytest.approx(1.0)
     assert "K18" in r["cohorts"]
 
     r_min_cao = client.get("/api/ai/screen", params={"min": "cao"}).json()
@@ -186,3 +214,25 @@ def test_api_screen_cohorts_summary(client, conn, user_id):
 
     r = client.get("/api/ai/screen/cohorts").json()
     assert {"cohort": "K18", "screened": 1, "flagged": 1} in r
+
+
+def test_api_screen_min_score_and_sorted_by_max_score_desc(client, conn, user_id):
+    mk_work(conn, SAME_TITLE, abstract=SAME_TITLE, cohort="K17")
+    w_high = mk_work(conn, SAME_TITLE, abstract=SAME_TITLE, cohort="K18")
+    w_mid = mk_work(conn, MID_TITLE, abstract=MID_TITLE, cohort="K18")
+    w_low = mk_work(conn, OTHER_TITLE, abstract=OTHER_TITLE, cohort="K18")
+    p = FakeProvider()
+    E.build_embeddings(conn, p)
+    conn.commit()
+    S.screen_cohort(conn, p, cohort="K18")
+    conn.commit()
+
+    r = client.get("/api/ai/screen", params={"cohort": "K18"}).json()
+    assert [it["work_id"] for it in r["items"]] == [w_high, w_mid, w_low]
+    scores = {it["work_id"]: it["max_score"] for it in r["items"]}
+    assert scores[w_high] == pytest.approx(1.0)
+    assert 0.80 <= scores[w_mid] < 0.90
+    assert scores[w_low] < 0.80
+
+    r_min_score = client.get("/api/ai/screen", params={"cohort": "K18", "min_score": 0.85}).json()
+    assert [it["work_id"] for it in r_min_score["items"]] == [w_high]

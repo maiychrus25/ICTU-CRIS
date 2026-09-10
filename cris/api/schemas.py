@@ -370,7 +370,8 @@ class ScreenItem(BaseModel):
     title: str | None
     cohort: str | None
     neighbours: list[ScreenNeighbour]
-    max_level: str
+    max_score: float
+    level: str
 
 
 class ScreenList(BaseModel):

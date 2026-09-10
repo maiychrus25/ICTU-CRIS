@@ -34,6 +34,17 @@
 - `serve` nay chạy `uvicorn` phục vụ API FastAPI; UI HTML cũ giữ qua cờ
   `--legacy` tới khi giao diện Next.js ngang màn.
 
+### Fixed
+
+- Rà soát trùng đề tài theo khoá dùng ngưỡng riêng `SCREEN_THRESHOLDS =
+  (0.90, 0.80)`, hiệu chỉnh trên phân bố điểm thật (cohort 21, 529 đồ án:
+  p50=0,835 · p90=0,897 · p99=0,928) thay cho ngưỡng khía cạnh 0,55/0,35 kế
+  thừa từ `compare.py` — ngưỡng cũ gắn cờ 529/529 (100%), ngưỡng mới gắn cờ
+  47/529 (8,9%). `screen_cohort` ghi thêm `max_score`/`level` vào payload;
+  CLI có `--high`/`--mid`; `GET /api/ai/screen` thêm `min_score`, trả kết
+  quả sắp theo `max_score` giảm dần (`cris/ai/screen.py`,
+  `cris/api/routes/screen.py`, `cris/api/schemas.py`, `cris/cli.py`).
+
 ## [0.1.0] - 2026-09-10
 
 Bản dự thi "Phát triển phần mềm mã nguồn mở tích hợp AI 2026". Tag `v0.1.0`.

@@ -91,11 +91,13 @@ bằng đo được.
 - **Trục chủ đề**: k-means (k-means++, ≤ 50 vòng) trên vector từ khoá; k tự giảm nếu ít
   từ khoá hơn k; nhãn cụm = từ khoá tần suất cao nhất.
 - **Rà soát trùng đề tài theo khoá**: với mỗi đồ án của khoá đang rà, top-k cosine trong
-  cùng `doc_type` (mặc định 3), loại láng giềng cùng khoá; mức khía cạnh `bai_toan` chia
-  theo đúng hai ngưỡng 0,55/0,35 (đổi tên nhãn: `cao`/`vua`/`thap` thay vì `giống`/`khác`/
-  `chưa đủ` của đối chiếu đề tài, để không lẫn hai thang đo); ba khía cạnh còn lại luôn là
-  `khong_du_du_lieu` vì không có mô tả khía cạnh riêng để so — chỉ có tiêu đề/tóm tắt/từ
-  khoá của chính công trình.
+  cùng `doc_type` (mặc định 3), loại láng giềng cùng khoá; mức `cao`/`vua`/`thap` (đổi tên
+  nhãn khỏi `giống`/`khác`/`chưa đủ` của đối chiếu đề tài, để không lẫn hai thang đo) chia
+  theo `SCREEN_THRESHOLDS = (0.90, 0.80)` — **hiệu chỉnh riêng trên phân bố điểm thật**
+  (không dùng lại 0,55/0,35 của đối chiếu đề tài, xem số đo ở mục 5) — tính trên
+  `max_score`, điểm cosine toàn văn bản của láng giềng cao nhất; ba khía cạnh còn lại của
+  từng láng giềng luôn là `khong_du_du_lieu` vì không có mô tả khía cạnh riêng để so — chỉ
+  có tiêu đề/tóm tắt/từ khoá của chính công trình.
 
 ## 5. Rà soát trùng đề tài theo khoá
 
@@ -111,20 +113,39 @@ trước. Đúng nỗi đau "đề tài lặp lại qua các năm" mà giảng v
 ```bash
 python -m cris ai embed                 # cần vector trước — screen chỉ rà công trình đã embed
 python -m cris ai screen --cohort K18   # --k đổi số láng giềng mỗi công trình (mặc định 3)
+python -m cris ai screen --cohort K18 --high 0.92 --mid 0.82   # tự đổi ngưỡng nếu cần
 ```
 
-Ghi `ai_suggestion(kind='topic_overlap', target_id=<work_id>, payload={cohort, neighbours:
-[{work_id, title, cohort, score, aspects}]})`, UPSERT theo `UNIQUE(kind, target_id,
-model)` — chạy lại không nhân đôi dòng. `GET /api/ai/screen?cohort=&min=cao|vua|thap&page=`
-đọc lại gợi ý đã ghi (không tự chạy AI), lọc theo khoá và theo mức cao nhất của `bai_toan`
-trong các láng giềng; `GET /api/ai/screen/cohorts` liệt kê số công trình đã rà/đã gắn cờ
-theo từng khoá.
+Ghi `ai_suggestion(kind='topic_overlap', target_id=<work_id>, payload={cohort, max_score,
+level, neighbours: [{work_id, title, cohort, score, aspects}]})`, UPSERT theo
+`UNIQUE(kind, target_id, model)` — chạy lại không nhân đôi dòng. `max_score` là điểm láng
+giềng cao nhất; `level` (`cao`/`vua`/`thap`) là mức của `max_score` theo `SCREEN_THRESHOLDS`
+(hoặc `--high`/`--mid` nếu đổi lúc chạy). `GET /api/ai/screen?cohort=&min=cao|vua|thap&
+min_score=&page=` đọc lại gợi ý đã ghi (không tự chạy AI), lọc theo khoá, theo mức và/hoặc
+theo điểm số tối thiểu, **sắp theo `max_score` giảm dần**; `GET /api/ai/screen/cohorts`
+liệt kê số công trình đã rà/đã gắn cờ (`level == "cao"`) theo từng khoá.
 
-**Giới hạn**: chỉ so trên tóm tắt (như mọi chức năng AI khác trong dự án — xem mục 5 bên
-dưới); chỉ khía cạnh `bai_toan` có mức tính được (theo cosine toàn văn bản), ba khía cạnh
-còn lại luôn `khong_du_du_lieu` vì không có mô tả khía cạnh riêng để tách; **AI gợi ý,
-người quyết** — không có hành động gộp, xoá hay đổi trạng thái nào chạy tự động từ kết
-quả rà soát, kể cả khi mức là `cao`.
+**Hiệu chỉnh ngưỡng (10/09/2026, DB thật, cohort 21, 529 đồ án đã `ai embed`, mô hình
+`local`)**: đo `max_score` của mỗi đồ án — phân vị p50=0,835 · p75=0,870 · p90=0,897 ·
+p95=0,908 · p99=0,928; số đồ án có `max_score` ≥ 0,80/0,85/0,90/0,95 lần lượt là
+370 (69,9%) / 205 (38,8%) / 47 (8,9%) / 2 (0,4%). Ngưỡng khía cạnh 0,55/0,35 kế thừa nhầm
+từ đối chiếu đề tài (hiệu chỉnh cho so một khía cạnh với một câu, không phải so toàn văn
+bản hai công trình cùng loại) gắn cờ 529/529 = 100% — vô dụng. Đọc từng cặp: quanh 0,80–
+0,85 phần lớn chỉ trùng lớp từ vựng chung của đồ án CNTT (VD: hai website "quản lý ... cho
+công ty/cửa hàng ..." khác hẳn đề tài); từ 0,90 trở lên các cặp đọc lên là cùng đề tài thật,
+ví dụ: "Xây dựng ứng dụng Android hỗ trợ du lịch thông minh" ~ "Xây dựng ứng dụng du lịch
+trên nền tảng Android" (0,9503); "Xây dựng ứng dụng học tiếng Anh có tích hợp AI trên
+Android" ~ "Xây dựng ứng dụng học lập trình thông minh tích hợp AI trên nền tảng Android"
+(0,9495); "Ứng dụng AI xây dựng hệ thống điểm danh sinh viên dựa trên nhận diện khuôn mặt"
+~ chính đề tài đó lặp lại nguyên văn (0,9510). Chọn `HIGH = 0.90` (gắn cờ 47/529 = 8,9%,
+trong khoảng mục tiêu 5–15%), `MID = 0.80` (ranh dưới của lớp "cùng vốn từ chung ngành").
+
+**Giới hạn**: chỉ so trên tóm tắt (như mọi chức năng AI khác trong dự án — xem mục 6 bên
+dưới); chỉ khía cạnh `bai_toan` của mỗi láng giềng có mức tính được (theo cosine toàn văn
+bản), ba khía cạnh còn lại luôn `khong_du_du_lieu` vì không có mô tả khía cạnh riêng để
+tách; ngưỡng hiệu chỉnh trên một cohort/một mô hình — đổi cohort hay mô hình khác có thể
+cần đo lại; **AI gợi ý, người quyết** — không có hành động gộp, xoá hay đổi trạng thái nào
+chạy tự động từ kết quả rà soát, kể cả khi mức là `cao`.
 
 ## 6. Giới hạn — nói trước để không ai hiểu nhầm
 
