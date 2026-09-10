@@ -71,7 +71,7 @@ erDiagram
 | 10 | `last_seen_at` | timestamptz | C | now() | Cột duy nhất được cập nhật |
 | 11 | `status` | text | C | `active` | `active` · `vanished`; biến mất ở nguồn thì đánh dấu, không xoá |
 
-Duy nhất: `(source, source_key, content_hash)`. Chỉ số: `(source, source_key)`.
+Duy nhất: `(source, source_key, version)`. Chỉ số: `(source, source_key)`. Không ràng buộc duy nhất theo `content_hash`: nội dung có thể quay về băm của một phiên bản cũ (ví dụ trang chi tiết lỗi tạm thời rồi phục hồi) và khi đó vẫn là một phiên bản mới so với phiên bản gần nhất. Nhiều phiên bản của cùng khoá có thể cùng `status = active`; người đọc luôn lấy `max(version)`.
 
 ### `work` — công trình sau chuẩn hoá (N-01, N-07..N-13, N-16, N-17)
 
