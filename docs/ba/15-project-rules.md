@@ -95,7 +95,7 @@ Gom toàn bộ `[CẦN XÁC NHẬN]` rải trong bộ tài liệu. Nên đi theo
 | Q-21 | Danh mục hướng đề tài có bao nhiêu mã định hướng, ai quản, có đổi theo năm không? | BR-20, N-14, A-04 |
 | Q-22 | Công cụ kiểm tra đạo văn ở mốc 5 là gì, kết quả có xuất ra để đối chiếu với bảng đối chiếu đề tài không? | BR-19; quyết định có tích hợp hay chỉ tham chiếu |
 | Q-23 | Thư viện trường có cho hệ thống truy cập file mềm đồ án đã nộp không, từ khoá nào? | Q-11; mở hay đóng mức dữ liệu toàn văn |
-| Q-24 | Nếu ICTU-CRIS đi theo lịch này (thực hiện 09/03–22/05, nộp quyển 01/06), lát cắt nào của 60 chức năng P1 là phạm vi bản đầu? | Đề xuất: giai đoạn S, N và T-01, T-02, vì có số đo và giá trị chứng minh rõ nhất; phần kê khai và duyệt cần khảo sát người dùng mà lịch không còn chỗ. Người chủ trì quyết |
+| Q-24 | Lát cắt bản đầu đã chốt: S + N + T-01/T-02 (đồng bộ, chuẩn hoá, nối tác giả, gộp trùng, tra cứu). Giao diện hàng đợi và tra cứu, nhập Excel khoa, quét bù phân trang là các kế hoạch tiếp theo theo thứ tự đó. | Đã thực hiện trong docs/superpowers/plans/2026-09-10-lat-cat-s-n.md |
 
 ## 15.4 Bộ tài liệu dự án phải duy trì
 
@@ -111,7 +111,7 @@ Gom toàn bộ `[CẦN XÁC NHẬN]` rải trong bộ tài liệu. Nên đi theo
 
 ## 15.5 Giới hạn của bản 1.0 này
 
-Bộ tài liệu này viết trên cơ sở hai tài liệu định hướng, số đo trên dữ liệu công khai, kế hoạch triển khai ĐATN K21, và trả lời khảo sát đợt 1 (§15.6). Trả lời đợt 1 nhận bằng văn bản, chưa kèm file báo cáo mẫu và biểu mẫu khoa; hai tệp đó được hẹn cung cấp ở buổi gặp trực tiếp. Luồng kỳ báo cáo ở [01-bpmn.md](01-bpmn.md) §1.1 đã được xác nhận về trình tự và bổ sung cấp lãnh đạo trường, còn phải xác nhận bằng tài liệu thật về mẫu báo cáo và quy tắc thống kê. Luồng đối chiếu đề tài ở §1.2 bám theo kế hoạch ĐATN thật, phần còn phải xác nhận là quyền truy cập dữ liệu (Q-20, Q-23).
+Bộ tài liệu này viết trên cơ sở hai tài liệu định hướng, số đo trên dữ liệu công khai, kế hoạch triển khai ĐATN K21, và trả lời khảo sát đợt 1 (§15.6). Trả lời đợt 1 nhận bằng văn bản, chưa kèm file báo cáo mẫu và biểu mẫu khoa; hai tệp đó được hẹn cung cấp ở buổi gặp trực tiếp. Luồng kỳ báo cáo ở [01-bpmn.md](01-bpmn.md) §1.1 đã được xác nhận về trình tự và bổ sung cấp lãnh đạo trường, còn phải xác nhận bằng tài liệu thật về mẫu báo cáo và quy tắc thống kê. Luồng đối chiếu đề tài ở §1.2 bám theo kế hoạch ĐATN thật, phần còn phải xác nhận là quyền truy cập dữ liệu (Q-20, Q-23). Lát cắt bản đầu (Q-24) đã chốt và triển khai độc lập với lịch nộp đồ án K21 — kế hoạch ĐATN là quy trình nghiệp vụ hệ thống hỗ trợ, không phải lịch phát hành của dự án.
 
 Phần đã có cơ sở vững: mọi số đo về dữ liệu nguồn, các ràng buộc kỹ thuật, các quy tắc nghiệp vụ suy ra trực tiếp từ số đo (BR-06..BR-10), hai quy tắc suy từ kế hoạch ĐATN (BR-19, BR-20), và năm quy tắc suy từ khảo sát đợt 1 (BR-21..BR-25).
 

@@ -14,6 +14,7 @@ Dự án: **ICTU-CRIS** — hệ thống hỗ trợ tổng hợp, đối soát v
 | [Khảo sát kho ICTU](../../khao-sat-nguon/README.md) | Bề mặt API, 10 lỗi dữ liệu của nguồn |
 | [Kế hoạch triển khai ĐATN ĐHCQ K21](../KH%20triển%20khai%20ĐATN_DHCQ_K21.docx) (Khoa CNTT, 26/02/2026) | Quy trình đồ án thật: 12 mốc, cấp bộ môn, danh mục hướng đề tài, kiểm tra đạo văn cuối kỳ, thư viện lưu file mềm |
 | Trả lời khảo sát đợt 1 (10/09/2026), ghi tại [15-project-rules.md](15-project-rules.md) §15.6 | Ba tầng phòng, khoa, giảng viên; xác nhận trình tự duyệt, thêm cấp lãnh đạo trường, tách đơn vị chủ trì, quy tắc năm công bố, nguồn chính là Excel khoa gửi |
+| [Kế hoạch triển khai lát cắt S + N](../superpowers/plans/2026-09-10-lat-cat-s-n.md) (10/09/2026) | Quyết định phạm vi bản đầu (Q-24): S + N + T-01/T-02; đã triển khai thành mã nguồn `cris/` |
 
 Tài liệu cấp trên (BRD, SRS) chưa lập. Bộ BA này viết trên cơ sở hai tài liệu định hướng ở trên; mọi giả định chưa xác nhận được đánh dấu `[CẦN XÁC NHẬN]` và gom lại ở [15-project-rules.md](15-project-rules.md).
 
