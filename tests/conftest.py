@@ -5,7 +5,8 @@ import pytest
 from cris import db
 
 TABLES = [
-    "audit_log", "duplicate_member", "duplicate_group", "author_link",
+    "audit_log", "declaration_event", "evidence", "declaration", "period",
+    "duplicate_member", "duplicate_group", "author_link",
     "author_mention", "field_provenance", "work", "person", "unit",
     "source_record", "sync_run", "rule_set", "catalog", "app_user",
 ]
