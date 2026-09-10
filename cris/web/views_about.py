@@ -12,7 +12,7 @@ import os
 from cris.web.render import badge, e, layout, table
 from cris.web.wsgi import route
 
-REPO_URL = "https://github.com/maiychrus25/CRIS"
+REPO_URL = "https://github.com/maiychrus25/ICTU-CRIS"
 SOURCE_URL = "https://repository.ictu.edu.vn"
 
 LIMITS = [

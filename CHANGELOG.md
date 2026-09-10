@@ -107,5 +107,5 @@ sinh trong 11 phút trên CPU; đối chiếu một đề tài 3,25 s. Chi tiế
   hỗ trợ `DISTINCT` trong window function nên mọi lần mở hàng đợi đều lỗi 500.
   Thay bằng subquery gộp rồi nối lại theo tên thô (`cris/web/views_queue.py`).
 
-[Unreleased]: https://github.com/maiychrus25/CRIS/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/maiychrus25/CRIS/releases/tag/v0.1.0
+[Unreleased]: https://github.com/maiychrus25/ICTU-CRIS/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/maiychrus25/ICTU-CRIS/releases/tag/v0.1.0

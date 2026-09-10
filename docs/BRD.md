@@ -6,7 +6,7 @@
 | Phiên bản tài liệu | 1.0, ngày 10/09/2026 |
 | Bối cảnh | Sản phẩm dự thi **"Phát triển phần mềm mã nguồn mở tích hợp AI 2026"** (Khoa CNTT, ICTU). Nộp kho mã nguồn trước 30/09/2026; chung kết 10/10/2026 |
 | Giấy phép | Apache-2.0; mọi tệp mã có header SPDX |
-| Kho mã nguồn | https://github.com/maiychrus25/CRIS |
+| Kho mã nguồn | https://github.com/maiychrus25/ICTU-CRIS |
 | Tài liệu liên quan | [SRS.md](SRS.md) · [ba/](ba/00-README.md) (18 tệp phân tích nghiệp vụ) · [khảo sát nguồn](../khao-sat-nguon/README.md) · [kiểm chứng giả định bằng số đo](../khao-sat-nguon/kiem-chung-gia-dinh-de-tai.md) |
 
 ## 1. Bối cảnh

@@ -9,17 +9,17 @@
 *Hệ thống đồng bộ, chuẩn hoá và đối soát dữ liệu công bố khoa học cho Trường Công nghệ Thông tin và Truyền thông, Đại học Thái Nguyên.*
 
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=for-the-badge)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/maiychrus25/CRIS/ci.yml?style=for-the-badge&label=CI)](https://github.com/maiychrus25/CRIS/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/maiychrus25/CRIS?style=for-the-badge&label=release)](https://github.com/maiychrus25/CRIS/releases)
-[![Docker](https://img.shields.io/github/actions/workflow/status/maiychrus25/CRIS/docker.yml?style=for-the-badge&label=ghcr.io)](https://github.com/maiychrus25/CRIS/pkgs/container/cris)
+[![CI](https://img.shields.io/github/actions/workflow/status/maiychrus25/ICTU-CRIS/ci.yml?style=for-the-badge&label=CI)](https://github.com/maiychrus25/ICTU-CRIS/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/maiychrus25/ICTU-CRIS?style=for-the-badge&label=release)](https://github.com/maiychrus25/ICTU-CRIS/releases)
+[![Docker](https://img.shields.io/github/actions/workflow/status/maiychrus25/ICTU-CRIS/docker.yml?style=for-the-badge&label=ghcr.io)](https://github.com/maiychrus25/ICTU-CRIS/pkgs/container/ictu-cris)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg?style=for-the-badge)](pyproject.toml)
 ![PostgreSQL 16](https://img.shields.io/badge/postgresql-16-blue.svg?style=for-the-badge)
 [![Docker Ready](https://img.shields.io/badge/docker-ready-2496ED.svg?style=for-the-badge)](BUILDING.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](CONTRIBUTING.md)
 
-![GitHub stars](https://img.shields.io/github/stars/maiychrus25/CRIS?style=flat-square)
-![GitHub issues](https://img.shields.io/github/issues/maiychrus25/CRIS?style=flat-square)
-![GitHub last commit](https://img.shields.io/github/last-commit/maiychrus25/CRIS?style=flat-square)
+![GitHub stars](https://img.shields.io/github/stars/maiychrus25/ICTU-CRIS?style=flat-square)
+![GitHub issues](https://img.shields.io/github/issues/maiychrus25/ICTU-CRIS?style=flat-square)
+![GitHub last commit](https://img.shields.io/github/last-commit/maiychrus25/ICTU-CRIS?style=flat-square)
 
 </div>
 
@@ -93,7 +93,7 @@ Lược đồ CSDL nằm ở `cris/migrations/0001`–`0007` (PostgreSQL 16, kh�
 |---|---|---|
 | Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3 | Không ORM — truy vấn SQL trực tiếp |
 | CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0007` |
-| Đóng gói | sdist + wheel đính kèm mỗi Release; ảnh `ghcr.io/maiychrus25/cris` | Workflow `release.yml` kiểm phiên bản khớp tag; `docker.yml` đẩy ảnh theo semver |
+| Đóng gói | sdist + wheel đính kèm mỗi Release; ảnh `ghcr.io/maiychrus25/ictu-cris` | Workflow `release.yml` kiểm phiên bản khớp tag; `docker.yml` đẩy ảnh theo semver |
 | Triển khai | `deploy/setup.sh` + `deploy/docker-compose.yml` | Một lệnh: DB, lược đồ, người dùng mặc định, web; `--ai` tải mô hình |
 | Web | WSGI stdlib (`wsgiref`), server-render, không framework | 14 route; đổi sang Flask khi làm đăng nhập là thay `wsgi.py` + `render.py`, giữ các view |
 | AI | Extra tuỳ chọn `[ai]`: `onnxruntime` · `tokenizers` · `numpy` | Mô hình `paraphrase-multilingual-MiniLM-L12-v2` ONNX 118 MB chạy CPU; `CRIS_AI_PROVIDER=none` vẫn chạy đủ chức năng |
@@ -182,7 +182,7 @@ mạng công khai**.
 ## 🐛 Quản lý lỗi & Đóng góp (Bug tracker & Contributing)
 
 Báo lỗi hoặc đề xuất tính năng qua
-[GitHub Issues](https://github.com/maiychrus25/CRIS/issues), dùng mẫu
+[GitHub Issues](https://github.com/maiychrus25/ICTU-CRIS/issues), dùng mẫu
 trong [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/). Xem
 [CONTRIBUTING.md](CONTRIBUTING.md) cho quy trình, chuẩn mã và
 [Conventional Commits](https://www.conventionalcommits.org/) cho thông điệp

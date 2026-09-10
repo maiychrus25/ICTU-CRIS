@@ -104,6 +104,6 @@ trong checklist của [mẫu PR](.github/pull_request_template.md).
 2. Commit, rồi tag có chú thích: `git tag -a vX.Y.Z -m "..."` và `git push origin main vX.Y.Z`.
 3. Workflow **Release** kiểm phiên bản khớp tag, dựng sdist (`.tar.gz`) + wheel, tạo
    GitHub Release với ghi chú từ tệp release-notes cộng danh sách thay đổi tự sinh, đính
-   kèm gói và `SHA256SUMS`. Workflow **Docker** đẩy `ghcr.io/maiychrus25/cris:X.Y.Z`,
+   kèm gói và `SHA256SUMS`. Workflow **Docker** đẩy `ghcr.io/maiychrus25/ictu-cris:X.Y.Z`,
    `:X.Y`, `:latest`.
 4. Tag có dấu gạch (`v0.2.0-rc1`) được đánh dấu *pre-release*.

@@ -1,7 +1,7 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-# Docker — dựng ảnh và đẩy lên GHCR: ghcr.io/maiychrus25/cris
+# Docker — dựng ảnh và đẩy lên GHCR: ghcr.io/maiychrus25/ictu-cris
 #   main            → :latest, :main, :sha-<7 ký tự>
 #   tag vX.Y.Z      → :X.Y.Z, :X.Y, :latest
 #   pull request    → chỉ dựng, không đẩy
@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE: ghcr.io/maiychrus25/cris
+  IMAGE: ghcr.io/maiychrus25/ictu-cris
 
 jobs:
   image:

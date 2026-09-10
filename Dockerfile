@@ -3,7 +3,7 @@
 FROM python:3.12-slim
 ARG EXTRAS=""
 LABEL org.opencontainers.image.title="ICTU-CRIS" \
-      org.opencontainers.image.source="https://github.com/maiychrus25/CRIS" \
+      org.opencontainers.image.source="https://github.com/maiychrus25/ICTU-CRIS" \
       org.opencontainers.image.licenses="Apache-2.0"
 WORKDIR /app
 COPY pyproject.toml LICENSE NOTICE README.md ./
