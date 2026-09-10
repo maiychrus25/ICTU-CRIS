@@ -10,6 +10,9 @@ dependencies = ["psycopg[binary]>=3.2,<4"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<9"]
+# Thư viện AI là tuỳ chọn: provider none/fake chạy không cần chúng.
+# Giấy phép: onnxruntime MIT, tokenizers Apache-2.0, numpy BSD-3 (xem DEPENDENCIES.md).
+ai = ["onnxruntime>=1.17,<2", "tokenizers>=0.15,<1", "numpy>=1.26,<3"]
 
 [tool.setuptools.packages.find]
 include = ["cris*"]
@@ -19,3 +22,4 @@ cris = ["migrations/*.sql"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["slow: cần mô hình AI cục bộ, bỏ qua trong CI"]

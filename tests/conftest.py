@@ -5,6 +5,7 @@ import pytest
 from cris import db
 
 TABLES = [
+    "ai_query", "ai_suggestion", "ai_topic_keyword", "ai_topic", "ai_embedding",
     "audit_log", "declaration_event", "evidence", "declaration", "period",
     "duplicate_member", "duplicate_group", "author_link",
     "author_mention", "field_provenance", "work", "person", "unit",
