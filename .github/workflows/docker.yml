@@ -1,0 +1,59 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+# Docker — dựng ảnh và đẩy lên GHCR: ghcr.io/maiychrus25/cris
+#   main            → :latest, :main, :sha-<7 ký tự>
+#   tag vX.Y.Z      → :X.Y.Z, :X.Y, :latest
+#   pull request    → chỉ dựng, không đẩy
+# Ảnh có nhãn OCI (nguồn, giấy phép, phiên bản) do docker/metadata-action sinh.
+name: Docker
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    paths: [Dockerfile, pyproject.toml, "cris/**", ".github/workflows/docker.yml"]
+  workflow_dispatch:
+
+env:
+  IMAGE: ghcr.io/maiychrus25/cris
+
+jobs:
+  image:
+    name: Dựng và đẩy ảnh
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Đăng nhập GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=ICTU-CRIS
+            org.opencontainers.image.licenses=Apache-2.0
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

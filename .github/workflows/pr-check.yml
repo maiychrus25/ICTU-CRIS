@@ -1,0 +1,45 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+# PR Check — tiêu đề theo Conventional Commits, thân PR có nội dung, và liên kết
+# issue (closes/fixes/resolves #N) để issue tự đóng khi merge. Gắn nhãn
+# `skip-issue-link` cho PR không cần issue (sửa chính tả, cập nhật CI).
+name: PR Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate:
+    name: Kiểm tiêu đề, thân và liên kết issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tiêu đề theo Conventional Commits
+        env: { PR_TITLE: "${{ github.event.pull_request.title }}" }
+        run: |
+          if echo "$PR_TITLE" | grep -qP '^(feat|fix|docs|chore|ci|build|refactor|test|style|perf|revert)(\([a-z0-9.,/-]+\))?!?: .{10,}$'; then
+            echo "✅ $PR_TITLE"
+          else
+            echo "::error::Tiêu đề PR phải theo dạng 'type(scope): mô tả' (≥ 10 ký tự). Ví dụ: feat(ai): cache the provider per process"
+            exit 1
+          fi
+      - name: Thân PR không rỗng
+        env: { PR_BODY: "${{ github.event.pull_request.body }}" }
+        run: |
+          n=$(printf '%s' "$PR_BODY" | tr -d '[:space:]' | wc -c)
+          [ "$n" -ge 20 ] && echo "✅ thân PR $n ký tự" || { echo "::error::Thân PR quá ngắn (< 20 ký tự): mô tả thay đổi, lý do, cách kiểm."; exit 1; }
+      - name: Liên kết issue
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-issue-link') }}
+        env:
+          PR_TEXT: "${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}"
+        run: |
+          if printf '%s' "$PR_TEXT" | grep -iqP '(closes?|fixes?|resolves?)\s+#[0-9]+'; then
+            echo "✅ $(printf '%s' "$PR_TEXT" | grep -ioP '(closes?|fixes?|resolves?)\s+#[0-9]+' | head -1)"
+          else
+            echo "::error::PR chưa liên kết issue. Thêm 'closes #N' vào thân PR, hoặc gắn nhãn skip-issue-link."
+            exit 1
+          fi

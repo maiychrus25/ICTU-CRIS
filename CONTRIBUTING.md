@@ -83,3 +83,27 @@ trong checklist của [mẫu PR](.github/pull_request_template.md).
 Đóng góp vào dự án đồng nghĩa với việc đồng ý phát hành mã theo Apache-2.0
 (xem [LICENSE](LICENSE), [NOTICE](NOTICE),
 [docs/LICENSE_NOTICE.md](docs/LICENSE_NOTICE.md)).
+
+## Quy trình PR
+
+- Tiêu đề theo Conventional Commits: `type(scope): mô tả` — `feat`, `fix`, `docs`,
+  `chore`, `ci`, `build`, `refactor`, `test`, `style`, `perf`, `revert`. Workflow
+  **PR Check** chặn tiêu đề sai, thân rỗng, và PR không liên kết issue (`closes #N`);
+  gắn nhãn `skip-issue-link` cho sửa nhỏ không cần issue.
+- Nhãn được gắn tự động theo đường dẫn (`.github/labeler.yml`).
+- Issue chỉ đóng qua PR merge; đóng tay sẽ được mở lại (trừ `wontfix`/`invalid`/`duplicate`).
+- Không có dòng ghi công AI (`Co-Authored-By`…) trong thông điệp commit.
+- Tuỳ chọn: `pip install pre-commit && pre-commit install` để kiểm header SPDX, YAML,
+  lỗi cú pháp trước khi commit.
+
+## Quy trình phát hành
+
+1. Cập nhật `version` trong `pyproject.toml` và `CITATION.cff`; chuyển mục
+   `[Unreleased]` của `CHANGELOG.md` thành `[X.Y.Z] - YYYY-MM-DD`; viết
+   `docs/release-notes/vX.Y.Z.md`.
+2. Commit, rồi tag có chú thích: `git tag -a vX.Y.Z -m "..."` và `git push origin main vX.Y.Z`.
+3. Workflow **Release** kiểm phiên bản khớp tag, dựng sdist (`.tar.gz`) + wheel, tạo
+   GitHub Release với ghi chú từ tệp release-notes cộng danh sách thay đổi tự sinh, đính
+   kèm gói và `SHA256SUMS`. Workflow **Docker** đẩy `ghcr.io/maiychrus25/cris:X.Y.Z`,
+   `:X.Y`, `:latest`.
+4. Tag có dấu gạch (`v0.2.0-rc1`) được đánh dấu *pre-release*.

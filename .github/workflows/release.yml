@@ -1,0 +1,56 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+# Release — khi đẩy tag vX.Y.Z: kiểm phiên bản trong pyproject khớp tag, dựng sdist
+# (.tar.gz) + wheel, tạo GitHub Release với ghi chú từ docs/release-notes/<tag>.md
+# (nếu có) cộng danh sách thay đổi tự sinh, đính kèm gói. Định dạng đính kèm là
+# .tar.gz và .whl — không .zip/.rar (thể lệ trừ điểm định dạng đóng).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Dựng sdist và wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Phiên bản trong pyproject phải khớp tag
+        run: python scripts/check_version.py "${GITHUB_REF_NAME}"
+      - run: pip install build && python -m build
+      - run: |
+          echo "## Gói" && ls -la dist/
+          sha256sum dist/* > dist/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with: { name: dist, path: dist/ }
+
+  release:
+    name: Tạo GitHub Release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: dist, path: dist/ }
+      - name: Ghi chú phát hành
+        id: notes
+        run: |
+          f="docs/release-notes/${GITHUB_REF_NAME}.md"
+          if [ -f "$f" ]; then echo "path=$f" >> "$GITHUB_OUTPUT"; echo "dùng $f"; else echo "không có $f — chỉ dùng danh sách tự sinh"; fi
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: ICTU-CRIS ${{ github.ref_name }}
+          body_path: ${{ steps.notes.outputs.path }}
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+            dist/SHA256SUMS

@@ -1,0 +1,24 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+cff-version: 1.2.0
+message: "Nếu dùng phần mềm này trong nghiên cứu, xin trích dẫn như sau."
+type: software
+title: "ICTU-CRIS: hệ thống thông tin nghiên cứu cho Trường CNTT&TT – ĐH Thái Nguyên"
+abstract: >-
+  Một nguồn sự thật cho dữ liệu công bố khoa học: đồng bộ kho nguồn giữ nguyên bản
+  gốc, chuẩn hoá có xuất xứ từng trường, nối tác giả và gộp trùng qua hàng đợi
+  người quyết, tra cứu truy ngược được, và AI đối chiếu đề tài bằng mô hình cục bộ.
+authors:
+  - name: "ICTU-CRIS contributors"
+    alias: maiychrus25
+version: 0.1.0
+date-released: "2026-09-10"
+license: Apache-2.0
+repository-code: "https://github.com/maiychrus25/CRIS"
+keywords:
+  - CRIS
+  - research information system
+  - author disambiguation
+  - deduplication
+  - Vietnamese
+  - sentence embeddings

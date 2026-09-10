@@ -1,0 +1,44 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+# Triển khai một máy: PostgreSQL + ICTU-CRIS (web). Cấu hình qua deploy/.env
+# (tạo bằng deploy/setup.sh). Ảnh app dựng từ mã nguồn ở thư mục gốc, hoặc thay
+# `build` bằng `image: ghcr.io/maiychrus25/cris:0.1.0` để dùng ảnh phát hành.
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cris}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?đặt trong deploy/.env}
+      POSTGRES_DB: ${POSTGRES_DB:-cris}
+    volumes:
+      - cris_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cris} -d ${POSTGRES_DB:-cris}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build:
+      context: ..
+      args:
+        EXTRAS: ${CRIS_EXTRAS:-}          # "[ai]" để cài thư viện AI vào ảnh
+    image: ictu-cris:local
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cris}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-cris}
+      CRIS_AI_PROVIDER: ${CRIS_AI_PROVIDER:-none}
+      CRIS_AI_MODEL_DIR: /models
+    volumes:
+      - cris_models:/models                # mô hình AI tải một lần, giữ qua các lần dựng lại
+    ports:
+      - "${CRIS_PORT:-8000}:8000"
+    command: ["serve", "--host", "0.0.0.0", "--port", "8000"]
+
+volumes:
+  cris_pg: {}
+  cris_models: {}

@@ -56,6 +56,17 @@ trong lớp, nên gói lõi không kéo theo. Cả ba dùng nguyên trạng từ
 Không có thư viện nào trong nhóm này chứa mã bên thứ ba được đính kèm vào repo; mô hình
 là dữ liệu tải về, không phải mã nguồn, và không bị sửa.
 
+### Công cụ chỉ dùng trong CI / phát hành (không nằm trong sản phẩm)
+
+| Công cụ | Giấy phép | Dùng ở |
+|---|---|---|
+| `ruff` | MIT | lint trong CI và pre-commit |
+| `pip-audit` | Apache-2.0 | quét lỗ hổng trong CI |
+| `build` | MIT | dựng sdist/wheel trong CI và Release |
+| GitHub Actions: `actions/checkout`, `setup-python`, `upload-artifact`, `download-artifact`, `labeler` | MIT | workflow |
+| `docker/setup-buildx-action`, `login-action`, `metadata-action`, `build-push-action` | Apache-2.0 | workflow Docker |
+| `softprops/action-gh-release` | MIT | tạo GitHub Release |
+
 ## 3. Dịch vụ ngoài (External Services)
 
 | Dịch vụ | Phiên bản/Image | Giấy phép | Ghi chú |

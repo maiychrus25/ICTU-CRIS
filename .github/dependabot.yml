@@ -1,0 +1,20 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+# Dependabot — cập nhật thư viện Python, action GitHub và ảnh nền Docker mỗi tuần.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    labels: [dependencies]
+    commit-message: { prefix: "build" }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    labels: [devops]
+    commit-message: { prefix: "ci" }
+  - package-ecosystem: docker
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    labels: [devops]
+    commit-message: { prefix: "build" }

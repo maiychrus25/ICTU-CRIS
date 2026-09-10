@@ -1,0 +1,45 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+# Protect Issues — issue chỉ được đóng qua PR merge (closes #N). Đóng tay thì mở
+# lại và nhắc, trừ khi có nhãn wontfix / invalid / duplicate.
+name: Protect Issues
+
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  issues: write
+
+jobs:
+  reopen-if-manual:
+    name: Mở lại issue đóng tay
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.sender.type == 'User' &&
+      !contains(github.event.issue.labels.*.name, 'wontfix') &&
+      !contains(github.event.issue.labels.*.name, 'invalid') &&
+      !contains(github.event.issue.labels.*.name, 'duplicate')
+    steps:
+      - name: Issue có được đóng bởi PR/commit không
+        id: closer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          t=$(gh api graphql -F owner="${{ github.repository_owner }}" -F name="${{ github.event.repository.name }}" -F number="$NUM" -f query='
+            query($owner:String!,$name:String!,$number:Int!){ repository(owner:$owner,name:$name){ issue(number:$number){
+              timelineItems(last:1,itemTypes:CLOSED_EVENT){ nodes{ ... on ClosedEvent{ closer{ __typename } } } } } } }' \
+            --jq '.data.repository.issue.timelineItems.nodes[0].closer.__typename' 2>/dev/null || echo "")
+          echo "closer=$t"; echo "via_pr=$([ "$t" = PullRequest ] || [ "$t" = Commit ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Mở lại và nhắc
+        if: steps.closer.outputs.via_pr == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.event.sender.login }}
+        run: |
+          gh issue reopen "$NUM" --repo "$REPO"
+          gh issue comment "$NUM" --repo "$REPO" --body "Issue được mở lại tự động: @${ACTOR} đóng tay mà chưa có PR nào merge với \`closes #${NUM}\`. Quy tắc dự án: issue đóng qua PR để lịch sử thay đổi truy ngược được. Nếu đóng vì lý do khác, gắn nhãn \`wontfix\`, \`invalid\` hoặc \`duplicate\` rồi đóng lại."

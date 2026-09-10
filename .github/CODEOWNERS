@@ -1,0 +1,8 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+# Người được yêu cầu review mặc định theo đường dẫn.
+*                 @maiychrus25
+/cris/ai/         @maiychrus25
+/cris/migrations/ @maiychrus25
+/docs/            @maiychrus25
+/.github/         @maiychrus25

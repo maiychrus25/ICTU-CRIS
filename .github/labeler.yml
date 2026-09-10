@@ -1,0 +1,59 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+# Cấu hình cho actions/labeler@v5 — nhãn theo lát cắt của sản phẩm.
+
+ai:
+  - changed-files:
+      - any-glob-to-any-file: ["cris/ai/**", "tests/test_ai_*.py", "docs/ai.md"]
+
+web:
+  - changed-files:
+      - any-glob-to-any-file: ["cris/web/**", "tests/test_web_*.py"]
+
+sync:
+  - changed-files:
+      - any-glob-to-any-file: ["cris/sync.py", "cris/source/**", "tests/test_sync.py", "tests/test_repository.py", "tests/fixtures/**"]
+
+normalize:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "cris/normalize.py"
+          - "cris/people.py"
+          - "cris/link.py"
+          - "cris/dedup.py"
+          - "cris/rules.py"
+          - "cris/quality.py"
+          - "tests/test_normalize.py"
+          - "tests/test_people.py"
+          - "tests/test_link.py"
+          - "tests/test_dedup.py"
+          - "tests/test_rules.py"
+          - "tests/test_quality.py"
+
+period:
+  - changed-files:
+      - any-glob-to-any-file: ["cris/period.py", "tests/test_period.py"]
+
+database:
+  - changed-files:
+      - any-glob-to-any-file: ["cris/migrations/**", "cris/db.py", "docker/initdb/**"]
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file: ["docs/**", "*.md", "khao-sat-nguon/*.md"]
+
+ba:
+  - changed-files:
+      - any-glob-to-any-file: ["docs/ba/**", "docs/BRD.md", "docs/SRS.md"]
+
+devops:
+  - changed-files:
+      - any-glob-to-any-file: [".github/**", "Dockerfile", "docker-compose*.yml", "deploy/**", "scripts/**", ".pre-commit-config.yaml"]
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file: ["tests/**"]
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file: ["pyproject.toml", "DEPENDENCIES.md"]

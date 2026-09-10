@@ -10,6 +10,8 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=for-the-badge)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/maiychrus25/CRIS/ci.yml?style=for-the-badge&label=CI)](https://github.com/maiychrus25/CRIS/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/maiychrus25/CRIS?style=for-the-badge&label=release)](https://github.com/maiychrus25/CRIS/releases)
+[![Docker](https://img.shields.io/github/actions/workflow/status/maiychrus25/CRIS/docker.yml?style=for-the-badge&label=ghcr.io)](https://github.com/maiychrus25/CRIS/pkgs/container/cris)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg?style=for-the-badge)](pyproject.toml)
 ![PostgreSQL 16](https://img.shields.io/badge/postgresql-16-blue.svg?style=for-the-badge)
 [![Docker Ready](https://img.shields.io/badge/docker-ready-2496ED.svg?style=for-the-badge)](BUILDING.md)
@@ -91,11 +93,12 @@ Lược đồ CSDL nằm ở `cris/migrations/0001`–`0007` (PostgreSQL 16, kh�
 |---|---|---|
 | Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3 | Không ORM — truy vấn SQL trực tiếp |
 | CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0007` |
-| Đóng gói | Docker Compose | Image chạy được ngoài thư mục mã nguồn |
+| Đóng gói | sdist + wheel đính kèm mỗi Release; ảnh `ghcr.io/maiychrus25/cris` | Workflow `release.yml` kiểm phiên bản khớp tag; `docker.yml` đẩy ảnh theo semver |
+| Triển khai | `deploy/setup.sh` + `deploy/docker-compose.yml` | Một lệnh: DB, lược đồ, người dùng mặc định, web; `--ai` tải mô hình |
 | Web | WSGI stdlib (`wsgiref`), server-render, không framework | 14 route; đổi sang Flask khi làm đăng nhập là thay `wsgi.py` + `render.py`, giữ các view |
 | AI | Extra tuỳ chọn `[ai]`: `onnxruntime` · `tokenizers` · `numpy` | Mô hình `paraphrase-multilingual-MiniLM-L12-v2` ONNX 118 MB chạy CPU; `CRIS_AI_PROVIDER=none` vẫn chạy đủ chức năng |
 | Kiểm thử | pytest 8 trên PostgreSQL thật | 209 test, không mock cơ sở dữ liệu; +3 test `slow` chạy mô hình thật |
-| CI | GitHub Actions | `pytest -v -m "not slow"` trên PostgreSQL 16 |
+| CI | GitHub Actions | lint (ruff), test Python 3.12 + 3.13 trên PostgreSQL 16, `pip-audit`, dựng gói + ảnh; PR check, auto-label, Dependabot |
 | Quy tắc | Bảng `rule_set` có phiên bản | Chuẩn hoá tên, ánh xạ loại bài, khoá gộp |
 
 CLI thống nhất:
