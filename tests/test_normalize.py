@@ -167,3 +167,57 @@ def test_linked_mention_orphaned_when_name_disappears(conn, seeded):
     assert row["position"] < 0
     assert q(conn, "SELECT 1 FROM author_link WHERE mention_id=%s AND person_id=%s", cd_id, person_id)
     assert q(conn, "SELECT 1 FROM audit_log WHERE action='mention.orphaned' AND entity_id=%s", cd_id)
+
+def test_orphan_survives_next_cycle(conn, seeded):
+    v1 = {"archive": {"url": "https://r/bai-bao/h/", "title": "T4", "authors": "A B, C D", "pub_type": "Scopus",
+                      "year": "2021", "journal": "J", "volume": "V", "keywords": None},
+          "detail": {"title": "T4", "authors": ["A B", "C D"], "doi": [], "abstract": None, "meta": {}}}
+    load(conn, "bai_bao", v1, "https://r/bai-bao/h/")
+    normalize.normalize_pending(conn)
+    work_id = q(conn, "SELECT id FROM work")[0]["id"]
+    cd_id = q(conn, "SELECT id FROM author_mention WHERE work_id=%s AND raw_name='C D'", work_id)[0]["id"]
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO person(kind, display_name, name_norm) VALUES ('external','C D','c d') RETURNING id")
+        person_id = cur.fetchone()["id"]
+        cur.execute("INSERT INTO author_link(mention_id, person_id, confidence, state) VALUES (%s,%s,'ten_day_du_duy_nhat','DaXacNhan')",
+                    (cd_id, person_id))
+    conn.commit()
+
+    v2 = json.loads(json.dumps(v1)); v2["detail"]["authors"] = ["A B"]
+    load(conn, "bai_bao", v2, "https://r/bai-bao/h/")
+    normalize.normalize_pending(conn)   # "C D" trở thành mồ côi (position âm)
+
+    v3 = json.loads(json.dumps(v1)); v3["detail"]["authors"] = ["A B", "X Y"]
+    load(conn, "bai_bao", v3, "https://r/bai-bao/h/")
+    normalize.normalize_pending(conn)   # không được ném UniqueViolation
+
+    row = q(conn, "SELECT position FROM author_mention WHERE id=%s", cd_id)[0]
+    assert row["position"] < 0
+    assert q(conn, "SELECT 1 FROM author_link WHERE mention_id=%s AND person_id=%s", cd_id, person_id)
+    xy = q(conn, "SELECT position FROM author_mention WHERE work_id=%s AND raw_name='X Y'", work_id)[0]
+    assert xy["position"] == 2
+    logs = q(conn, "SELECT 1 FROM audit_log WHERE action='mention.orphaned' AND entity_id=%s", cd_id)
+    assert len(logs) == 1
+
+def test_duplicate_names_in_one_record_keep_two_rows(conn, seeded):
+    v1 = {"archive": {"url": "https://r/bai-bao/i/", "title": "T5", "authors": "A B", "pub_type": "Scopus",
+                      "year": "2021", "journal": "J", "volume": "V", "keywords": None},
+          "detail": {"title": "T5", "authors": ["A B"], "doi": [], "abstract": None, "meta": {}}}
+    load(conn, "bai_bao", v1, "https://r/bai-bao/i/")
+    normalize.normalize_pending(conn)
+    work_id = q(conn, "SELECT id FROM work")[0]["id"]
+    ab_id = q(conn, "SELECT id FROM author_mention WHERE work_id=%s AND raw_name='A B'", work_id)[0]["id"]
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO person(kind, display_name, name_norm) VALUES ('external','A B','a b') RETURNING id")
+        person_id = cur.fetchone()["id"]
+        cur.execute("INSERT INTO author_link(mention_id, person_id, confidence, state) VALUES (%s,%s,'ten_day_du_duy_nhat','DaXacNhan')",
+                    (ab_id, person_id))
+    conn.commit()
+
+    v2 = json.loads(json.dumps(v1)); v2["detail"]["authors"] = ["A B", "A B"]
+    load(conn, "bai_bao", v2, "https://r/bai-bao/i/")
+    normalize.normalize_pending(conn)
+
+    ms = q(conn, "SELECT id, position FROM author_mention WHERE work_id=%s ORDER BY position", work_id)
+    assert [m["position"] for m in ms] == [1, 2]
+    assert ms[0]["id"] == ab_id

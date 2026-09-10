@@ -90,8 +90,10 @@ def normalize_record(conn, rec, rules, actor_id=None):
             extra = "primary_source_record_id=%s, rule_set_id=%s, updated_at=now()"
             cur.execute(f"UPDATE work SET {(sets + ', ' + extra) if sets else extra} WHERE id=%s",
                         (*upd_cols.values(), rec["id"], rs_id, work_id))
-            # giải phóng mọi vị trí (không vi phạm UNIQUE) trước khi khớp lại lượt tên theo name_key
-            cur.execute("UPDATE author_mention SET position = -position WHERE work_id=%s", (work_id,))
+            # giải phóng vị trí đang active (không vi phạm UNIQUE) trước khi khớp lại theo name_key;
+            # không đụng tới các hàng đã mồ côi từ chu kỳ trước (đang giữ position âm)
+            cur.execute("UPDATE author_mention SET position = -position WHERE work_id=%s AND position > 0 RETURNING id", (work_id,))
+            freed = {r["id"] for r in cur.fetchall()}
             cur.execute("DELETE FROM author_mention WHERE work_id=%s AND id NOT IN (SELECT mention_id FROM author_link)", (work_id,))
         else:
             names = ", ".join(cols)
@@ -121,7 +123,9 @@ def normalize_record(conn, rec, rules, actor_id=None):
             is_ph = RU.is_placeholder(m["raw_name"], nb)
             is_tr = f["authors_truncated"] and m["role"] == "author"
             if existing:
-                cur.execute("SELECT id FROM author_mention WHERE work_id=%s AND role=%s AND name_key=%s ORDER BY id",
+                # chỉ khớp với hàng chưa nhận (position âm: mồ côi cũ hoặc vừa giải phóng ở trên);
+                # tên trùng lặp trong cùng bản ghi mới sẽ không giành lại cùng một hàng đã khớp
+                cur.execute("SELECT id FROM author_mention WHERE work_id=%s AND role=%s AND name_key=%s AND position < 0 ORDER BY id",
                             (work_id, m["role"], nk))
                 candidates = [r["id"] for r in cur.fetchall() if r["id"] not in matched]
                 if candidates:
@@ -134,11 +138,14 @@ def normalize_record(conn, rec, rules, actor_id=None):
                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                         (work_id, m["role"], pos[m["role"]], m["raw_name"], nn, nk, deg, is_ph, is_tr))
         if existing:
-            # lượt tên còn giữ liên kết nhưng không còn khớp tên mới nào: mồ côi, giữ nguyên và ghi audit
-            cur.execute("SELECT id, name_key FROM author_mention WHERE work_id=%s AND position < 0", (work_id,))
-            for orphan in cur.fetchall():
-                audit.log(conn, actor_id, "mention.orphaned", "author_mention", orphan["id"],
-                          before={"work_id": work_id, "name_key": orphan["name_key"]})
+            # chỉ ghi audit cho hàng vừa chuyển từ active sang mồ côi ở chu kỳ này (freed nhưng không được khớp lại);
+            # mồ côi từ chu kỳ trước (đã nằm ngoài freed) không bị ghi lặp lại
+            newly_orphaned = freed - matched
+            if newly_orphaned:
+                cur.execute("SELECT id, name_key FROM author_mention WHERE id = ANY(%s)", (list(newly_orphaned),))
+                for orphan in cur.fetchall():
+                    audit.log(conn, actor_id, "mention.orphaned", "author_mention", orphan["id"],
+                              before={"work_id": work_id, "name_key": orphan["name_key"]})
     return work_id, bool(existing)
 
 def normalize_pending(conn, actor_id=None):
