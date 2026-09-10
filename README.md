@@ -13,7 +13,7 @@ cho lớp hệ thống quản lý thông tin nghiên cứu của một tổ ch�
 tác giả, đơn vị, kỳ báo cáo (chuẩn CERIF, mạng euroCRIS). `ICTU-CRIS` là tên
 làm việc.
 
-## Ba số liệu chi phối thiết kế
+## Ba số liệu chi phối thiết kế (Three driving measurements)
 
 Đo ngày 09–10/09/2026 trên 8.034 bản ghi và 410 hồ sơ giảng viên của kho
 nguồn (xem [khao-sat-nguon/](khao-sat-nguon/README.md)):
@@ -48,7 +48,7 @@ mô hình quan hệ (relational model), không phải một chuỗi công cụ l
   dùng — quy tắc BR-18 ("AI gợi ý, người quyết", xem
   [docs/ba/15-project-rules.md](docs/ba/15-project-rules.md)).
 
-## Trạng thái hiện tại
+## Trạng thái hiện tại (Status)
 
 Lát cắt **S** (đồng bộ) và **N** (chuẩn hoá — nối tác giả, gộp trùng, báo
 cáo chất lượng) cùng phần tra cứu dữ liệu chạy được **từ dòng lệnh**, có 90
@@ -73,7 +73,7 @@ Xem [BUILDING.md](BUILDING.md) để chạy đủ đường ống (`seed`, `sync
 `normalize`, `people`, `link`, `dedup`, `quality`) và cách dịch/chạy không
 dùng Docker (venv + `pip install -e ".[dev]"`).
 
-## Kiến trúc
+## Kiến trúc (Architecture)
 
 Gói `cris` tổ chức thành đường ống bốn bước: **đồng bộ** (`sync`) → **chuẩn
 hoá** (`normalize`) → **nối và gộp tác giả** (`people`, `link`, `dedup`) →
@@ -86,7 +86,7 @@ CLI thống nhất:
 python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--json]
 ```
 
-## Tài liệu
+## Tài liệu (Documentation)
 
 | Tài liệu | Nội dung |
 |---|---|
@@ -98,8 +98,9 @@ python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--
 | [docs/LICENSE_NOTICE.md](docs/LICENSE_NOTICE.md) | Lý do chọn giấy phép, ma trận tương thích, quy định header |
 | [CHANGELOG.md](CHANGELOG.md) | Lịch sử thay đổi |
 | [khao-sat-nguon/](khao-sat-nguon/README.md) | Khảo sát kho nguồn `repository.ictu.edu.vn` + công cụ trích xuất |
+| [docs/KH triển khai ĐATN_DHCQ_K21.docx](docs/KH%20triển%20khai%20ĐATN_DHCQ_K21.docx) | Kế hoạch đồ án tốt nghiệp của Khoa CNTT (đầu vào nghiệp vụ cho luồng đối chiếu đề tài; không phải lịch của dự án) |
 
-## Đóng góp
+## Đóng góp (Contributing)
 
 Xem [CONTRIBUTING.md](CONTRIBUTING.md) cho quy trình, Conventional Commits
 và chuẩn mã. Báo lỗi hoặc đề xuất tính năng qua
@@ -107,7 +108,7 @@ và chuẩn mã. Báo lỗi hoặc đề xuất tính năng qua
 trong [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/). Quy tắc ứng xử ở
 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-## Giấy phép
+## Giấy phép (License)
 
 Apache-2.0 — xem [LICENSE](LICENSE), [NOTICE](NOTICE) và
 [docs/LICENSE_NOTICE.md](docs/LICENSE_NOTICE.md). Bản quyền: ICTU-CRIS

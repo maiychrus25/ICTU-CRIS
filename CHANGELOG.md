@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+Chưa có trong bản này: giao diện web (hàng đợi xác nhận, tra cứu dữ liệu —
+hiện chỉ chạy được từ dòng lệnh), nhập Excel khoa (S-06), quét bù phân
+trang (S-04).
+
 ### Added
 
 - Lát cắt **S** (đồng bộ — sync): kéo dữ liệu công bố khoa học từ kho
@@ -26,12 +30,6 @@
   (`.github/ISSUE_TEMPLATE/`), mẫu PR, CI (`pytest -v` trên PostgreSQL 16
   qua GitHub Actions).
 - `BUILDING.md` — hướng dẫn dịch và chạy từ mã nguồn (Docker và venv).
-
-### Chưa có (Not yet)
-
-- Giao diện web (hàng đợi xác nhận, tra cứu dữ liệu) — hiện chỉ chạy được
-  từ dòng lệnh.
-- Nhập Excel khoa (S-06) và quét bù phân trang (S-04).
 
 ## [0.1.0] - Chưa phát hành
 

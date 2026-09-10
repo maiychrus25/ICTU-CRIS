@@ -75,7 +75,7 @@ trong checklist của [mẫu PR](.github/pull_request_template.md).
 - Dữ liệu thật thu thập từ `khao-sat-nguon/` nằm ngoài repo (xem
   `.gitignore`) và không bao giờ được commit.
 
-## Giấy phép
+## Giấy phép (License)
 
 Đóng góp vào dự án đồng nghĩa với việc đồng ý phát hành mã theo Apache-2.0
 (xem [LICENSE](LICENSE), [NOTICE](NOTICE),
