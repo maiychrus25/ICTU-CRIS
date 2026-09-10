@@ -104,7 +104,7 @@ Duy nhất: `(source, source_key, version)`. Chỉ số: `(source, source_key)`.
 | 25 | `rule_set_id` | bigint → `rule_set.id` | K | | Phiên bản quy tắc đã dùng để chuẩn hoá |
 | 26 | `created_at` / `updated_at` | timestamptz | C | now() | |
 
-Chỉ số: `doi` (duy nhất từng phần khi khác null và `merged_into_id` null), `title_norm`, `(doc_type, year_issue)`.
+Chỉ số: `doi` (duy nhất từng phần chỉ trong các công trình `state = DaXacNhan` và khác null; hai công trình mới đồng bộ cùng DOI phải cùng tồn tại để gộp trùng phát hiện được, N-07), `title_norm`, `(doc_type, year_issue)`.
 
 Không có cột "năm công bố" tính sẵn. Năm tính theo quy tắc của kỳ báo cáo (N-17) từ ba mốc trên, là việc của giai đoạn R.
 
