@@ -15,14 +15,14 @@ def test_default_provider_is_none():
 
 
 def test_core_package_does_not_import_ai_libraries():
-    """Gói lõi (web, CLI, provider none) không kéo onnxruntime/numpy vào tiến trình.
+    """Gói lõi (API, CLI, provider none) không kéo onnxruntime/numpy vào tiến trình.
 
     Chạy trong tiến trình con: test khác trong cùng phiên (ví dụ test `slow`) có thể
     đã import các thư viện này, nên kiểm trong tiến trình hiện tại không có ý nghĩa.
     """
     import subprocess
     code = ("import sys; from cris.ai import provider, embed; provider.get_provider({}); "
-            "import cris.web.wsgi, cris.cli; "
+            "import cris.api.app, cris.cli; "
             "print(sorted(m for m in ('onnxruntime','numpy','tokenizers') if m in sys.modules))")
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
                          env={"CRIS_AI_PROVIDER": "none", "PATH": "/usr/bin:/bin"}, timeout=60)

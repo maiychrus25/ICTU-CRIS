@@ -1,7 +1,7 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
 """Tra cứu công trình, chi tiết có xuất xứ từng trường, hồ sơ giảng viên, trục chủ đề.
-SQL chuyển nguyên từ `cris/web/views_search.py`."""
+SQL chuyển nguyên từ UI HTML cũ (đã gỡ, xem CHANGELOG)."""
 from fastapi import APIRouter, HTTPException, Query
 
 from cris.api.deps import Conn

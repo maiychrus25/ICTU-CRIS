@@ -1,7 +1,7 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
 """Hai hàng đợi người quyết: liên kết tác giả và nghi trùng.
-SQL chuyển nguyên từ `cris/web/views_queue.py` và `views_dedup.py`; quyết định đi qua
+SQL chuyển nguyên từ UI HTML cũ (đã gỡ, xem CHANGELOG); quyết định đi qua
 `link.decide_link` / `dedup.decide_group` (BR-18), lô nhiều id trong một giao dịch."""
 from fastapi import APIRouter, HTTPException, Query
 

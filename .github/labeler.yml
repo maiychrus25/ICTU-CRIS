@@ -8,7 +8,7 @@ ai:
 
 web:
   - changed-files:
-      - any-glob-to-any-file: ["cris/web/**", "tests/test_web_*.py"]
+      - any-glob-to-any-file: ["frontend/**", "cris/api/**", "tests/test_api_*.py"]
 
 sync:
   - changed-files:

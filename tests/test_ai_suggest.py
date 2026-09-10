@@ -1,15 +1,13 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
-import io
 import itertools
-from urllib.parse import urlencode
 
 import pytest
+from fastapi.testclient import TestClient
 
-import cris.web.views_queue  # noqa: F401  # đăng ký route vào wsgi.ROUTES
 from cris.ai import suggest as S
-from cris.ai.provider import FakeProvider
-from cris.web import wsgi
+from cris.ai.provider import FakeProvider, clear_provider_cache
+from cris.api.app import create_app
 
 _seq = itertools.count()
 
@@ -164,49 +162,36 @@ def test_suggest_duplicates_never_touches_business_tables(conn):
     assert _counts(conn) == before
 
 
-# --- giao diện: cột "Gợi ý AI" trong hàng đợi tác giả (SC-08) ---
+# --- API: cột "Gợi ý AI" trong hàng đợi tác giả (SC-08) ---
 
-def _call(method, path, headers=None, body=b"", query=""):
-    environ = {
-        "REQUEST_METHOD": method, "PATH_INFO": path, "QUERY_STRING": query,
-        "wsgi.input": io.BytesIO(body), "CONTENT_LENGTH": str(len(body)),
-    }
-    if headers:
-        environ.update(headers)
-    captured = {}
-
-    def start_response(status, resp_headers, exc_info=None):
-        captured["status"] = status
-        captured["headers"] = resp_headers
-
-    result = wsgi.app(environ, start_response)
-    body_bytes = b"".join(result)
-    return captured["status"], dict(captured["headers"]), body_bytes.decode("utf-8", errors="replace")
+@pytest.fixture
+def client(monkeypatch):
+    monkeypatch.setenv("CRIS_AI_PROVIDER", "fake")
+    clear_provider_cache()
+    return TestClient(create_app(static_dir="/nonexistent"))
 
 
-def test_queue_page_shows_ai_suggestion_column_when_present(conn):
+def test_author_queue_shows_ai_suggestion_when_present(client, conn):
     l1, l2, l3 = _seed_candidates(conn)
     S.suggest_author_links(conn, FakeProvider())
-    conn.commit()  # wsgi.app dùng kết nối riêng, cần thấy dữ liệu đã ghi
-    status, _, body = _call("GET", "/doi-soat/tac-gia", headers={"HTTP_X_CRIS_USER": "1"},
-                             query=urlencode({"state": "ChoXacNhan"}))
-    assert status.startswith("200")
-    assert "Gợi ý AI" in body
-    assert "#1 —" in body
-    assert "chưa có công trình đã xác nhận" in body
-    assert "Traceback" not in body
+    conn.commit()  # TestClient dùng kết nối riêng, cần thấy dữ liệu đã ghi
+    items = client.get("/api/queue/authors", params={"state": "ChoXacNhan"}).json()["items"]
+    by_link = {r["link_id"]: r for r in items}
+    assert by_link[l1]["ai_rank"] == 1
+    assert by_link[l1]["ai_score"] is not None
+    assert by_link[l3]["ai_score"] is None
+    assert by_link[l3]["ai_reason"] == "chưa có công trình đã xác nhận"
 
 
-def test_queue_page_shows_dash_when_no_ai_suggestion(conn):
+def test_author_queue_shows_null_ai_fields_when_no_suggestion(client, conn):
     w = mk_work(conn, abstract="x")
     p1 = mk_person(conn, "P Một"); p2 = mk_person(conn, "P Hai")
     m = mk_mention(conn, w, "Ung vien")
-    mk_link(conn, m, p1, "ChoXacNhan")
+    l1 = mk_link(conn, m, p1, "ChoXacNhan")
     mk_link(conn, m, p2, "ChoXacNhan")
-    conn.commit()  # wsgi.app dùng kết nối riêng, cần thấy dữ liệu đã ghi
-    status, _, body = _call("GET", "/doi-soat/tac-gia", headers={"HTTP_X_CRIS_USER": "1"},
-                             query=urlencode({"state": "ChoXacNhan"}))
-    assert status.startswith("200")
-    assert "Gợi ý AI" in body
-    assert "—" in body
-    assert "Traceback" not in body
+    conn.commit()  # TestClient dùng kết nối riêng, cần thấy dữ liệu đã ghi
+    items = client.get("/api/queue/authors", params={"state": "ChoXacNhan"}).json()["items"]
+    row = next(r for r in items if r["link_id"] == l1)
+    assert row["ai_rank"] is None
+    assert row["ai_score"] is None
+    assert row["ai_reason"] is None
