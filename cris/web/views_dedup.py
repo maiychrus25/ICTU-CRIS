@@ -64,6 +64,19 @@ def _fetch_group(conn, gid):
         return cur.fetchone()
 
 
+def _fetch_ai_similarity(conn, gid):
+    """Tương đồng tóm tắt (AI, FR-AI-07): min–max cosine giữa các thành viên,
+    hoặc `None` nếu chưa có gợi ý. Chỉ đọc `ai_suggestion` — không tính lại."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT payload FROM ai_suggestion WHERE kind='duplicate' AND target_id=%s "
+            "ORDER BY built_at DESC LIMIT 1",
+            (gid,),
+        )
+        row = cur.fetchone()
+    return row["payload"] if row else None
+
+
 def _fetch_members(conn, gid):
     with conn.cursor() as cur:
         cur.execute(
@@ -218,6 +231,12 @@ def detail(req, gid):
         f'<p>{badge(state_label, state_kind)} · '
         f'{e(BASIS_LABELS.get(group["basis"], group["basis"]))} · {e(group["doc_type"])}</p>'
     )
+
+    ai_sim = _fetch_ai_similarity(req.conn, gid)
+    if ai_sim:
+        parts.append(
+            f'<p>Tương đồng tóm tắt (AI): {e(round(ai_sim["min"], 2))}–{e(round(ai_sim["max"], 2))}</p>'
+        )
 
     has_hint = bool(group["hint"])
     if has_hint:
