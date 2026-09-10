@@ -104,3 +104,28 @@ def test_sync_repository_detail_failure_changed_archive_marks_stale(conn, monkey
     assert versions[1]["raw"]["archive"]["title"] == "T2"
     assert versions[1]["raw"]["detail"]["authors"] == ["A B"]
     assert versions[1]["raw"]["detail_stale"] is True
+
+def test_page_drift_does_not_create_a_fake_version(conn):
+    """Kho sắp xếp không ổn định nên số trang trôi giữa các lần đồng bộ.
+    `_page` là siêu dữ liệu tìm thấy, không phải nội dung: không được băm."""
+    for page in (27, 28):
+        sync.run_sync(conn, source="repository", scope="do-an", doc_type="do_an",
+                      records=[("u1", {"archive": {"title": "A", "_page": page}})],
+                      expected=1, full=True)
+    vs = rows(conn, "SELECT version FROM source_record WHERE source_key='u1'")
+    assert [v["version"] for v in vs] == [1]
+
+def test_backfill_marker_does_not_create_a_fake_version(conn):
+    sync.run_sync(conn, source="repository", scope="do-an", doc_type="do_an",
+                  records=[("u1", {"archive": {"title": "A", "_page": 3}})], expected=1, full=True)
+    sync.run_sync(conn, source="repository", scope="do-an", doc_type="do_an",
+                  records=[("u1", {"archive": {"title": "A", "_page": 1, "_backfill": {"cohort": "21"}}})],
+                  expected=1, full=True)
+    assert len(rows(conn, "SELECT 1 FROM source_record WHERE source_key='u1'")) == 1
+
+def test_real_content_change_still_creates_a_version(conn):
+    for title in ("A", "B"):
+        sync.run_sync(conn, source="repository", scope="do-an", doc_type="do_an",
+                      records=[("u1", {"archive": {"title": title, "_page": 1}})], expected=1, full=True)
+    vs = rows(conn, "SELECT version FROM source_record WHERE source_key='u1' ORDER BY version")
+    assert [v["version"] for v in vs] == [1, 2]

@@ -3,6 +3,7 @@
 import html
 import re
 import time
+import urllib.parse
 import urllib.request
 
 BASE = "https://repository.ictu.edu.vn"
@@ -160,11 +161,58 @@ def extract_orcid(h):
     m = re.search(r'orcid\.org/(\d{4}-\d{4}-\d{4}-\d{3}[\dX])', h)
     return m.group(1) if m else None
 
-def iter_archive(path, fetch=get, max_pages=400):
+# S-04 quét bù phân trang.
+# Kho nguồn sắp xếp theo cột không duy nhất, nên LIMIT/OFFSET trả kết quả không
+# ổn định ở chỗ có giá trị bằng nhau: một số bản ghi hiện lặp ở hai trang liền
+# nhau và số khác không bao giờ lọt vào trang nào. Đo 09/2026: duyệt hết 269
+# trang /do-an/ chỉ ra 5.364 trên 5.375 bản ghi. Bộ lọc phân hoạch kho theo
+# trục khác nên chạm được phần bị bỏ sót.
+FACET = {
+    "bai-bao":  "dept",
+    "do-an":    "cohort",
+    "luan-van": "cohort",
+    "luan-an":  "cohort",
+}
+
+def facet_options(h, name):
+    """Giá trị bộ lọc trong <select name=...>, đã giải mã thực thể HTML.
+
+    Giải mã là bắt buộc: value="KT&amp;CN" phải thành "KT&CN" trước khi mã hoá
+    vào URL, nếu không kho trả về 0 kết quả.
+    """
+    m = re.search(r'<select[^>]*name="%s"[^>]*>(.*?)</select>' % re.escape(name), h, re.S)
+    if not m:
+        return []
+    vals = (html.unescape(v) for v in re.findall(r'<option[^>]*value="([^"]*)"', m.group(1)))
+    return [v for v in dict.fromkeys(vals) if v]
+
+def _iter_facet(path, facet, value, fetch, max_pages):
+    """Duyệt hết các trang của một giá trị bộ lọc."""
+    q = urllib.parse.quote(value, safe="")
     seen, pg, total = set(), 1, None
+    while pg <= max_pages:
+        url = f"{BASE}/{path}/?{facet}={q}" + (f"&pg={pg}" if pg > 1 else "")
+        h = fetch(url)
+        if total is None:
+            total = archive_total(h)
+        fresh = [r for r in parse_archive(path, h) if r.get("url") and r["url"] not in seen]
+        if not fresh:
+            return
+        for r in fresh:
+            seen.add(r["url"])
+            r["_page"] = pg
+            yield r
+        if total and len(seen) >= total:
+            return
+        pg += 1
+
+def iter_archive(path, fetch=get, max_pages=400, backfill=True):
+    seen, pg, total, first = set(), 1, None, None
     while pg <= max_pages:
         url = f"{BASE}/{path}/" + (f"?pg={pg}" if pg > 1 else "")
         h = fetch(url)
+        if first is None:
+            first = h
         if total is None:
             total = archive_total(h)
         new = [r for r in parse_archive(path, h) if r.get("url") and r["url"] not in seen]
@@ -173,5 +221,19 @@ def iter_archive(path, fetch=get, max_pages=400):
             r["_page"] = pg
             yield r
         if not new or (total and len(seen) >= total):
-            return
+            break
         pg += 1
+
+    # Lật trang xong mà vẫn thiếu so với số kho tự công bố: quét bù theo bộ lọc.
+    facet = FACET.get(path)
+    if not (backfill and facet and total and first is not None and len(seen) < total):
+        return
+    for value in facet_options(first, facet):
+        if len(seen) >= total:
+            return
+        for r in _iter_facet(path, facet, value, fetch, max_pages):
+            if r["url"] in seen:
+                continue
+            seen.add(r["url"])
+            r["_backfill"] = {facet: value}
+            yield r
