@@ -94,34 +94,83 @@ pytest -v
   (`postgresql://cris:cris@localhost:5432/cris_test`) nếu không đặt biến môi
   trường; `.env.example` đã có sẵn giá trị này.
 
-## 6. Chạy giao diện web (Running the web interface)
+## 6. Chạy giao diện (Running the interface)
 
-Sau khi đã `migrate` và có dữ liệu, chạy API:
+Giao diện là ứng dụng Next.js xuất tĩnh (`frontend/`, App Router, TypeScript,
+Tailwind, shadcn/ui) gọi vào API FastAPI qua `/api/*`; không có server-render
+phía Node lúc chạy — chỉ HTML/CSS/JS tĩnh do FastAPI phục vụ.
+
+### 6.1 Dựng giao diện (build tĩnh)
+
+Yêu cầu Node.js 24.
+
+```bash
+cd frontend
+npm ci
+npm run build            # next build (output: "export") → frontend/out/
+```
+
+`frontend/out/` là thư mục FastAPI mount ở `/` khi có (xem `cris/api/app.py`).
+Sau khi đã `migrate` và có dữ liệu, chạy API phục vụ cả hai:
 
 ```bash
 python -m cris serve                      # FastAPI/uvicorn, mặc định http://127.0.0.1:8000
 python -m cris serve --host 0.0.0.0 --port 8080
 ```
 
-Mặc định `serve` chạy lớp API JSON FastAPI: router `/api/*` (tra cứu, hàng đợi
-liên kết tác giả, hàng đợi nghi trùng, đối chiếu đề tài, chất lượng dữ liệu),
-tài liệu OpenAPI tương tác tại `/docs`. Bản xuất tĩnh của giao diện Next.js
-(`frontend/out`), nếu có, được phục vụ ở `/`.
+`serve` chạy lớp API JSON FastAPI: router `/api/*` (tra cứu, hàng đợi liên kết
+tác giả, hàng đợi nghi trùng, đối chiếu đề tài, tổng quan, xuất CSV, nhật ký,
+kỳ báo cáo, rà soát trùng đề tài, chất lượng dữ liệu), tài liệu OpenAPI tương
+tác tại `/docs`. Bản xuất tĩnh của giao diện Next.js (`frontend/out`), nếu có,
+được phục vụ ở `/` — **cùng gốc**, không cần CORS trong sản xuất.
 
-UI HTML cũ (`cris/web/wsgi.py`, `wsgiref`) vẫn giữ cho tới khi giao diện Next.js
-ngang màn; chạy bằng cờ `--legacy`:
+### 6.2 Chạy phát triển hai cổng (dev, hot reload)
 
 ```bash
-python -m cris serve --legacy             # UI HTML cũ: /doi-soat/tac-gia, /tra-cuu, ...
+# cổng 1: API
+python -m cris serve --port 8000
+
+# cổng 2: Next.js dev server, gọi API ở cổng 8000
+cd frontend
+NEXT_PUBLIC_API_BASE=http://localhost:8000 npm run dev   # http://localhost:3000
 ```
 
-Giao diện cũ gồm: hàng đợi liên kết tác giả (`/doi-soat/tac-gia`), hàng đợi nghi
-trùng (`/doi-soat/trung-lap`), tra cứu công trình (`/tra-cuu`), hồ sơ công bố
-giảng viên, và báo cáo chất lượng dữ liệu (`/chat-luong-du-lieu`).
+`lib/api.ts` đọc `NEXT_PUBLIC_API_BASE` lúc build (rỗng = cùng gốc, dùng khi
+chạy sau FastAPI); `CRIS_CORS_ORIGINS` ở phía API mặc định đã mở cho
+`http://localhost:3000`. Chạy giao diện độc lập không cần backend bằng dữ liệu
+mẫu: `NEXT_PUBLIC_MOCK=1 npm run dev` (đọc `frontend/lib/fixtures.ts`).
+
+### 6.3 Kiểm thử giao diện (Playwright)
+
+```bash
+cd frontend
+npm run lint && npx tsc --noEmit && npm run build
+npx playwright install --with-deps chromium
+npx playwright test        # chạy trên dữ liệu mẫu (NEXT_PUBLIC_MOCK), không cần backend
+```
+
+### 6.4 Ảnh Docker đa tầng (multi-stage)
+
+`Dockerfile` có hai tầng: `node:24-alpine` dựng `frontend/out/` (`npm ci &&
+npm run build`), rồi tầng `python:3.12-slim` sao chép `frontend/out/` vào
+`/app/frontend/out` và cài `cris`. Một ảnh duy nhất chạy được mọi lệnh CLI lẫn
+`serve` (API + giao diện cùng container, cùng cổng 8000):
+
+```bash
+docker build -t ictu-cris:full --build-arg EXTRAS="[ai]" .   # EXTRAS rỗng: không cài AI
+docker run --rm -p 8000:8000 -e DATABASE_URL=postgresql://cris:cris@host:5432/cris \
+  ictu-cris:full serve --host 0.0.0.0 --port 8000
+```
+
+Gói sdist/wheel dựng bằng `python -m build` (xem `release.yml`) **không** đóng
+gói `frontend/` — `pyproject.toml` chỉ khai `packages.find include = ["cris*"]`,
+nên bản phát hành PyPI-style là mã Python thuần. **Ảnh Docker mới mới là bản
+chạy đủ** (API + giao diện): người triển khai dùng ảnh
+`ghcr.io/maiychrus25/ictu-cris`, không phải sdist/wheel, để có giao diện.
 
 Mọi quyết định đều được ghi kèm người thực hiện, nên cần ít nhất một người dùng
-có vai trò `rd_officer`. Chưa có thì cả `/api/*` (dùng `link.decide_link` /
-`dedup.decide_group`) lẫn UI cũ đều trả về `503` kèm hướng dẫn:
+có vai trò `rd_officer`. Chưa có thì `/api/*` (dùng `link.decide_link` /
+`dedup.decide_group`) trả về `503` kèm hướng dẫn:
 
 ```sql
 INSERT INTO app_user(email, display_name, roles)
@@ -130,9 +179,8 @@ VALUES ('ten@ictu.edu.vn', 'Tên hiển thị', ARRAY['rd_officer']);
 
 **Chưa có đăng nhập thật.** Bản này chạy với một người dùng mặc định (hoặc header
 `X-CRIS-User: <id>`); xác thực và phân quyền theo đơn vị là NFR-01 và NFR-02,
-chưa triển khai. `--legacy` dùng `wsgiref` — máy chủ phát triển; API FastAPI
-chạy qua `uvicorn` — cũng **không triển khai lên mạng công khai** nếu chưa có
-xác thực thật.
+chưa triển khai. API FastAPI chạy qua `uvicorn` — **không triển khai lên mạng
+công khai** nếu chưa có xác thực thật.
 
 ## 7. Bật AI (Enabling the AI features)
 
@@ -187,3 +235,13 @@ mount thư mục mã nguồn và PostgreSQL 16 từ `docker compose`:
 
 `migrate` trả về danh sách rỗng khi mọi migration đã được áp dụng; `quality --json` in
 báo cáo chất lượng hiện tại của cơ sở dữ liệu.
+
+Ngày 11/09/2026 (E6 — đóng gói một container, gỡ UI cũ), cùng máy phát triển:
+
+| Việc | Kết quả |
+|---|---|
+| `docker build -t ictu-cris:full --build-arg EXTRAS="[ai]" .` (Dockerfile đa tầng) | dựng thành công, ảnh 507 MB; `frontend/out/index.html` có trong ảnh |
+| `grep -rl 'localhost:8001' /app/frontend/out` trong ảnh | không có kết quả — bản xuất tĩnh gọi API cùng gốc |
+| `docker run ... ictu-cris:full serve --host 0.0.0.0 --port 8000` rồi `curl` 11 trang tĩnh (`/`, `/tra-cuu/`, `/tong-quan/`, `/doi-soat/tac-gia/`, `/doi-soat/trung-lap/`, `/doi-chieu/`, `/doi-chieu/ra-soat/`, `/ky-bao-cao/`, `/nhat-ky/`, `/chat-luong-du-lieu/`, `/ve/`) + 3 route API (`/api/health`, `/api/stats`, `/docs`) | tất cả `200`, 0 dòng traceback trong `docker logs` |
+| `CRIS_AI_PROVIDER=none python -c "import cris.api.app, cris.cli"` | `onnxruntime`, `numpy`, `tokenizers` không nằm trong `sys.modules` |
+| Gỡ `cris/web/` (UI HTML cũ) và `tests/test_web_*.py`, bỏ cờ `--legacy` | `ruff check --select E9,F63,F7,F82` sạch; `pytest -q` **193 passed, 3 skipped** (từ 245 passed, 3 skipped trước khi xoá — đúng bằng 52 test web đã gỡ) |

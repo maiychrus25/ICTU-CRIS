@@ -75,13 +75,46 @@ là dữ liệu tải về, không phải mã nguồn, và không bị sửa.
 | `docker/setup-buildx-action`, `login-action`, `metadata-action`, `build-push-action` | Apache-2.0 | workflow Docker |
 | `softprops/action-gh-release` | MIT | tạo GitHub Release |
 
-## 3. Dịch vụ ngoài (External Services)
+## 3. Thư viện JavaScript/TypeScript (frontend, `frontend/package.json`)
+
+Giao diện dựng tĩnh bằng `npm ci && npm run build` (không có mã Node chạy lúc
+sản xuất — chỉ HTML/CSS/JS tĩnh do FastAPI phục vụ). Toàn bộ thư viện cài qua
+`npm` từ npm registry, không đính kèm mã nguồn bên thứ ba vào repo, không sửa.
+
+### Thư viện chạy (runtime — vào trong bản xuất tĩnh)
+
+| Thư viện | Giấy phép | Mục đích |
+|---|---|---|
+| `next` | MIT | Framework React, xuất tĩnh (`output: "export"`) |
+| `react` / `react-dom` | MIT | Thư viện UI nền |
+| `@tanstack/react-query` | MIT | Gọi API, cache, trạng thái tải/lỗi |
+| `@tanstack/react-table` | MIT | Bảng dữ liệu (tra cứu, hàng đợi, nhật ký) |
+| `recharts` | MIT | Biểu đồ (tổng quan cho lãnh đạo) |
+| `lucide-react` | ISC | Bộ icon |
+| `shadcn/ui` (mã sinh vào `components/ui/`, không phải gói npm chạy) | MIT | Thành phần giao diện nền (Button, Dialog, Table, …) |
+| `tailwindcss` | MIT | CSS tiện ích |
+| `next-themes` | MIT | Chuyển sáng/tối |
+| `sonner` | MIT | Toast thông báo |
+| `@base-ui/react` | MIT | Thành phần không giao diện (primitives) cho shadcn/ui |
+| `class-variance-authority` | Apache-2.0 | Biến thể className có kiểu |
+| `cn` | MIT (xem `node_modules/cn/package.json`) | Gộp className có điều kiện |
+
+### Thư viện phát triển (dev — không vào bản xuất tĩnh)
+
+| Thư viện | Giấy phép | Mục đích |
+|---|---|---|
+| `typescript` | Apache-2.0 | Kiểm kiểu tĩnh (`tsc --noEmit`) |
+| `eslint` (+ `eslint-config-next`) | MIT | Lint |
+| `@playwright/test` | Apache-2.0 | Test đầu-cuối trên dữ liệu mẫu |
+| `openapi-typescript` | MIT | Sinh kiểu TypeScript từ OpenAPI của FastAPI |
+
+## 4. Dịch vụ ngoài (External Services)
 
 | Dịch vụ | Phiên bản/Image | Giấy phép | Ghi chú |
 |---|---|---|---|
 | PostgreSQL | 16, image `postgres:16` | PostgreSQL License | Chạy như dịch vụ ngoài (container), không nhúng mã vào repo |
 
-## 4. Mã nguồn nội bộ tương tự thư viện (First-party code)
+## 5. Mã nguồn nội bộ tương tự thư viện (First-party code)
 
 `cris/source/repository.py` chứa các hàm parser được sao chép từ chính
 `khao-sat-nguon/harvest.py` của dự án. Đây là **mã nguồn của chính dự án

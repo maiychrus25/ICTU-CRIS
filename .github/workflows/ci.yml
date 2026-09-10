@@ -117,4 +117,12 @@ jobs:
       - run: pip install build && python -m build && ls -la dist/
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v6
-        with: { context: ., push: false, tags: "cris:ci", cache-from: type=gha, cache-to: "type=gha,mode=max" }
+        with:
+          context: .
+          push: false
+          load: true
+          tags: "cris:ci"
+          cache-from: type=gha
+          cache-to: "type=gha,mode=max"
+      - name: Ảnh đa tầng có bản xuất tĩnh của giao diện (out/index.html)
+        run: docker run --rm --entrypoint python cris:ci -c "import pathlib; assert pathlib.Path('/app/frontend/out/index.html').exists()"

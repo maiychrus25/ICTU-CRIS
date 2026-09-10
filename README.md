@@ -85,20 +85,25 @@ mô hình quan hệ (relational model), không phải một chuỗi công cụ l
 Gói `cris` gồm ba tầng tách bạch. **Tầng nghiệp vụ** là đường ống: **đồng bộ**
 (`sync`) → **chuẩn hoá** (`normalize`) → **nối và gộp tác giả** (`people`, `link`,
 `dedup`) → **báo cáo chất lượng** (`quality`), cộng lược đồ kỳ báo cáo (`period`).
-**Tầng web** (`cris/web/`, WSGI thuần stdlib, 14 route) chỉ gọi vào tầng nghiệp vụ.
-**Tầng AI** (`cris/ai/`) cũng chỉ gọi vào tầng nghiệp vụ và chỉ ghi vào bảng `ai_*`.
-Lược đồ CSDL nằm ở `cris/migrations/0001`–`0007` (PostgreSQL 16, không ORM).
+**Tầng API** (`cris/api/`, FastAPI, router `/api/*`, OpenAPI tại `/docs`) chỉ gọi
+vào tầng nghiệp vụ. **Giao diện** là bản xuất tĩnh Next.js (`frontend/`) — dựng
+sẵn thành HTML/CSS/JS tĩnh (`next build`, `output: "export"`), FastAPI phục vụ
+bản xuất đó ở `/` cùng gốc với `/api/*`: **một ảnh Docker, một container, một
+cổng** cho cả API lẫn giao diện. **Tầng AI** (`cris/ai/`) cũng chỉ gọi vào tầng
+nghiệp vụ và chỉ ghi vào bảng `ai_*`. Lược đồ CSDL nằm ở `cris/migrations/0001`–
+`0007` (PostgreSQL 16, không ORM).
 
 | Thành phần | Công nghệ | Vai trò |
 |---|---|---|
 | Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3 | Không ORM — truy vấn SQL trực tiếp |
 | CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0007` |
-| Đóng gói | sdist + wheel đính kèm mỗi Release; ảnh `ghcr.io/maiychrus25/ictu-cris` | Workflow `release.yml` kiểm phiên bản khớp tag; `docker.yml` đẩy ảnh theo semver |
-| Triển khai | `deploy/setup.sh` + `deploy/docker-compose.yml` | Một lệnh: DB, lược đồ, người dùng mặc định, web; `--ai` tải mô hình |
-| Web | WSGI stdlib (`wsgiref`), server-render, không framework | 14 route; đổi sang Flask khi làm đăng nhập là thay `wsgi.py` + `render.py`, giữ các view |
+| Đóng gói | sdist + wheel đính kèm mỗi Release (không gồm `frontend/`); ảnh `ghcr.io/maiychrus25/ictu-cris` là bản chạy đủ | Workflow `release.yml` kiểm phiên bản khớp tag; `docker.yml` đẩy ảnh theo semver |
+| Triển khai | `deploy/setup.sh` + `deploy/docker-compose.yml` | Một lệnh: DB, lược đồ, người dùng mặc định, giao diện; `--ai` tải mô hình |
+| API | FastAPI + `uvicorn` | Router `/api/*`, tài liệu OpenAPI tương tác ở `/docs` |
+| Giao diện | Next.js (App Router, TypeScript, Tailwind, shadcn/ui), xuất tĩnh (`next export`) | Gọi `/api/*` cùng gốc khi chạy sau FastAPI; dev chạy cổng riêng gọi API qua `NEXT_PUBLIC_API_BASE` |
 | AI | Extra tuỳ chọn `[ai]`: `onnxruntime` · `tokenizers` · `numpy` | Mô hình `paraphrase-multilingual-MiniLM-L12-v2` ONNX 118 MB chạy CPU; `CRIS_AI_PROVIDER=none` vẫn chạy đủ chức năng |
-| Kiểm thử | pytest 8 trên PostgreSQL thật | 209 test, không mock cơ sở dữ liệu; +3 test `slow` chạy mô hình thật |
-| CI | GitHub Actions | lint (ruff), test Python 3.12 + 3.13 trên PostgreSQL 16, `pip-audit`, dựng gói + ảnh; PR check, auto-label, Dependabot |
+| Kiểm thử | pytest 8 trên PostgreSQL thật (backend) + Playwright (giao diện) | Không mock cơ sở dữ liệu; xem BUILDING.md §9 cho số test hiện tại |
+| CI | GitHub Actions | lint (ruff), test Python 3.12 + 3.13 trên PostgreSQL 16, giao diện (lint/kiểu/build/e2e), `pip-audit`, dựng gói + ảnh đa tầng; PR check, auto-label, Dependabot |
 | Quy tắc | Bảng `rule_set` có phiên bản | Chuẩn hoá tên, ánh xạ loại bài, khoá gộp |
 
 CLI thống nhất:
@@ -108,6 +113,27 @@ python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--
 python -m cris serve [--host] [--port]
 python -m cris ai download|embed|topics|suggest|screen|status      # cần CRIS_AI_PROVIDER=local
 ```
+
+## ✨ Tính năng (Features)
+
+- **Tra cứu & hồ sơ** — tìm công trình theo từ khoá/loại/năm/đơn vị/chủ đề, chi
+  tiết có xuất xứ từng trường, hồ sơ công bố giảng viên.
+- **Hàng đợi người quyết** — xác nhận liên kết tác giả, gộp/giữ riêng nghi
+  trùng, luôn có gợi ý AI kèm lý do, quyết định cuối luôn thuộc về người dùng.
+- **Tổng quan cho lãnh đạo** (`/tong-quan/`) — công trình theo năm × loại, theo
+  đơn vị, top giảng viên, tỉ lệ đã liên kết tác giả, hàng đợi đang mở.
+- **Xuất CSV** — danh sách công trình đã lọc và hồ sơ công bố giảng viên, UTF-8
+  có BOM, tải thẳng từ trình duyệt.
+- **Nhật ký thao tác** (`/nhat-ky/`) — mọi quyết định (xác nhận/bác bỏ liên kết,
+  gộp/giữ riêng, mở/đóng/huỷ kỳ báo cáo) đọc lại được kèm người thực hiện.
+- **Kỳ báo cáo** (`/ky-bao-cao/`) — mở, đóng, huỷ kỳ và xem tiến độ kê khai
+  theo đơn vị.
+- **Rà soát trùng đề tài theo khoá** (`/doi-chieu/ra-soat/`) — so đề tài đồ án
+  của một khoá với toàn bộ khoá trước, gắn cờ theo mức "cao/vừa/thấp"; ngưỡng
+  hiệu chuẩn 0,90/0,80 trên phân bố điểm thật (47/529 đồ án khoá 21 được gắn
+  cờ). AI chỉ gợi ý, người quyết đi tiếp ở `/doi-chieu/`.
+- **Chất lượng dữ liệu** (`/chat-luong-du-lieu/`) — báo cáo độ phủ liên kết,
+  cảnh báo dữ liệu thiếu/nghi vấn.
 
 ## 🚀 Cài đặt nhanh (Quick start)
 

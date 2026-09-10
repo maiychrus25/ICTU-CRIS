@@ -28,11 +28,22 @@
   `GET /api/ai/screen` và `GET /api/ai/screen/cohorts` — so đồ án của một
   khoá với các khoá khác, ghi gợi ý `ai_suggestion(kind='topic_overlap')`,
   không đổi dữ liệu nghiệp vụ.
+- Giao diện Next.js (`frontend/`, App Router, TypeScript, Tailwind, shadcn/ui,
+  xuất tĩnh): tra cứu công trình và hồ sơ giảng viên, hàng đợi liên kết tác
+  giả và nghi trùng, tổng quan cho lãnh đạo, xuất CSV, nhật ký thao tác, kỳ
+  báo cáo, đối chiếu và rà soát trùng đề tài theo khoá, chất lượng dữ liệu —
+  gọi `/api/*`, không có server-render phía Node lúc chạy.
 
 ### Changed
 
-- `serve` nay chạy `uvicorn` phục vụ API FastAPI; UI HTML cũ giữ qua cờ
-  `--legacy` tới khi giao diện Next.js ngang màn.
+- `serve` nay chạy `uvicorn` phục vụ API FastAPI; giao diện Next.js thay UI
+  HTML thuần cũ; một container (ảnh Docker đa tầng) phục vụ cả API và giao
+  diện, cùng cổng 8000.
+
+### Removed
+
+- `cris/web` (UI HTML thuần, WSGI stdlib) và `tests/test_web_*.py`; cờ
+  `python -m cris serve --legacy`.
 
 ### Fixed
 

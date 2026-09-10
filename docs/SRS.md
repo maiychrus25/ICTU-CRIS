@@ -53,7 +53,7 @@ kho ICTU ──S──▶ source_record ──N──▶ work + field_provenance
                                                                     gợi ý xếp hạng ──▶ hai hàng đợi
 ```
 
-Tầng nghiệp vụ (`cris/*.py`, 978 dòng) không biết gì về web. Tầng web (`cris/web/`, 1.529 dòng) chỉ gọi vào nó. Tầng AI (`cris/ai/`, lát cắt tới) cũng chỉ gọi vào tầng nghiệp vụ và **không bao giờ** ghi trực tiếp vào `work`, `author_link` hay `duplicate_group` — nó chỉ ghi vào bảng gợi ý của riêng mình.
+Tầng nghiệp vụ (`cris/*.py`) không biết gì về API hay giao diện. Tầng API (`cris/api/`, FastAPI, router `/api/*`) chỉ gọi vào tầng nghiệp vụ; giao diện (`frontend/`, Next.js xuất tĩnh) chỉ gọi vào tầng API qua HTTP/JSON. Tầng AI (`cris/ai/`) cũng chỉ gọi vào tầng nghiệp vụ và **không bao giờ** ghi trực tiếp vào `work`, `author_link` hay `duplicate_group` — nó chỉ ghi vào bảng gợi ý của riêng mình.
 
 ### 2.2 Người dùng
 
@@ -63,8 +63,11 @@ Theo BA [05-permissions.md](ba/05-permissions.md): `rd_officer` (Phòng KH-CN), 
 
 - Python ≥ 3.12, PostgreSQL 16. Một thư viện chạy: `psycopg`. Lát cắt AI thêm thư viện theo mục 8.3 và phải ghi vào `DEPENDENCIES.md` trước khi commit.
 - Không ghi đè giá trị gốc. Không xoá bản ghi. Mọi thay đổi trạng thái ghi `audit_log` với `actor_id`.
-- Web: WSGI stdlib, server-render, `POST → 303 → GET`, escape mọi nội suy.
-- Test chạy trên PostgreSQL thật, không mock cơ sở dữ liệu; hiện 152 test.
+- API: FastAPI/`uvicorn`, JSON, mọi endpoint có `response_model`. Giao diện: Next.js
+  xuất tĩnh (`output: "export"`), gọi API qua `fetch`; FastAPI phục vụ bản xuất đó
+  ở `/`, cùng gốc với `/api/*` (một container).
+- Test chạy trên PostgreSQL thật, không mock cơ sở dữ liệu; xem `BUILDING.md` §9
+  cho số test hiện tại.
 
 ## 3. Yêu cầu chức năng
 
@@ -152,14 +155,14 @@ Nguyên tắc: AI **chỉ ghi vào bảng gợi ý của nó** (`ai_embedding`, 
 
 ### 4.1 Người dùng
 
-Web server-render tiếng Việt, đọc được trên màn hình hẹp, thao tác hàng loạt cho việc lặp lại. Mô tả từng màn ở [ba/07-screens.md](ba/07-screens.md); đường dẫn đã có đánh dấu ✅ ở [ba/08-sitemap.md](ba/08-sitemap.md). Lát cắt AI thêm `/doi-chieu` và `/doi-chieu/<id>` (SC-13, SC-14).
+Giao diện Next.js xuất tĩnh, tiếng Việt, đọc được trên màn hình hẹp, thao tác hàng loạt cho việc lặp lại. Mô tả từng màn ở [ba/07-screens.md](ba/07-screens.md); đường dẫn đã có đánh dấu ✅ ở [ba/08-sitemap.md](ba/08-sitemap.md). Lát cắt AI thêm `/doi-chieu` và `/doi-chieu/ra-soat` (SC-13, SC-14).
 
 ### 4.2 Phần mềm
 
 | Đối tác | Giao thức | Ghi chú |
 |---|---|---|
 | Kho ICTU | HTTPS GET, HTML; `/wp-json/wp/v2/media` JSON | Chỉ đọc; ≤ 3 yêu cầu/giây; `User-Agent` có tên sản phẩm |
-| PostgreSQL 16 | `psycopg` | Một kết nối mỗi request web |
+| PostgreSQL 16 | `psycopg` | Một kết nối mỗi request API |
 | Mô hình embedding cục bộ | tệp mô hình tải một lần vào thư mục cấu hình | Giấy phép và nguồn ghi ở `DEPENDENCIES.md` |
 | Dịch vụ AI ngoài (tuỳ chọn) | HTTPS, khoá qua biến môi trường | Chỉ FR-AI-04; không gửi dữ liệu cá nhân (email, điện thoại, ngày sinh) |
 
@@ -205,8 +208,8 @@ Không dùng `pgvector` trong bản dự thi để không thêm extension phải
 
 ## 7. Ràng buộc thiết kế
 
-- Ba tầng tách bạch: nghiệp vụ (`cris/*.py`) — web (`cris/web/`) — AI (`cris/ai/`). Web và AI chỉ gọi vào nghiệp vụ; AI ghi vào bảng của riêng nó.
-- Không thêm framework web trong bản dự thi. Đổi sang Flask được cân nhắc khi làm đăng nhập (NFR-01); chi phí đo được: thay `wsgi.py` và `render.py`, giữ nguyên các `views_*.py`.
+- Ba tầng tách bạch: nghiệp vụ (`cris/*.py`) — API (`cris/api/`, FastAPI) — AI (`cris/ai/`); giao diện (`frontend/`, Next.js xuất tĩnh) chỉ gọi vào API, không truy cập cơ sở dữ liệu. API và AI chỉ gọi vào nghiệp vụ; AI ghi vào bảng của riêng nó.
+- UI HTML thuần cũ (`cris/web/`, WSGI stdlib) đã gỡ sau khi giao diện Next.js ngang màn (xem CHANGELOG); một ảnh Docker đa tầng dựng giao diện tĩnh rồi cùng ảnh đó chạy API phục vụ cả hai.
 - Mọi quy tắc (chuẩn hoá, khoá gộp, ngưỡng AI, số cụm) là cấu hình đọc được, không nhúng trong mã.
 - Test không mock cơ sở dữ liệu và không mock mô hình AI: test AI dùng mô hình thật với fixture nhỏ, đánh dấu chạy chậm để CI có thể tách.
 
