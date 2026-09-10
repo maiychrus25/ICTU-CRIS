@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" role="img" aria-labelledby="icutCrisLogoTitle">
+  <title id="icutCrisLogoTitle">ICTU-CRIS</title>
+  <g stroke="#1D4ED8" stroke-width="6" stroke-linecap="round" fill="none">
+    <line x1="108" y1="46" x2="60" y2="96" />
+    <line x1="108" y1="46" x2="140" y2="112" />
+  </g>
+  <circle cx="108" cy="46" r="17" fill="#1D4ED8" />
+  <circle cx="60" cy="96" r="17" fill="#1D4ED8" />
+  <circle cx="140" cy="112" r="17" fill="#0F172A" />
+  <text x="196" y="107" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="700" fill="#0F172A">ICTU-CRIS</text>
+</svg>
