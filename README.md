@@ -21,25 +21,11 @@
 
 </div>
 
-```mermaid
-flowchart LR
-    REPO["repository.ictu.edu.vn<br/>(WordPress, đọc HTML)"] --> SYNC["sync<br/>source_record, phiên bản, bất biến"]
-    SYNC --> NORM["normalize<br/>work, field_provenance, author_mention"]
-    NORM --> PEOPLE["people<br/>person, unit"]
-    PEOPLE --> LINK["link<br/>author_link, hàng đợi xác nhận"]
-    LINK --> DEDUP["dedup<br/>duplicate_group"]
-    DEDUP --> QUALITY["quality<br/>v_data_quality"]
-    QUALITY --> HUMAN(["Người quyết:<br/>xác nhận, gộp, giữ riêng"])
-    PG[("PostgreSQL 16")]
-    SYNC -.-> PG
-    NORM -.-> PG
-    PEOPLE -.-> PG
-    LINK -.-> PG
-    DEDUP -.-> PG
-    QUALITY -.-> PG
-```
+<p align="center"><img src="docs/images/duong-ong-du-lieu.svg" alt="Sơ đồ đường ống dữ liệu ICTU-CRIS" width="900"></p>
 
-*Đường ống bốn bước: đồng bộ → chuẩn hoá → nối/gộp tác giả → báo cáo chất lượng — mỗi bước ghi qua PostgreSQL, quyết định cuối luôn thuộc về người dùng.*
+*Đường ống sáu bước: đồng bộ → chuẩn hoá → định danh tác giả → nối tác giả → gộp trùng → báo cáo chất lượng — mỗi bước ghi qua PostgreSQL, quyết định cuối luôn thuộc về người dùng.*
+
+Bản tương tác (pan/zoom, tra vết quan hệ, đổi sáng/tối): [docs/architecture/duong-ong-du-lieu.html](docs/architecture/duong-ong-du-lieu.html).
 
 ## 🌟 Tầm nhìn (Vision)
 

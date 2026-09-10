@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "ICTU-CRIS — đường ống dữ liệu",
+    "output": "docs/architecture/duong-ong-du-lieu.html",
+    "quality_profile": "showcase",
+    "viewBox": [1080, 555]
+  },
+  "stages": [
+    { "label": "Nguồn" },
+    { "label": "Thu thập" },
+    { "label": "Chuẩn hoá" },
+    { "label": "Liên kết & đối soát" },
+    { "label": "Quyết định" }
+  ],
+  "nodes": [
+    { "id": "repo", "type": "external", "label": "repository.ictu.edu.vn", "sublabel": "WordPress, đọc HTML, không API", "stage": 0, "row": 0, "width": 150 },
+    { "id": "sync", "type": "backend", "label": "cris sync", "sublabel": "source_record (raw, có phiên bản)", "stage": 1, "row": 0, "width": 150 },
+    { "id": "normalize", "type": "backend", "label": "cris normalize", "sublabel": "work, field_provenance", "tag": "author_mention", "stage": 2, "row": 0, "width": 160 },
+    { "id": "people", "type": "backend", "label": "cris people", "sublabel": "person, unit", "stage": 2, "row": 1 },
+    { "id": "link", "type": "backend", "label": "cris link", "sublabel": "author_link + hàng đợi xác nhận", "stage": 3, "row": 0, "width": 150 },
+    { "id": "dedup", "type": "backend", "label": "cris dedup", "sublabel": "duplicate_group", "stage": 3, "row": 1 },
+    { "id": "quality", "type": "backend", "label": "cris quality", "sublabel": "v_data_quality", "stage": 3, "row": 2 },
+    { "id": "human", "type": "frontend", "label": "Người quyết", "sublabel": "xác nhận, gộp, giữ riêng", "tag": "quyết định cuối", "stage": 4, "row": 0, "width": 160 },
+    { "id": "postgres", "type": "database", "label": "PostgreSQL 16", "sublabel": "mọi bước ghi · audit_log: chỉ thêm", "tag": "trung tâm dữ liệu", "stage": 2, "row": 2, "width": 160 }
+  ],
+  "flows": [
+    { "id": "repo-sync", "from": "repo", "to": "sync", "label": "HTML, 0,35 s/yêu cầu", "classification": "đọc HTML", "variant": "emphasis", "labelDy": 53 },
+    { "id": "sync-normalize", "from": "sync", "to": "normalize", "label": "raw + version", "classification": "source_record", "variant": "emphasis", "labelDy": 53, "labelDx": 45 },
+    { "id": "normalize-people", "from": "normalize", "to": "people", "label": "author_mention", "classification": "chuẩn hoá", "variant": "emphasis", "labelDy": 40, "labelDx": 20 },
+    { "id": "people-link", "from": "people", "to": "link", "label": "person, unit", "classification": "định danh", "variant": "emphasis" },
+    { "id": "link-dedup", "from": "link", "to": "dedup", "label": "gợi ý ứng viên", "classification": "author_link", "variant": "emphasis", "labelDy": 24 },
+    { "id": "dedup-quality", "from": "dedup", "to": "quality", "label": "duplicate_group", "classification": "đối soát", "variant": "emphasis", "labelDy": 24 },
+    { "id": "quality-human", "from": "quality", "to": "human", "label": "xác nhận / bác bỏ", "classification": "v_data_quality", "variant": "emphasis", "labelDy": 53 },
+    { "id": "sync-pg", "from": "sync", "to": "postgres", "label": "ghi", "classification": "lưu trữ", "variant": "dashed", "route": "bottom-channel" },
+    { "id": "quality-pg", "from": "quality", "to": "postgres", "label": "ghi", "classification": "lưu trữ", "variant": "dashed", "route": "bottom-channel" }
+  ]
+}

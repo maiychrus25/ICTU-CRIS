@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <title>ICTU-CRIS — biểu tượng phiên bản xác nhận</title>
+  <g fill="none" stroke="currentColor">
+    <rect x="18" y="46" width="46" height="30" rx="6" stroke-width="2" opacity="0.3"/>
+    <rect x="26" y="36" width="46" height="30" rx="6" stroke-width="2.5" opacity="0.6"/>
+    <rect x="34" y="26" width="46" height="30" rx="6" stroke-width="3.5"/>
+  </g>
+  <circle cx="82" cy="26" r="9" fill="none" stroke="currentColor" stroke-width="3"/>
+  <path d="M77,26 L81,30 L88,22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
