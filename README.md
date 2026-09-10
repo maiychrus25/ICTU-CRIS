@@ -90,7 +90,7 @@ python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--
 
 | Tài liệu | Nội dung |
 |---|---|
-| [docs/ba/00-README.md](docs/ba/00-README.md) | Bộ tài liệu phân tích nghiệp vụ (BA) — 17 tệp |
+| [docs/ba/00-README.md](docs/ba/00-README.md) | Bộ tài liệu phân tích nghiệp vụ (BA) — 18 tệp |
 | [docs/ba/17-mo-hinh-du-lieu.md](docs/ba/17-mo-hinh-du-lieu.md) | Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 |
 | [docs/superpowers/plans/2026-09-10-lat-cat-s-n.md](docs/superpowers/plans/2026-09-10-lat-cat-s-n.md) | Kế hoạch triển khai lát cắt S + N |
 | [BUILDING.md](BUILDING.md) | Dịch và chạy từ mã nguồn (Docker, venv) |
@@ -112,5 +112,7 @@ trong [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/). Quy tắc ứng xử �
 
 Apache-2.0 — xem [LICENSE](LICENSE), [NOTICE](NOTICE) và
 [docs/LICENSE_NOTICE.md](docs/LICENSE_NOTICE.md). Bản quyền: ICTU-CRIS
-contributors. Repo chỉ chứa fixture kiểm thử đã ẩn danh; dữ liệu thật (số
-điện thoại, ngày sinh giảng viên, ...) không bao giờ được đưa vào Git.
+contributors. Fixture kiểm thử đã ẩn danh thông tin cá nhân giảng viên (tên,
+email, điện thoại, ngày sinh); tên tác giả trên fixture bài báo là dữ liệu
+thư mục công khai. Dữ liệu cá nhân thật khác (số điện thoại, ngày sinh giảng
+viên, ...) không bao giờ được đưa vào Git.

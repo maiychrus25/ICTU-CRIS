@@ -26,8 +26,12 @@ mã nguồn, không phụ thuộc dịch vụ đóng hoặc image không rõ ngu
 
 ## 3. Cách 1: Dịch và chạy bằng Docker (Build and run with Docker)
 
+Trên đường Docker, `docker-compose.yml` tự cấp `DATABASE_URL` trỏ tới
+service `db` (xem service `app`) — không cần tạo `.env`; `.env` chỉ dùng cho
+cách 2 (venv) ở mục 4. Muốn đổi CSDL khi chạy Docker thì ghi đè biến môi
+trường trên từng lệnh, ví dụ: `docker compose run --rm -e DATABASE_URL=... app <lệnh>`.
+
 ```bash
-cp .env.example .env
 docker compose up -d db
 docker compose build app
 docker compose run --rm app migrate
@@ -61,7 +65,7 @@ Ghi chú:
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env
+cp .env.example .env   # cần cho cách 2 (venv); Docker ở mục 3 không cần bước này
 docker compose up -d db   # hoặc trỏ DATABASE_URL tới Postgres 16 tự quản lý
 export $(grep -v '^#' .env | xargs)
 python -m cris migrate

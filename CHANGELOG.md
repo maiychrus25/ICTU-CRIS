@@ -19,7 +19,7 @@ trang (S-04).
   cáo chất lượng dữ liệu (`cris/normalize.py`, `cris/people.py`,
   `cris/link.py`, `cris/dedup.py`, `cris/quality.py`).
 - CLI thống nhất: `python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--json]`.
-- Bộ tài liệu phân tích nghiệp vụ (BA) bản 1.0 — 17 tệp, `docs/ba/`.
+- Bộ tài liệu phân tích nghiệp vụ (BA) bản 1.0 — 18 tệp, `docs/ba/`.
 - Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 —
   `docs/ba/17-mo-hinh-du-lieu.md`.
 - Migrations `0001`–`0005` (khởi tạo lược đồ, ràng buộc duy nhất

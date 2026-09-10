@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 name: ci
 on: [push, pull_request]
+permissions: { contents: read }
+concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: true }
 jobs:
   test:
     runs-on: ubuntu-latest

@@ -37,7 +37,9 @@ chủ sở hữu bản quyền: ICTU-CRIS contributors) vì các lý do sau:
 
 ## 3. Quy định header từng tệp (Per-file Header)
 
-Mỗi tệp mã nguồn (`.py`, `.sql`) phải có hai dòng header ở đầu tệp:
+Mỗi tệp mã nguồn có phần mở rộng `.py`, `.sql`, `.sh`, `.yml`, `.yaml` phải
+có hai dòng header ở đầu tệp — dùng `--` cho `.sql`, `#` cho các loại còn
+lại:
 
 ```
 Copyright (c) 2026 ICTU-CRIS contributors
@@ -72,7 +74,8 @@ Giấy phép Apache-2.0 của dự án áp dụng cho **mã nguồn**, không á
 - Dữ liệu thô kéo từ kho công khai của trường (repository.ictu.edu.vn) không
   thuộc phạm vi giấy phép này — quyền sở hữu và điều khoản sử dụng dữ liệu đó
   do trường quyết định.
-- Repo chỉ chứa các fixture kiểm thử đã ẩn danh (`tests/fixtures/`), phục vụ
-  mục đích kiểm thử tự động, không chứa dữ liệu cá nhân thật.
+- Fixture kiểm thử trong `tests/fixtures/` đã ẩn danh thông tin cá nhân
+  giảng viên (tên, email, điện thoại, ngày sinh), phục vụ mục đích kiểm thử
+  tự động; tên tác giả trên fixture bài báo là dữ liệu thư mục công khai.
 - Dữ liệu thật (kết quả thu thập từ `khao-sat-nguon/`) nằm ngoài repo, được
   loại trừ qua `.gitignore`, không bao giờ được đẩy lên Git.

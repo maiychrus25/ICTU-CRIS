@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Đưa kho ICTU-CRIS lên chuẩn dự án nguồn mở chuyên nghiệp: giấy phép ghi trong từng tệp, tài liệu dịch từ mã nguồn, chính sách thư viện, nhật ký thay đổi, hướng dẫn đóng góp, mẫu issue và PR, Dockerfile, CI, README định vị theo HPDI; không nhắc tên cuộc thi nào trong tài liệu.
+**Goal:** Đưa kho ICTU-CRIS lên chuẩn dự án nguồn mở chuyên nghiệp: giấy phép ghi trong từng tệp, tài liệu dịch từ mã nguồn, chính sách thư viện, nhật ký thay đổi, hướng dẫn đóng góp, mẫu issue và PR, Dockerfile, CI, README định vị theo HPDI; không nhắc tên sự kiện bên ngoài nào trong tài liệu.
 
 **Architecture:** Chỉ thêm tệp tài liệu, cấu hình và một test quét header; mã ứng dụng không đổi hành vi. Chủ sở hữu bản quyền: `ICTU-CRIS contributors`. Giấy phép: Apache-2.0. Ngôn ngữ: tiếng Việt, thuật ngữ tiếng Anh chuẩn để trong ngoặc.
 
 **Tech Stack:** Python 3.12, pytest, Docker, GitHub Actions. Không thêm thư viện.
 
-**Spec:** Tiêu chí PoF sáu mục (kho công khai; giấy phép OSI có header từng tệp, thông báo mục đích, toàn văn; bản phát hành semver `.tar.gz`; dịch từ nguồn có BUILDING.md, cấu hình qua `.env`, chạy được ngoài thư mục nguồn; thư viện có DEPENDENCIES.md, không đính kèm, không sửa; tài liệu có bug tracker, CHANGELOG, README). Tham chiếu cấu trúc: kho `CuongKenn/ICTU_Proteus-os`.
+**Spec:** Chuẩn dự án nguồn mở sáu mục (kho công khai; giấy phép OSI có header từng tệp, thông báo mục đích, toàn văn; bản phát hành semver `.tar.gz`; dịch từ nguồn có BUILDING.md, cấu hình qua `.env`, chạy được ngoài thư mục nguồn; thư viện có DEPENDENCIES.md, không đính kèm, không sửa; tài liệu có bug tracker, CHANGELOG, README).
 
 ## Global Constraints
 
@@ -16,7 +16,7 @@
   - Python, shell, YAML: `# Copyright (c) 2026 ICTU-CRIS contributors` và `# SPDX-License-Identifier: Apache-2.0`
   - SQL: `-- Copyright (c) 2026 ICTU-CRIS contributors` và `-- SPDX-License-Identifier: Apache-2.0`
 - Không đổi hành vi mã trong `cris/` và `khao-sat-nguon/`; chỉ thêm header.
-- Không nhắc tên cuộc thi (OLP hay tên khác) ở bất kỳ tệp nào.
+- Không nhắc tên sự kiện bên ngoài nào ở bất kỳ tệp nào.
 - Không đưa dữ liệu thật hay thông tin cá nhân vào repo; fixture đã ẩn danh là giới hạn.
 - Mọi tài liệu mới viết tiếng Việt; tiêu đề có thuật ngữ Anh trong ngoặc khi là thuật ngữ chuẩn.
 - Tệp cấu hình mẫu là `.env.example`; không hướng dẫn sửa mã để cấu hình.
@@ -278,9 +278,9 @@ git commit -m "ci: workflow pytest với Postgres; mẫu issue, PR; quy tắc �
 
 - [ ] **Step 4: Sửa `docs/ba/15-project-rules.md`**: Q-24 đổi thành "Lát cắt bản đầu là S + N + T-01/T-02 (đã chốt); giao diện hàng đợi và tra cứu là kế hoạch tiếp theo" và bỏ tham chiếu lịch 09/03–22/05; §15.5 bỏ câu "kế hoạch đồ án đang chạy". Sửa dòng tương ứng trong `docs/ba/00-README.md` nếu có.
 
-- [ ] **Step 5: Kiểm tra không có tên cuộc thi**
+- [ ] **Step 5: Kiểm tra không có tên sự kiện bên ngoài**
 
-Run: `grep -rniE "olp|olympic|cuộc thi|contest" README.md CHANGELOG.md CONTRIBUTING.md BUILDING.md DEPENDENCIES.md docs/LICENSE_NOTICE.md .github CODE_OF_CONDUCT.md`
+Run: `git ls-files | xargs grep -niE "[o]lp|[o]lympic|cuộc th[i]|[c]ontest|[p]roteus" || true`
 Expected: không có kết quả.
 
 - [ ] **Step 6: Commit**
@@ -304,6 +304,6 @@ Việc hướng ra ngoài; chỉ làm khi người chủ dự án đồng ý t�
 
 ## Tự rà
 
-- Sáu tiêu chí PoF: (1) Task 6; (2) Task 1, 2, LICENSE đã có; (3) Task 6; (4) Task 3; (5) Task 2; (6) Task 4, 5.
+- Sáu tiêu chí chuẩn dự án nguồn mở: (1) Task 6; (2) Task 1, 2, LICENSE đã có; (3) Task 6; (4) Task 3; (5) Task 2; (6) Task 4, 5.
 - Không đổi hành vi mã: Task 1 chỉ chèn hai dòng comment; `pytest` toàn bộ là bằng chứng.
-- Không nhắc cuộc thi: kiểm bằng grep ở Task 5 Step 5.
+- Không nhắc sự kiện bên ngoài: kiểm bằng grep ở Task 5 Step 5.

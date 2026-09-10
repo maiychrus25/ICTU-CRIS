@@ -11,7 +11,7 @@ Closes #
 - [ ] Tài liệu (docs)
 - [ ] Khác (other)
 
-## Checklist
+## Checklist (Danh sách kiểm tra)
 
 - [ ] Đã đọc `CONTRIBUTING`
 - [ ] Tệp mới có header SPDX (`SPDX-License-Identifier: Apache-2.0`)

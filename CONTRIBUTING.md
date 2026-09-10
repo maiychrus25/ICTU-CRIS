@@ -40,8 +40,9 @@ Ví dụ: `feat: thêm bước gộp trùng cho tác giả trùng tên`.
 - Tên bảng, cột và giá trị trạng thái phải viết đúng chính tả theo đặc tả
   trong [docs/ba/17-mo-hinh-du-lieu.md](docs/ba/17-mo-hinh-du-lieu.md) —
   không tự đặt tên khác đi.
-- Mỗi tệp `.py` và `.sql` mới phải có header SPDX ở hai dòng đầu (xem
-  [docs/LICENSE_NOTICE.md](docs/LICENSE_NOTICE.md) §3):
+- Mỗi tệp mới có phần mở rộng `.py`, `.sql`, `.sh`, `.yml`, `.yaml` phải có
+  header SPDX ở hai dòng đầu — dùng `--` cho `.sql`, `#` cho các loại còn lại
+  (xem [docs/LICENSE_NOTICE.md](docs/LICENSE_NOTICE.md) §3):
 
   ```python
   # Copyright (c) 2026 ICTU-CRIS contributors
@@ -71,7 +72,9 @@ trong checklist của [mẫu PR](.github/pull_request_template.md).
 - Không đưa dữ liệu cá nhân thật (số điện thoại, ngày sinh giảng viên, ...)
   vào repo dưới bất kỳ hình thức nào: mã nguồn, fixture, ảnh chụp màn hình,
   log đính kèm issue hoặc PR.
-- Fixture kiểm thử trong `tests/fixtures/` phải là dữ liệu đã ẩn danh.
+- Fixture kiểm thử trong `tests/fixtures/` phải ẩn danh thông tin cá nhân
+  giảng viên (tên, email, điện thoại, ngày sinh); tên tác giả trên fixture
+  bài báo là dữ liệu thư mục công khai nên được giữ nguyên.
 - Dữ liệu thật thu thập từ `khao-sat-nguon/` nằm ngoài repo (xem
   `.gitignore`) và không bao giờ được commit.
 
