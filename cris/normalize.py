@@ -1,5 +1,6 @@
 import json
 import re
+from cris import audit
 from cris import rules as RU
 from cris.db import tx
 
@@ -34,9 +35,12 @@ def extract_fields(rec, rules):
          "cohort": _first(meta, fm["cohort"]), "doi": _doi(det, arc),
          "year_issue": _year(arc.get("year")) or _year(_first(meta, fm["year"]))}
     f["title_norm"] = RU.norm_title(f["title"])
-    f.update(RU.map_pub_type(f["pub_type_raw"], rules["pub_type_map"][1]))
-    if rec["doc_type"] == "bai_bao" and f["pub_type_raw"] is None:
-        f["needs_review"] = True
+    if rec["doc_type"] == "bai_bao":
+        f.update(RU.map_pub_type(f["pub_type_raw"], rules["pub_type_map"][1]))
+        if f["pub_type_raw"] is None:
+            f["needs_review"] = True
+    else:
+        f.update({"indexes": [], "quartile": None, "venue_kind": None, "score": None, "needs_review": False})
 
     mentions, truncated = [], False
     if rec["doc_type"] == "bai_bao":
@@ -75,11 +79,19 @@ def normalize_record(conn, rec, rules, actor_id=None):
         existing = cur.fetchone()
         cols = {k: f[k] for k in FIELDS}
         cols["indexes"] = list(cols["indexes"])
+        protected = set()
         if existing:
             work_id = existing["id"]
-            sets = ", ".join(f"{k}=%s" for k in cols)
-            cur.execute(f"UPDATE work SET {sets}, primary_source_record_id=%s, rule_set_id=%s, updated_at=now() WHERE id=%s",
-                        (*cols.values(), rec["id"], rs_id, work_id))
+            cur.execute("""SELECT DISTINCT ON (field) field, set_kind FROM field_provenance
+                           WHERE work_id=%s ORDER BY field, set_at DESC""", (work_id,))
+            protected = {r["field"] for r in cur.fetchall() if r["set_kind"] in ("manual", "merge")}
+            upd_cols = {k: v for k, v in cols.items() if k not in protected}
+            sets = ", ".join(f"{k}=%s" for k in upd_cols)
+            extra = "primary_source_record_id=%s, rule_set_id=%s, updated_at=now()"
+            cur.execute(f"UPDATE work SET {(sets + ', ' + extra) if sets else extra} WHERE id=%s",
+                        (*upd_cols.values(), rec["id"], rs_id, work_id))
+            # giải phóng mọi vị trí (không vi phạm UNIQUE) trước khi khớp lại lượt tên theo name_key
+            cur.execute("UPDATE author_mention SET position = -position WHERE work_id=%s", (work_id,))
             cur.execute("DELETE FROM author_mention WHERE work_id=%s AND id NOT IN (SELECT mention_id FROM author_link)", (work_id,))
         else:
             names = ", ".join(cols)
@@ -87,11 +99,12 @@ def normalize_record(conn, rec, rules, actor_id=None):
             cur.execute(f"INSERT INTO work(doc_type, primary_source_record_id, rule_set_id, state, {names}) VALUES (%s,%s,%s,'DaChuanHoa',{ph}) RETURNING id",
                         (rec["doc_type"], rec["id"], rs_id, *cols.values()))
             work_id = cur.fetchone()["id"]
-        raw_map = {"title": (rec["raw"].get("detail") or {}).get("title") or rec["raw"]["archive"].get("title"),
-                   "pub_type_raw": rec["raw"]["archive"].get("pub_type"), "year_issue": rec["raw"]["archive"].get("year"),
+        arc = rec["raw"].get("archive", {})
+        raw_map = {"title": (rec["raw"].get("detail") or {}).get("title") or arc.get("title"),
+                   "pub_type_raw": arc.get("pub_type"), "year_issue": arc.get("year"),
                    "doi": ",".join((rec["raw"].get("detail") or {}).get("doi") or [])}
         for k, v in cols.items():
-            if v in (None, [], ""):
+            if k in protected or v in (None, [], ""):
                 continue
             cur.execute("""SELECT value FROM field_provenance WHERE work_id=%s AND field=%s ORDER BY set_at DESC LIMIT 1""", (work_id, k))
             last = cur.fetchone()
@@ -100,16 +113,32 @@ def normalize_record(conn, rec, rules, actor_id=None):
                 continue
             cur.execute("INSERT INTO field_provenance(work_id, field, raw_value, value, source_record_id, set_kind) VALUES (%s,%s,%s,%s,%s,'normalize')",
                         (work_id, k, raw_map.get(k), val, rec["id"]))
-        pos = {}
+        pos, matched = {}, set()
         for m in f["mentions"]:
             pos[m["role"]] = pos.get(m["role"], 0) + 1
             nn, deg = RU.norm_name(m["raw_name"], nb)
+            nk = RU.name_key(nn)
+            is_ph = RU.is_placeholder(m["raw_name"], nb)
+            is_tr = f["authors_truncated"] and m["role"] == "author"
+            if existing:
+                cur.execute("SELECT id FROM author_mention WHERE work_id=%s AND role=%s AND name_key=%s ORDER BY id",
+                            (work_id, m["role"], nk))
+                candidates = [r["id"] for r in cur.fetchall() if r["id"] not in matched]
+                if candidates:
+                    matched.add(candidates[0])
+                    cur.execute("""UPDATE author_mention SET position=%s, raw_name=%s, name_norm=%s, degree_raw=%s,
+                                   is_placeholder=%s, is_truncated=%s WHERE id=%s""",
+                                (pos[m["role"]], m["raw_name"], nn, deg, is_ph, is_tr, candidates[0]))
+                    continue
             cur.execute("""INSERT INTO author_mention(work_id, role, position, raw_name, name_norm, name_key, degree_raw, is_placeholder, is_truncated)
-                           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                           ON CONFLICT (work_id, role, position) DO UPDATE SET raw_name=EXCLUDED.raw_name, name_norm=EXCLUDED.name_norm,
-                             name_key=EXCLUDED.name_key, degree_raw=EXCLUDED.degree_raw, is_placeholder=EXCLUDED.is_placeholder, is_truncated=EXCLUDED.is_truncated""",
-                        (work_id, m["role"], pos[m["role"]], m["raw_name"], nn, RU.name_key(nn), deg,
-                         RU.is_placeholder(m["raw_name"], nb), f["authors_truncated"] and m["role"] == "author"))
+                           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                        (work_id, m["role"], pos[m["role"]], m["raw_name"], nn, nk, deg, is_ph, is_tr))
+        if existing:
+            # lượt tên còn giữ liên kết nhưng không còn khớp tên mới nào: mồ côi, giữ nguyên và ghi audit
+            cur.execute("SELECT id, name_key FROM author_mention WHERE work_id=%s AND position < 0", (work_id,))
+            for orphan in cur.fetchall():
+                audit.log(conn, actor_id, "mention.orphaned", "author_mention", orphan["id"],
+                          before={"work_id": work_id, "name_key": orphan["name_key"]})
     return work_id, bool(existing)
 
 def normalize_pending(conn, actor_id=None):
