@@ -22,10 +22,14 @@ def test_name_key_matches_reordered_names():
     assert rules.name_key(a) == rules.name_key(b) == "nguyen the vinh"
 
 def test_split_names_handles_comma_and_truncation():
-    names, trunc = rules.split_names("Phạm Thanh Giang, Trần Duy Minh")
+    names, trunc = rules.split_names("Phạm Thanh Giang, Trần Duy Minh", NB)
     assert names == ["Phạm Thanh Giang", "Trần Duy Minh"] and trunc is False
-    names, trunc = rules.split_names("Minh-Hue Luong Thi, The-Vinh Nguyen, Trung-Nghia P…")
+    names, trunc = rules.split_names("Minh-Hue Luong Thi, The-Vinh Nguyen, Trung-Nghia P…", NB)
     assert names == ["Minh-Hue Luong Thi", "The-Vinh Nguyen", "Trung-Nghia P"] and trunc is True
+
+def test_split_names_honors_custom_body():
+    body = {"separators": ["|"], "truncation_marks": ["+++"]}
+    assert rules.split_names("A B|C D+++", body) == (["A B", "C D"], True)
 
 @pytest.mark.parametrize("raw, expected", [
     ("ICTU_TEACHER", True), ("ICTU_STUDENT", True), ("ICTU", True), ("Nguyễn Văn Tảo", False),

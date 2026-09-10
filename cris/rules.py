@@ -75,12 +75,13 @@ def norm_name(raw, body):
 def name_key(name_norm):
     return " ".join(sorted(name_norm.split()))
 
-def split_names(raw):
+def split_names(raw, body):
     raw = raw or ""
-    trunc = any(raw.rstrip().endswith(m) for m in RULES_V1["name_norm"]["truncation_marks"])
-    for m in RULES_V1["name_norm"]["truncation_marks"]:
+    trunc = any(raw.rstrip().endswith(m) for m in body["truncation_marks"])
+    for m in body["truncation_marks"]:
         raw = raw.replace(m, "")
-    parts = [p.strip() for p in re.split(r"[,;]", raw)]
+    sep_pattern = "[" + "".join(re.escape(s) for s in body["separators"]) + "]"
+    parts = [p.strip() for p in re.split(sep_pattern, raw)]
     return [p for p in parts if p], trunc
 
 def is_placeholder(raw, body):
