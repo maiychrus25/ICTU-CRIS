@@ -145,8 +145,8 @@ Khuôn mỗi use case: actor · tiền điều kiện · luồng chính · luồ
 | Luồng chính | 1. Bấm Chốt dữ liệu. 2. Hệ thống hiện hộp xác nhận: số hồ sơ, số công trình duy nhất, mã phiên bản sẽ sinh. 3. Xác nhận. 4. Khoá tập hồ sơ, sinh mã phiên bản |
 | Luồng thay thế | 4a. Phát hiện sai sau khi chốt → **Mở lại kỳ**: sinh phiên bản mới, giữ nguyên phiên bản cũ |
 | Hậu điều kiện | Kỳ ở `DaChot`; số liệu không đổi cho tới khi mở lại |
-| Quy tắc | Không sửa số liệu trong một phiên bản đã chốt. Mọi điều chỉnh tạo phiên bản mới |
-| Chức năng | R-01, R-02 |
+| Quy tắc | Không sửa số liệu trong một phiên bản đã chốt. Mọi điều chỉnh tạo phiên bản mới, ghi số cũ, số mới, lý do, và báo cáo nào đã dùng phiên bản cũ (BR-25) |
+| Chức năng | R-01, R-02, R-10 |
 
 ## UC-14 Xuất báo cáo và truy ngược chỉ tiêu
 
@@ -155,9 +155,21 @@ Khuôn mỗi use case: actor · tiền điều kiện · luồng chính · luồ
 | Actor | `rd_officer`; `faculty_head` (phạm vi khoa) |
 | Tiền điều kiện | Kỳ ở `DaChot` |
 | Luồng chính | 1. Mở báo cáo. 2. Xem chỉ tiêu tổng hợp, bảng theo khoa, theo năm, theo loại. 3. Bấm một chỉ tiêu để mở danh sách công trình tạo nên nó. 4. Bấm một dòng để xem bản ghi gốc, nguồn, đơn vị kê khai, lịch sử duyệt. 5. Xuất tệp |
-| Hậu điều kiện | Tệp xuất kèm mã phiên bản và thời điểm |
-| Quy tắc | Báo cáo toàn trường tính **số công trình duy nhất**. Báo cáo theo khoa ghi nhận **sự tham gia** của khoa. Tổng các khoa không phải tổng công trình duy nhất — ghi chú này bắt buộc hiện trên bảng theo khoa |
-| Chức năng | R-03..R-06, R-08 |
+| Hậu điều kiện | Tệp xuất theo mẫu của kỳ, kèm mã phiên bản và thời điểm |
+| Quy tắc | Báo cáo toàn trường tính **số công trình duy nhất**. Báo cáo theo khoa ghi nhận **sự tham gia** của khoa. Tổng các khoa không phải tổng công trình duy nhất — ghi chú này bắt buộc hiện trên bảng theo khoa. Khi mẫu đòi một đơn vị cho mỗi công trình, dùng **đơn vị chủ trì** (BR-22), không dùng đơn vị tác giả |
+| Chức năng | R-03..R-06, R-08, A-07 |
+
+## UC-17 Phê duyệt báo cáo chính thức
+
+| Mục | Nội dung |
+|---|---|
+| Actor | `school_leader`; `rd_officer` trình |
+| Tiền điều kiện | Kỳ ở `DaChot`; mẫu báo cáo của kỳ là mẫu gửi cấp trên |
+| Luồng chính | 1. `rd_officer` lập báo cáo theo mẫu và bấm Trình ký. 2. Kỳ chuyển `ChoTruongDuyet`. 3. `school_leader` mở báo cáo: chỉ tiêu tổng hợp, bảng theo khoa, lịch sử chốt, phần thay đổi so với phiên bản trước nếu có. 4. Bấm **Phê duyệt**. 5. Kỳ chuyển `DaPhatHanh`; hệ thống ghi người ký, thời điểm, mã phiên bản |
+| Luồng thay thế | 4a. **Trả lại** kèm lý do bắt buộc → kỳ về `DangDoiSoat`, sinh phiên bản mới, phòng xử lý và trình lại. 1a. Mẫu là báo cáo nội bộ → bỏ qua use case này, phòng phát hành thẳng |
+| Hậu điều kiện | Báo cáo chính thức có chữ ký số hoặc ghi nhận phê duyệt của lãnh đạo trường; không sửa được nữa |
+| Quy tắc | Lãnh đạo trường phê duyệt **báo cáo**, không sửa số liệu và không tham gia đối soát (BR-24). Lý do trả lại bắt buộc (BR-14) |
+| Chức năng | R-09, R-08 |
 
 ## UC-15 Tra cứu công trình và hồ sơ công bố
 
@@ -173,9 +185,10 @@ Khuôn mỗi use case: actor · tiền điều kiện · luồng chính · luồ
 
 | Mục | Nội dung |
 |---|---|
-| Actor | `student`, `lecturer` |
-| Luồng chính | 1. Nhập tên đề tài, vấn đề, đối tượng, phương pháp, dữ liệu dự kiến. 2. Chạy đối chiếu. 3. Hệ thống trả về công trình liên quan kèm bảng so sánh theo khía cạnh. 4. Người dùng chỉnh mô tả, chạy lại. 5. Gửi giảng viên kèm bảng đối chiếu |
-| Luồng thay thế | 3a. Không đủ thông tin để so một khía cạnh → ghi rõ *chưa đủ thông tin để so*, không đoán |
+| Actor | `lecturer` (chính, khi chuẩn bị đề cương), `student` (khi tìm hướng); `department_head` (xem, nhận xét) |
+| Tiền điều kiện | Kỳ đồ án đang ở giai đoạn chọn đề tài, trước hạn nộp đề cương (mốc 2 kế hoạch ĐATN) |
+| Luồng chính | 1. Chọn hướng đề tài từ danh mục khoa; nhập tên đề tài, vấn đề, đối tượng, phương pháp, dữ liệu dự kiến. 2. Chạy đối chiếu. 3. Hệ thống trả về công trình liên quan kèm bảng so sánh theo khía cạnh. 4. Người dùng chỉnh mô tả, chạy lại. 5. Xuất bảng đối chiếu, GVHD đính vào đề cương nộp lãnh đạo bộ môn |
+| Luồng thay thế | 3a. Không đủ thông tin để so một khía cạnh → ghi rõ *chưa đủ thông tin để so*, không đoán. 1a. Sinh viên chạy trước khi liên hệ GVHD → kết quả gửi được cho GVHD, GVHD chạy lại khi soạn đề cương |
 | Hậu điều kiện | Bảng đối chiếu lưu được, xuất được, gửi được |
 | Quy tắc | Không hiển thị điểm số phần trăm tương đồng tổng hợp. Ghi rõ mức dữ liệu: so trên tiêu đề, tóm tắt và từ khoá — không phải toàn văn. Đầu ra là tài liệu hỗ trợ xem xét, không phải quyết định |
 | Chức năng | T-03..T-06, T-09 |

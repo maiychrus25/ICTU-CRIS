@@ -1,3 +1,5 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
 import json,glob,os,collections
 D=os.path.join(os.path.dirname(__file__),'out')
 def load(t):

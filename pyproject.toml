@@ -1,0 +1,21 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+[project]
+name = "cris"
+version = "0.1.0"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+dependencies = ["psycopg[binary]>=3.2,<4"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+
+[tool.setuptools.packages.find]
+include = ["cris*"]
+
+[tool.setuptools.package-data]
+cris = ["migrations/*.sql"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

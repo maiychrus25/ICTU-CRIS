@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
 """
 Harvester cho repository.ictu.edu.vn (DSpace-ICTU, WordPress + CPT tự viết).
 

@@ -10,9 +10,13 @@
 | 4 | Giảng viên (`lecturer`) | Kê khai và xác nhận công trình của mình; xác nhận liên kết tác giả; nhận yêu cầu bổ sung |
 | 5 | Sinh viên, học viên (`student`) | Tra cứu và đối chiếu đề tài dự kiến. Không thấy dữ liệu kỳ báo cáo |
 | 6 | Quản trị hệ thống (`admin`) | Người dùng, vai trò, danh mục, quy tắc thống kê, lịch đồng bộ |
-| 7 | Kho ICTU (`repository`) | Hệ thống nguồn, chỉ đọc. Không phải người |
+| 7 | Lãnh đạo bộ môn (`department_head`) | Duyệt đề cương đồ án, giới thiệu hội đồng chấm (theo kế hoạch ĐATN). Trong hệ thống chỉ tham gia luồng đối chiếu đề tài |
+| 8 | Lãnh đạo trường (`school_leader`) | Phê duyệt hoặc trả lại báo cáo chính thức gửi cấp trên sau khi phòng chốt (BR-24). Không sửa số liệu, không tham gia đối soát |
+| 9 | Kho ICTU (`repository`) | Hệ thống nguồn, chỉ đọc. Không phải người |
 
-`[CẦN XÁC NHẬN]` Tài liệu định hướng ghi rõ chưa đủ căn cứ khẳng định có bước phê duyệt của lãnh đạo phòng hoặc Ban giám hiệu. Nếu có, bổ sung actor `division_head` với quyền tương tự `faculty_head` ở cấp trường.
+Cấp bộ môn có thật trong quy trình đồ án (kế hoạch ĐATN K21, mốc 2–3, 7, 10). Chưa rõ cấp này có vai trò gì trong kỳ báo cáo công bố khoa học.
+
+Cấp lãnh đạo trường xác nhận ở khảo sát đợt 1, câu 10: khoa xác nhận dữ liệu → phòng kiểm tra, tổng hợp, chốt → lãnh đạo trường phê duyệt báo cáo chính thức. Thay cho giả định `division_head` trước đây; không có cấp lãnh đạo phòng riêng trong luồng.
 
 ## Bảng 2 — Ma trận
 
@@ -48,12 +52,20 @@
 | Quản lý người dùng, vai trò (A-03) | X | X | X | X | X | O |
 | Cấu hình đồng bộ, nhật ký hệ thống (A-05, A-06) | X | X | O* | X | X | O |
 
+### Actor `department_head`
+
+Không thêm cột vào ma trận vì actor này chỉ chạm nhóm `T`. Quyền: `T-01`, `T-02`, `T-08` như mọi vai trò; `T-03..T-06` được xem và nhận xét bảng đối chiếu của sinh viên thuộc bộ môn mình, không tạo mới thay GVHD. Mọi chức năng khác `X`. Nếu sau khảo sát cấp bộ môn có vai trò trong kỳ báo cáo công bố, mở rộng khi đó.
+
+### Actor `school_leader`
+
+Không thêm cột vì chỉ chạm hai chức năng. `R-09` phê duyệt hoặc trả lại báo cáo chính thức kèm lý do; `R-03`, `R-04`, `R-05`, `R-08`, `R-10` xem để kiểm trước khi ký; `W-01..03`, `T-01`, `T-02` như mọi vai trò. Mọi chức năng khác `X`. Không sửa số liệu, không chốt, không mở lại kỳ.
+
 ## Chú thích `O*`
 
 | Vị trí | Điều kiện |
 |---|---|
 | `faculty_officer`, `faculty_head` — nhật ký, chất lượng dữ liệu, báo cáo, truy ngược | Chỉ trong phạm vi khoa mình |
-| `rd_officer` — tạo, sửa hồ sơ kê khai | Chỉ khi khoa đã bàn giao và có ghi nhận lý do can thiệp |
+| `rd_officer` — tạo, sửa hồ sơ kê khai | Chỉ khi khoa đã bàn giao và có ghi nhận lý do can thiệp. **Không sửa** tác giả, đơn vị, minh chứng, là các trường thuộc trách nhiệm xác nhận của khoa và giảng viên; sai thì trả về khoa (BR-23) |
 | `lecturer` — nhập công trình ngoài kho | Chỉ công trình có tên mình trong danh sách tác giả |
 | `faculty_officer`, `lecturer` — xác nhận liên kết tác giả | Chỉ ca thuộc khoa mình / thuộc bản thân mình; ca liên khoa do `rd_officer` quyết |
 | `rd_officer` — cấu hình đồng bộ | Đặt được lịch và phạm vi, không sửa được thông tin kết nối nguồn |

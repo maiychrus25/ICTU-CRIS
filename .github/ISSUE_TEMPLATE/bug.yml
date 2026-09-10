@@ -1,0 +1,62 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+name: Báo lỗi (Bug report)
+description: Báo cáo một lỗi trong hệ thống ICTU-CRIS
+labels: ["bug"]
+body:
+  - type: input
+    id: title
+    attributes:
+      label: Tiêu đề (Title)
+      description: Tóm tắt ngắn gọn lỗi gặp phải
+      placeholder: "Ví dụ: Đồng bộ dữ liệu bị trùng tác giả"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Mô tả (Description)
+      description: Mô tả chi tiết lỗi
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Bước tái hiện (Steps to reproduce)
+      description: Các bước để tái hiện lỗi
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Kết quả mong đợi (Expected result)
+      description: Hệ thống lẽ ra phải làm gì
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Phiên bản (Version)
+      description: Phiên bản/commit của dự án đang dùng
+    validations:
+      required: false
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Môi trường (Environment)
+      description: Môi trường xảy ra lỗi
+      options:
+        - Dev (local)
+        - CI
+        - Khác
+    validations:
+      required: true

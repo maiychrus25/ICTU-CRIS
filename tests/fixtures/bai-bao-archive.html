@@ -1,0 +1,416 @@
+<div class="dl-info-bar">
+                                        Hiển thị <strong>1–20</strong> trong tổng số <strong>1907</strong> bài báo
+                                                        </div>
+        
+        <!-- Page Header -->
+        <header class="dl-page-header">
+            <h1 class="dl-page-title">Bài báo Khoa học</h1>
+            <p class="dl-page-sub">Cơ sở dữ liệu công bố khoa học của đơn vị</p>
+        </header>
+
+        <div class="dl-container" style="padding-top:28px;padding-bottom:48px;">
+
+            <div class="bb-archive-wrap">
+
+                <!-- Filter form -->
+                <form id="bb-filter-form" method="get" action="https://repository.ictu.edu.vn/bai-bao/" class="dl-filter-bar">
+                    <div class="dl-filter-group dl-filter-search">
+                        <label for="bb-s" class="screen-reader-text">Tìm kiếm</label>
+                        <input type="text" id="bb-s" name="s"
+                               value=""
+                               placeholder="Tìm tiêu đề, tác giả, tạp chí…"
+                               class="dl-search-input"
+                               autocomplete="off">
+                    </div>
+                    <div class="dl-filter-group">
+                        <label for="bb-type" class="screen-reader-text">Loại bài</label>
+                        <select id="bb-type" name="type" class="dl-select">
+                            <option value="">— Tất cả loại —</option>
+                                                        <option value="0,5" >0,5</option>
+                                                        <option value="0,5 điểm" >0,5 điểm</option>
+                                                        <option value="0,5đ" >0,5đ</option>
+                                                        <option value="0,75" >0,75</option>
+                                                        <option value="0,75 điểm" >0,75 điểm</option>
+                                                        <option value="0,75đ" >0,75đ</option>
+                                                        <option value="0.5" >0.5</option>
+                                                        <option value="0.75" >0.75</option>
+                                                        <option value="1" >1</option>
+                                                        <option value="1 điểm" >1 điểm</option>
+                                                        <option value="1,0" >1,0</option>
+                                                        <option value="1đ" >1đ</option>
+                                                        <option value="1điểm" >1điểm</option>
+                                                        <option value="Báo quốc tế có chỉ số DOAJ" >Báo quốc tế có chỉ số DOAJ</option>
+                                                        <option value="Chưa xác định" >Chưa xác định</option>
+                                                        <option value="DOAJ" >DOAJ</option>
+                                                        <option value="Hội thảo quốc tế (ISBN/ISSN)" >Hội thảo quốc tế (ISBN/ISSN)</option>
+                                                        <option value="Hội thảo trong nước" >Hội thảo trong nước</option>
+                                                        <option value="ISI/SCIE/SSCI" >ISI/SCIE/SSCI</option>
+                                                        <option value="KYHTGQ" >KYHTGQ</option>
+                                                        <option value="KYHTQG" >KYHTQG</option>
+                                                        <option value="KYHTQG (FAIR)" >KYHTQG (FAIR)</option>
+                                                        <option value="KYHTQG( Fair)" >KYHTQG( Fair)</option>
+                                                        <option value="KYHTQT" >KYHTQT</option>
+                                                        <option value="KYHTQT." >KYHTQT.</option>
+                                                        <option value="QT khác" >QT khác</option>
+                                                        <option value="Quốc tế" >Quốc tế</option>
+                                                        <option value="Research Article" >Research Article</option>
+                                                        <option value="SCIE, ESCI" >SCIE, ESCI</option>
+                                                        <option value="SCIE,ESCI" >SCIE,ESCI</option>
+                                                        <option value="Scopus" >Scopus</option>
+                                                        <option value="Scopus; WoS" >Scopus; WoS</option>
+                                                        <option value="Tạp chí ISSN" >Tạp chí ISSN</option>
+                                                        <option value="Tạp chí quốc tế khác" >Tạp chí quốc tế khác</option>
+                                                        <option value="Tạp chí trong nước" >Tạp chí trong nước</option>
+                                                        <option value="TC 0,5 điểm" >TC 0,5 điểm</option>
+                                                        <option value="TC 0,5đ" >TC 0,5đ</option>
+                                                        <option value="TC 0,75 điểm" >TC 0,75 điểm</option>
+                                                        <option value="TC 1 điểm" >TC 1 điểm</option>
+                                                        <option value="TC 1điểm" >TC 1điểm</option>
+                                                        <option value="TC có chỉ số ISSN" >TC có chỉ số ISSN</option>
+                                                        <option value="TC QT uy tín" >TC QT uy tín</option>
+                                                        <option value="WoS" >WoS</option>
+                                                        <option value="WoS Q1" >WoS Q1</option>
+                                                        <option value="WoS-Q1" >WoS-Q1</option>
+                                                        <option value="WoS-Q2" >WoS-Q2</option>
+                                                        <option value="WoS-Q3" >WoS-Q3</option>
+                                                    </select>
+                    </div>
+                    <div class="dl-filter-group">
+                        <label for="bb-year" class="screen-reader-text">Năm xuất bản</label>
+                        <select id="bb-year" name="year" class="dl-select">
+                            <option value="">— Tất cả năm XB —</option>
+                                                        <option value="2026" >2026</option>
+                                                        <option value="2025" >2025</option>
+                                                        <option value="2024" >2024</option>
+                                                        <option value="2023" >2023</option>
+                                                        <option value="2022" >2022</option>
+                                                        <option value="2021" >2021</option>
+                                                        <option value="2020" >2020</option>
+                                                        <option value="2019" >2019</option>
+                                                        <option value="2018" >2018</option>
+                                                        <option value="2017" >2017</option>
+                                                        <option value="2016" >2016</option>
+                                                        <option value="2015" >2015</option>
+                                                        <option value="2014" >2014</option>
+                                                        <option value="2013" >2013</option>
+                                                        <option value="2012" >2012</option>
+                                                        <option value="2011" >2011</option>
+                                                        <option value="2010" >2010</option>
+                                                        <option value="2009" >2009</option>
+                                                        <option value="2008" >2008</option>
+                                                        <option value="2007" >2007</option>
+                                                        <option value="2006" >2006</option>
+                                                        <option value="2005" >2005</option>
+                                                        <option value="2004" >2004</option>
+                                                    </select>
+                    </div>
+                    <div class="dl-filter-group">
+                        <label for="bb-dept" class="screen-reader-text">Đơn vị</label>
+                        <select id="bb-dept" name="dept" class="dl-select">
+                            <option value="">— Tất cả đơn vị —</option>
+                                                        <option value="CNTT" >CNTT</option>
+                                                        <option value="ĐTTT" >ĐTTT</option>
+                                                        <option value="ĐTVT" >ĐTVT</option>
+                                                        <option value="HTTKT" >HTTKT</option>
+                                                        <option value="HTTTKT" >HTTTKT</option>
+                                                        <option value="ICTU" >ICTU</option>
+                                                        <option value="KHCB" >KHCB</option>
+                                                        <option value="KT&amp;CN" >KT&amp;CN</option>
+                                                        <option value="KT&amp;QT" >KT&amp;QT</option>
+                                                        <option value="NT&amp;TT" >NT&amp;TT</option>
+                                                        <option value="TĐH" >TĐH</option>
+                                                        <option value="Trường Đại học Công nghệ thông tin và truyền thông" >Trường Đại học Công nghệ thông tin và truyền thông</option>
+                                                        <option value="TTĐPT" >TTĐPT</option>
+                                                    </select>
+                    </div>
+                    <div class="dl-filter-actions">
+                        <button type="submit" class="dl-btn dl-btn-primary">Lọc</button>
+                                            </div>
+                </form>
+
+                <!-- Info bar -->
+                <div class="dl-info-bar" id="bb-info-bar">
+                                        Hiển thị <strong>1–20</strong> trong tổng số <strong>1907</strong> bài báo
+                                                        </div>
+
+                <!-- Results -->
+                <div id="bb-results">
+                                <div class="bb-table-wrap">
+                    <table class="bb-table">
+                        <thead>
+                            <tr>
+                                <th class="bb-col-no">STT</th>
+                                <th class="bb-col-title">Tiêu đề / Tác giả</th>
+                                <th class="bb-col-type">Loại bài</th>
+                                <th class="bb-col-keywords">Từ khoá</th>
+                                <th class="bb-col-journal">Tạp chí / Hội thảo</th>
+                                <th class="bb-col-year">Năm XB</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">1</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/vinl2vis-faithbench-a-vietnamese-english-benchmark-and-faithfulness-evaluator-for-natural-language-to-visualization/" title="ViNL2Vis-FaithBench: A Vietnamese-English Benchmark and Faithfulness Evaluator for Natural-Language-to-Visualization">ViNL2Vis-FaithBench: A Vietnamese-English Benchmark and Faithfulness Evaluator for Natural-Language-to-Visualization</a>
+                                <div class="bb-authors-line">Minh-Hue Luong Thi, The-Vinh Nguyen, Van-Viet Nguyen,Duc-Quang Vu, Trung-Nghia P…</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Scopus; WoS</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">IEEE Access</span>                                <span class="bb-vip">Vol 14</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">2</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/a-novel-automated-method-for-uml-modeling-integrating-instruction-reasoning-llms-and-vision-language-model-evaluation/" title="A Novel Automated Method for UML Modeling Integrating Instruction, Reasoning LLMs and Vision Language Model Evaluation">A Novel Automated Method for UML Modeling Integrating Instruction, Reasoning LLMs and Vision Language Model Evaluation</a>
+                                <div class="bb-authors-line">Van-Viet Nguyen, Huu-Khanh Nguyen, Kim-Son Nguyen, Minh-Hue Luong Thi, Anh-Tu Bu…</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#0e5a8a18;color:#0e5a8a;border-color:#0e5a8a40;">Scopus</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Discover Artificial Intelligence</span>                                                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">3</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/toward-generalizable-uml-automation-a-dual-case-study-on-class-and-use-case-diagram-generation/" title="Toward generalizable UML automation: A dual case study on class and use case diagram generation">Toward generalizable UML automation: A dual case study on class and use case diagram generation</a>
+                                <div class="bb-authors-line">Van-Viet Nguyen, Huu-Khanh Nguyen, Kim-Son Nguyen, Minh-Hue Luong Thi, Duc-Quang…</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#0e5a8a18;color:#0e5a8a;border-color:#0e5a8a40;">Scopus</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Bulletin of Electrical Engineering and Informatics (BEEI)</span>                                <span class="bb-vip">Vol 15, No 4, pp. 3268 - 3279</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">4</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/phi-3-code-fine-tuning-a-small-size-language-model-for-coding-generation/" title="Phi-3-Code: Fine Tuning a Small Size Language Model for Coding Generation">Phi-3-Code: Fine Tuning a Small Size Language Model for Coding Generation</a>
+                                <div class="bb-authors-line">Van-Viet Nguyen, Huu-Khanh Nguyen, The-Vinh Nguyen, Duc-Quang Vu</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#0e5a8a18;color:#0e5a8a;border-color:#0e5a8a40;">Scopus</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Intelligence of Things: Technologies and Applications (ICIT 2025)</span>                                <span class="bb-vip">Vol 2, 282, 247–257</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">5</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/advances-in-information-and-communication-technology/" title="Advances in Information and Communication Technology">Advances in Information and Communication Technology</a>
+                                <div class="bb-authors-line">Tran Xuan Tu; Phung Trung Nghia; Nguyen Thanh Thuy; Vu Duc Thai; Le Hoang Son; N…</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Chưa xác định</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Springer Nature Switzerland</span>                                                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">6</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/analysis-of-induced-voltage-on-metal-sheaths-of-high-voltage-underground-cable-systems/" title="Analysis of induced voltage on metal sheaths of high voltage underground cable systems">Analysis of induced voltage on metal sheaths of high voltage underground cable systems</a>
+                                <div class="bb-authors-line">Nhat Nam Nguyen; Thanh Tam Nguyen; Duc-Quang Vu; Phan Tu Vu</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Chưa xác định</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Journal of Physics: Conference Series</span>                                <span class="bb-vip">Volume 3180 (1)</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">7</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/a-different-approach-to-the-rbf-fdtd-method-for-simulating-lightning-induced-voltage-on-power-lines/" title="A Different Approach to the RBF-FDTD Method for Simulating Lightning-Induced Voltage on Power Lines">A Different Approach to the RBF-FDTD Method for Simulating Lightning-Induced Voltage on Power Lines</a>
+                                <div class="bb-authors-line">Duc-Quang Vu; Nhat-Nam Nguyen; Phan-Tu Vu</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Chưa xác định</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Journal of Physics: Conference Series</span>                                <span class="bb-vip">Volume 3180 (1)</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">8</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/effectiveness-and-limitations-of-preprocessing-methods-for-proprioceptive-sensor-noise-in-quadruped-robots/" title="Effectiveness and Limitations of Preprocessing Methods for Proprioceptive Sensor Noise in Quadruped Robots">Effectiveness and Limitations of Preprocessing Methods for Proprioceptive Sensor Noise in Quadruped Robots</a>
+                                <div class="bb-authors-line">Mui D. Nguyen; Minh T. Nguyen; Ha T. Nguyen; Binh TT. Nguyen; Dinh Quy Long; Dun…</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Chưa xác định</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Journal of Computing Theories and Applications</span>                                <span class="bb-vip">Volume 3 (4)</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">9</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/optimized-feature-extraction-via-custom-low-cost-semg-hardware-for-real-time-myoelectric-interfaces/" title="Optimized Feature Extraction via Custom Low-Cost sEMG Hardware for Real-Time Myoelectric Interfaces">Optimized Feature Extraction via Custom Low-Cost sEMG Hardware for Real-Time Myoelectric Interfaces</a>
+                                <div class="bb-authors-line">Thi-Mai-Phuong Dao; Van-Kien Nguyen; Ngoc-Khoat Nguyen; Loc Le; Tien-Dung Nguyen…</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Chưa xác định</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Engineering, Technology &amp; Applied Science Research</span>                                <span class="bb-vip">Volume 16 (1)</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">10</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/stepwise-reasoning-for-ambiguous-nl2vis-with-candidate-generation-and-neural-reranking/" title="Stepwise Reasoning for Ambiguous NL2Vis with Candidate Generation and Neural Reranking">Stepwise Reasoning for Ambiguous NL2Vis with Candidate Generation and Neural Reranking</a>
+                                <div class="bb-authors-line">Minh-Hue Luong Thi; The-Vinh Nguyen; Duc-Quang Vu; Trung-Nghia Phung; Quach Xuan…</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Chưa xác định</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">SSRN Electronic Journal</span>                                                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">11</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/algebraic-multivariate-signature-algorithm-with-two-hidden-groups/" title="Algebraic multivariate signature algorithm with two hidden groups">Algebraic multivariate signature algorithm with two hidden groups</a>
+                                <div class="bb-authors-line">Khanh Linh Dinh; Long Giang Nguyen; Do Thi Bac; Alexandr Moldovyan; D. N. Moldov…</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Chưa xác định</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">International Journal of Information and Computer Security</span>                                                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">12</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/from-harvest-now-decrypt-later-to-quantum-safe-5g-iot-architectural-friction-practical-mitigations-and-a-cryptographic-agility-roadmap/" title="From Harvest-Now-Decrypt-Later to Quantum-Safe 5G/IoT: Architectural Friction, Practical Mitigations, and a Cryptographic Agility Roadmap">From Harvest-Now-Decrypt-Later to Quantum-Safe 5G/IoT: Architectural Friction, Practical Mitigations, and a Cryptographi…</a>
+                                <div class="bb-authors-line">Do Thi Bac; May Thu Duong</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Chưa xác định</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">SSRN Electronic Journal</span>                                                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">13</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/numerical-simulation-of-the-multi-step-hydroforming-process-for-fabricating-cups-with-complex-spatial-profiles/" title="Numerical simulation of the multi-step hydroforming process for fabricating cups with complex spatial profiles">Numerical simulation of the multi-step hydroforming process for fabricating cups with complex spatial profiles</a>
+                                <div class="bb-authors-line">Duc-Quang Vu</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Chưa xác định</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">EUREKA: Physics and Engineering</span>                                                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">14</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/sustained-outcomes-3-years-after-all-oral-9-month-regimen-for-rifampicin-resistant-tb/" title="Sustained outcomes 3 years after all-oral 9-month regimen for rifampicin-resistant TB">Sustained outcomes 3 years after all-oral 9-month regimen for rifampicin-resistant TB</a>
+                                <div class="bb-authors-line">T.M.P. Nguyen; T.H.M. Le; C.S.C. Merle; L. Guglielmetti; N.L. Nguyen; V.L. Dinh;…</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Chưa xác định</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">IJTLD Open</span>                                <span class="bb-vip">Volume 3 (2)</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">15</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/entanglement-assisted-quantum-error-correcting-codes-and-asymmetric-entanglement-assisted-quantum-error-correcting-codes-of-length-5pt-over-%f0%9d%94%bdpm/" title="Entanglement-assisted quantum error-correcting codes and asymmetric entanglement-assisted quantum error-correcting codes of length 5pt over 𝔽pm">Entanglement-assisted quantum error-correcting codes and asymmetric entanglement-assisted quantum error-correcting codes…</a>
+                                <div class="bb-authors-line">HQ Dinh; Bao-Trung Nguyen; Nguyen Van Nui; Hong-Linh Thi</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#55518;color:#555;border-color:#55540;">Chưa xác định</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">International Journal of Modern Physics C</span>                                                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">16</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/evaluation-of-some-model-order-reduction-algorithms-in-digital-filter-design/" title="Evaluation of Some Model Order Reduction Algorithms in Digital Filter Design">Evaluation of Some Model Order Reduction Algorithms in Digital Filter Design</a>
+                                <div class="bb-authors-line">Mau-Viet Ho; Huy-Du Dao; Ngoc-Kien Vu; Van-Ta Hoang</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#0e5a8a18;color:#0e5a8a;border-color:#0e5a8a40;">Scopus</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Lecture Notes in Networks and Systems</span>                                <span class="bb-vip">Volume 1610 LNNS</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">17</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/energy-efficiency-clustering-and-routing-algorithm-for-wireless-underground-sensor-networks-in-multiple-observed-areas-using-fuzzy-c-means/" title="Energy Efficiency Clustering and Routing Algorithm for Wireless Underground Sensor Networks in Multiple Observed Areas Using Fuzzy C-Means">Energy Efficiency Clustering and Routing Algorithm for Wireless Underground Sensor Networks in Multiple Observed Areas U…</a>
+                                <div class="bb-authors-line">Mai Ha Thi; Le Tuan Anh; Tran Tuan Toan; Nguyen Tran Quoc Vinh; Luong Thi Hong L…</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#0e5a8a18;color:#0e5a8a;border-color:#0e5a8a40;">Scopus</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Lecture Notes in Networks and Systems</span>                                <span class="bb-vip">Volume 1831 LNNS</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">18</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/sentinelai-ai-based-smart-surveillance-camera-system-with-telegram-notifications/" title="SentinelAI: AI-Based Smart Surveillance Camera System with Telegram Notifications">SentinelAI: AI-Based Smart Surveillance Camera System with Telegram Notifications</a>
+                                <div class="bb-authors-line">Huu-Huy Ngo; Hien-Y. Nguyen Thi; Tan-Tien Nguyen Thi</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#0e5a8a18;color:#0e5a8a;border-color:#0e5a8a40;">Scopus</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Lecture Notes in Networks and Systems</span>                                <span class="bb-vip">Volume 1505 LNNS</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">19</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/a-deep-learning-based-web-application-for-ct-reconstruction-from-x-ray-image/" title="A Deep Learning-Based Web Application for CT Reconstruction from X-Ray Image">A Deep Learning-Based Web Application for CT Reconstruction from X-Ray Image</a>
+                                <div class="bb-authors-line">Huu Quang Hoa Nguyen; Tran Quoc Bao Le; Quy Dat Tran; Thi Tan Tien Nguyen; Hang …</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#0e5a8a18;color:#0e5a8a;border-color:#0e5a8a40;">Scopus</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Lecture Notes in Networks and Systems</span>                                <span class="bb-vip">Volume 1831 LNNS</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                <tr class="bb-row">
+                            <td class="bb-col-no">20</td>
+                            <td class="bb-col-title">
+                                <a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/a-new-picture-safe-semi-supervised-fuzzy-clustering-approach-for-noisy-data-partitioning/" title="A New Picture Safe Semi-supervised Fuzzy Clustering Approach for Noisy Data Partitioning">A New Picture Safe Semi-supervised Fuzzy Clustering Approach for Noisy Data Partitioning</a>
+                                <div class="bb-authors-line">Pham Huy Thong; Phung The Huan; Le Truong Giang; Le Hoan; Pham Ba Tuan Chung; Le…</div>                            </td>
+                            <td class="bb-col-type"><span class="bb-badge" style="background:#0e5a8a18;color:#0e5a8a;border-color:#0e5a8a40;">Scopus</span></td>
+                            <td class="bb-col-keywords">
+                                                            </td>
+                            <td class="bb-col-journal">
+                                <span class="bb-journal-name">Lecture Notes in Networks and Systems</span>                                <span class="bb-vip">Volume 1596 LNNS</span>                            </td>
+                            <td class="bb-col-year">2026</td>
+                        </tr>
+                                                </tbody>
+                    </table>
+                </div>
+                                </div>
+
+                <!-- Pagination -->
+                <div id="bb-pagination">
+                                <nav class="dl-pagination" aria-label="Phân trang bài báo">
+                                        <span class="dl-pg-btn dl-pg-disabled" aria-disabled="true">‹</span>
+                    
+                    
+                                                                    <span class="dl-pg-btn dl-pg-active" aria-current="page">1</span>
+                                                                                            <a href="https://repository.ictu.edu.vn/bai-bao/?pg=2" class="dl-pg-btn" data-pg="2">2</a>
+                                                                                            <a href="https://repository.ictu.edu.vn/bai-bao/?pg=3" class="dl-pg-btn" data-pg="3">3</a>
+                                            
+                    <span class="dl-pg-ellipsis">…</span>                    <a href="https://repository.ictu.edu.vn/bai-bao/?pg=96" class="dl-pg-btn" data-pg="96">96</a>
+                    
+                                        <a href="https://repository.ictu.edu.vn/bai-bao/?pg=2" class="dl-pg-btn" data-pg="2" aria-label="Trang sau">›</a>
+                                    </nav>
+                                </div>
+
+            </div><!-- .bb-archive-wrap -->
+
+        </div><!-- .dl-container -->
+
+            

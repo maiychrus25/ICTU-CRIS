@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
 """Chuẩn hoá trường 'Loại bài' (pub_type) của bài báo.
 
 Vấn đề: 48 giá trị free-text trộn 2 chiều độc lập vào 1 ô:

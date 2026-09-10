@@ -59,16 +59,20 @@ flowchart LR
 flowchart LR
     RD(("Chuyên viên<br/>Phòng KH-CN"))
     FH(("Lãnh đạo khoa"))
+    SL(("Lãnh đạo trường"))
     ST(("Sinh viên,<br/>học viên"))
     LEC(("Giảng viên"))
 
     UC13["UC-13 Chốt dữ liệu kỳ báo cáo"]
     UC14["UC-14 Xuất báo cáo và truy ngược chỉ tiêu"]
+    UC17["UC-17 Phê duyệt báo cáo chính thức"]
     UC15["UC-15 Tra cứu công trình và hồ sơ công bố"]
     UC16["UC-16 Đối chiếu đề tài dự kiến"]
 
     RD --- UC13
     RD --- UC14
+    RD --- UC17
+    SL --- UC17
     FH --- UC14
     ST --- UC15
     ST --- UC16

@@ -1,0 +1,794 @@
+
+        
+        <!-- Page Header -->
+        <header class="dl-page-header">
+            <h1 class="dl-page-title">Danh sách Giảng viên</h1>
+            <p class="dl-page-sub">Đội ngũ giảng viên, nhà nghiên cứu của nhà trường</p>
+        </header>
+
+        <div class="dl-container" style="padding-top:28px;padding-bottom:48px;">
+
+            <!-- Search -->
+            <form id="gv-search-form" class="dl-filter-bar" autocomplete="off">
+                <div class="dl-filter-group dl-filter-search">
+                    <label for="gv-search-input" class="screen-reader-text">Tìm kiếm giảng viên</label>
+                    <input type="text" id="gv-search-input" class="dl-search-input"
+                           placeholder="Tìm theo tên, học hàm, học vị…"
+                           aria-label="Tìm kiếm giảng viên"
+                           autocomplete="off">
+                </div>
+                <div class="dl-filter-actions">
+                    <button type="submit" class="dl-btn dl-btn-primary">Tìm kiếm</button>
+                    <button type="button" id="gv-search-clear" class="dl-btn-reset" style="display:none;">✕ Xoá</button>
+                </div>
+                <span id="gv-spinner" class="dl-spinner" style="display:none;"></span>
+            </form>
+
+            <!-- Info bar -->
+            <p class="dl-info-bar" id="gv-info-bar"></p>
+
+            <!-- Cards -->
+            <div id="gv-grid" class="gv-grid">
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 01"
+                     data-rank="pgs"
+                     data-degree="ts"
+                     data-position="hiệu trưởng">
+                <div class="gv-avatar-wrap">
+                    <img src="https://repository.ictu.edu.vn/wp-content/uploads/2026/06/unnamed-150x150.webp"
+                         alt="Giảng viên Mẫu 01"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-01/" itemprop="url">Giảng viên Mẫu 01</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                    <li><span class="gv-label">Chức vụ:</span>
+                                <span itemprop="jobTitle">Hiệu trưởng</span></li>
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">PGS – TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">CNTT</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv01@example.invalid"
+                                    itemprop="email">gv01@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-01/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 02"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="hiệu phó">
+                <div class="gv-avatar-wrap">
+                    <img src="https://repository.ictu.edu.vn/wp-content/uploads/2026/06/unnamed-1-150x150.webp"
+                         alt="Giảng viên Mẫu 02"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-02/" itemprop="url">Giảng viên Mẫu 02</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                    <li><span class="gv-label">Chức vụ:</span>
+                                <span itemprop="jobTitle">Hiệu phó</span></li>
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">CNTT</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv02@example.invalid"
+                                    itemprop="email">gv02@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-02/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 03"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="hiệu phó">
+                <div class="gv-avatar-wrap">
+                    <img src="https://repository.ictu.edu.vn/wp-content/uploads/2026/06/unnamed-2-150x150.webp"
+                         alt="Giảng viên Mẫu 03"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-03/" itemprop="url">Giảng viên Mẫu 03</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                    <li><span class="gv-label">Chức vụ:</span>
+                                <span itemprop="jobTitle">Hiệu phó</span></li>
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Toán học tính toán, Khoa học máy tính</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv03@example.invalid"
+                                    itemprop="email">gv03@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-03/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 04"
+                     data-rank="gs"
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+04&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 04"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-04/" itemprop="url">Giảng viên Mẫu 04</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">GS – TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Toán; CNTT</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv04@example.invalid"
+                                    itemprop="email">gv04@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-04/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 05"
+                     data-rank="pgs"
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://repository.ictu.edu.vn/wp-content/uploads/2026/06/unnamed-3-150x150.webp"
+                         alt="Giảng viên Mẫu 05"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-05/" itemprop="url">Giảng viên Mẫu 05</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">PGS – TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Thể dục thể thao</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv05@example.invalid"
+                                    itemprop="email">gv05@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-05/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 06"
+                     data-rank="pgs"
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+06&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 06"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-06/" itemprop="url">Giảng viên Mẫu 06</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">PGS – TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Kỹ thuật Điện-Điện tử</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv06@example.invalid"
+                                    itemprop="email">gv06@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-06/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 07"
+                     data-rank="pgs"
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+07&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 07"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-07/" itemprop="url">Giảng viên Mẫu 07</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">PGS – TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Toán học, Đại số và Lý thuyết số</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv07@example.invalid"
+                                    itemprop="email">gv07@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-07/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 08"
+                     data-rank="pgs"
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+08&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 08"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-08/" itemprop="url">Giảng viên Mẫu 08</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">PGS – TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Kinh tế/CNTT</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv08@example.invalid"
+                                    itemprop="email">gv08@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-08/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 09"
+                     data-rank="pgs"
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://repository.ictu.edu.vn/wp-content/uploads/2026/06/unnamed-4-150x150.webp"
+                         alt="Giảng viên Mẫu 09"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-09/" itemprop="url">Giảng viên Mẫu 09</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">PGS – TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Khoa học máy tính; CNTT</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv09@example.invalid"
+                                    itemprop="email">gv09@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-09/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 10"
+                     data-rank="pgs"
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+10&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 10"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-10/" itemprop="url">Giảng viên Mẫu 10</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">PGS – TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Thương mại quốc tế; Kinh tế phát triển</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv10@example.invalid"
+                                    itemprop="email">gv10@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-10/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 11"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="trưởng khoa">
+                <div class="gv-avatar-wrap">
+                    <img src="https://repository.ictu.edu.vn/wp-content/uploads/2026/06/unnamed-5-150x150.webp"
+                         alt="Giảng viên Mẫu 11"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-11/" itemprop="url">Giảng viên Mẫu 11</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                    <li><span class="gv-label">Chức vụ:</span>
+                                <span itemprop="jobTitle">Trưởng khoa</span></li>
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Công nghệ thông tin</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv11@example.invalid"
+                                    itemprop="email">gv11@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-11/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 12"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+12&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 12"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-12/" itemprop="url">Giảng viên Mẫu 12</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Kỹ thuật phần mềm</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv12@example.invalid"
+                                    itemprop="email">gv12@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-12/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 13"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+13&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 13"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-13/" itemprop="url">Giảng viên Mẫu 13</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Quản lý giáo dục</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv13@example.invalid"
+                                    itemprop="email">gv13@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-13/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 14"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+14&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 14"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-14/" itemprop="url">Giảng viên Mẫu 14</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Kỹ thuật thông tin &amp; Khoa học máy tính, Điều khiển tự động</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv14@example.invalid"
+                                    itemprop="email">gv14@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-14/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 15"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+15&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 15"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-15/" itemprop="url">Giảng viên Mẫu 15</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Kỹ thuật Điều khiển và 
+Tự động hóa</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv15@example.invalid"
+                                    itemprop="email">gv15@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-15/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 16"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+16&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 16"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-16/" itemprop="url">Giảng viên Mẫu 16</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                                                    <li><span class="gv-label">Email:</span> <a href="mailto:gv16@example.invalid"
+                                    itemprop="email">gv16@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-16/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 17"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+17&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 17"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-17/" itemprop="url">Giảng viên Mẫu 17</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Khoa học máy tính</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv17@example.invalid"
+                                    itemprop="email">gv17@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-17/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 18"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+18&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 18"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-18/" itemprop="url">Giảng viên Mẫu 18</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Triết học, Chủ nghĩa xã hội khoa học</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv18@example.invalid"
+                                    itemprop="email">gv18@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-18/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 19"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+19&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 19"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-19/" itemprop="url">Giảng viên Mẫu 19</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Cơ sở toán học cho tin học và hệ thống tính toán</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv19@example.invalid"
+                                    itemprop="email">gv19@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-19/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 20"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+20&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 20"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-20/" itemprop="url">Giảng viên Mẫu 20</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Kinh tế, thương mại điện tử, tài chính, công nghệ tài chính, quản trị nguồn nhân lực</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv20@example.invalid"
+                                    itemprop="email">gv20@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-20/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 21"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+21&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 21"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-21/" itemprop="url">Giảng viên Mẫu 21</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Ngôn ngữ và Văn hoá Việt Nam. Văn học Việt  Nam</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv21@example.invalid"
+                                    itemprop="email">gv21@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-21/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 22"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+22&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 22"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-22/" itemprop="url">Giảng viên Mẫu 22</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Kỹ thuật Điều khiển và Tự động hóa</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv22@example.invalid"
+                                    itemprop="email">gv22@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-22/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 23"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+23&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 23"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-23/" itemprop="url">Giảng viên Mẫu 23</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Khoa học máy tính</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv23@example.invalid"
+                                    itemprop="email">gv23@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-23/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 24"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+24&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 24"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-24/" itemprop="url">Giảng viên Mẫu 24</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Kỹ thuật điện, điện tử</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv24@example.invalid"
+                                    itemprop="email">gv24@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-24/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 25"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+25&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 25"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-25/" itemprop="url">Giảng viên Mẫu 25</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Khoa học máy tính</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv25@example.invalid"
+                                    itemprop="email">gv25@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-25/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 26"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+26&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 26"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-26/" itemprop="url">Giảng viên Mẫu 26</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Kỹ thuật Điều khiển và Tự động hóa</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv26@example.invalid"
+                                    itemprop="email">gv26@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-26/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 27"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+27&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 27"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-27/" itemprop="url">Giảng viên Mẫu 27</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Cơ Khí Động Lực, Năng lượng</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv27@example.invalid"
+                                    itemprop="email">gv27@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-27/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>
+                        <article class="gv-card dl-card" itemscope itemtype="https://schema.org/Person"
+                     data-name="giảng viên mẫu 28"
+                     data-rank=""
+                     data-degree="ts"
+                     data-position="">
+                <div class="gv-avatar-wrap">
+                    <img src="https://ui-avatars.com/api/?name=Giang+Vien+Mau+28&#038;size=120&#038;background=0073ba&#038;color=fff&#038;font-size=0.4&#038;bold=true"
+                         alt="Giảng viên Mẫu 28"
+                         loading="lazy"
+                         class="gv-avatar-img"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="gv-avatar-fallback" style="display:none;">GV</span>
+                </div>
+                <div class="gv-info">
+                    <h2 class="gv-name" itemprop="name">
+                        <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-28/" itemprop="url">Giảng viên Mẫu 28</a>
+                    </h2>
+                    <ul class="gv-meta">
+                                                                            <li><span class="gv-label">Học hàm/vị:</span> <span
+                                    itemprop="honorificPrefix">TS</span></li>
+                                                                            <li><span class="gv-label">Chuyên ngành:</span> <span
+                                    itemprop="knowsAbout">Công nghệ thông tin</span></li>
+                                                                            <li><span class="gv-label">Email:</span> <a href="mailto:gv28@example.invalid"
+                                    itemprop="email">gv28@example.invalid</a></li>                    </ul>
+                    <a href="https://repository.ictu.edu.vn/giang-vien/giang-vien-mau-28/" class="gv-detail-link">Xem hồ sơ →</a>
+                </div>
+            </article>

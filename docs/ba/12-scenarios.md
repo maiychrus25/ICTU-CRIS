@@ -40,14 +40,16 @@ Cô mở danh sách, xem lướt tiêu đề. Sáu bài đúng là của cô, c�
 
 Từ lần sau, hệ thống không đề xuất lại cặp đã bị bác bỏ, và tự nối các bài mới có cùng dạng tên đó về hồ sơ của cô.
 
-## 12.5 Bạn Khánh, sinh viên năm cuối, kiểm tra đề tài dự kiến
+## 12.5 Bạn Khánh và thầy Hùng chốt đề tài trước hạn nộp đề cương
 
-Khánh định làm "ứng dụng học tiếng Anh cho trẻ em có tích hợp AI". Bạn nhập tên đề tài kèm bốn dòng mô tả: đối tượng là trẻ 6–10 tuổi, tập trung luyện phát âm, phương pháp dùng mô hình nhận dạng giọng nói, dữ liệu tự thu.
+Theo kế hoạch của khoa, Khánh phải liên hệ giảng viên hướng dẫn trước 06/03 và thầy phải nộp đề cương ký số cho bộ môn trước 09/03. Ba ngày cho cả hai việc.
+
+Trước khi gặp thầy Hùng, Khánh vào hệ thống nhập ý tưởng "ứng dụng học tiếng Anh cho trẻ em có tích hợp AI" kèm bốn dòng mô tả: đối tượng là trẻ 6–10 tuổi, tập trung luyện phát âm, phương pháp dùng mô hình nhận dạng giọng nói, dữ liệu tự thu.
 
 Hệ thống trả về 6 đồ án liên quan. Bảng đối chiếu cho thấy: một đồ án khoá trước làm gần trùng — cùng đối tượng trẻ em, cùng luyện phát âm; ba đồ án khác cùng chủ đề tiếng Anh nhưng khác đối tượng (sinh viên CNTT học từ vựng, luyện thi A2, luyện thi B1); hai đồ án dùng phương pháp khác. Ở cột "phương pháp", ba dòng ghi *chưa đủ thông tin để so*.
 
 Phía trên bảng có dòng chữ: kết quả so trên tiêu đề, tóm tắt và từ khoá — không phải toàn văn.
 
-Khánh sửa mô tả: chuyển sang trẻ khiếm thính, giữ phần luyện phát âm. Chạy lại, đồ án gần trùng tụt xuống dưới. Bạn gửi bảng đối chiếu kèm đề tài mới cho giảng viên hướng dẫn xem xét.
+Khánh mang bảng này đến gặp thầy. Thầy Hùng chọn hướng đề tài "Ứng dụng AI trong giáo dục" từ danh mục khoa, sửa mô tả cùng Khánh: chuyển sang trẻ khiếm thính, giữ phần luyện phát âm. Chạy lại, đồ án gần trùng tụt xuống dưới. Thầy xuất bảng đối chiếu, đính vào đề cương soạn theo mẫu của hướng đó, đặt tên tệp theo quy tắc mã định hướng, mã sinh viên, họ tên, lớp, ký số và nộp lãnh đạo bộ môn đúng hạn.
 
-Hệ thống không nói đề tài của Khánh được làm hay không được làm. Nó đưa căn cứ để thầy quyết định.
+Hệ thống không nói đề tài của Khánh được làm hay không được làm. Nó đưa căn cứ để thầy Hùng và bộ môn quyết định. Việc kiểm tra đạo văn trên quyển báo cáo cuối kỳ là bước khác, khoa làm bằng công cụ riêng.

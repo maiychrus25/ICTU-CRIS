@@ -1,0 +1,66 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+name: Đề xuất tính năng (Feature request)
+description: Đề xuất một tính năng hoặc thay đổi nghiệp vụ cho ICTU-CRIS
+labels: ["feature"]
+body:
+  - type: input
+    id: title
+    attributes:
+      label: Tiêu đề (Title)
+      description: Tóm tắt ngắn gọn tính năng đề xuất
+    validations:
+      required: true
+
+  - type: textarea
+    id: business_problem
+    attributes:
+      label: Vấn đề nghiệp vụ (Business problem)
+      description: Vấn đề hiện tại cần giải quyết là gì
+    validations:
+      required: true
+
+  - type: input
+    id: ba_function_code
+    attributes:
+      label: Mã chức năng BA liên quan (Related BA function code)
+      description: Mã chức năng trong tài liệu docs/ba/ (nếu có)
+      placeholder: "Ví dụ: N-04"
+    validations:
+      required: false
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Đề xuất (Proposal)
+      description: Mô tả giải pháp hoặc thay đổi đề xuất
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Kết quả mong đợi (Expected result)
+      description: Kết quả mong đợi sau khi triển khai
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Phiên bản (Version)
+      description: Phiên bản/commit của dự án tại thời điểm đề xuất
+    validations:
+      required: false
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Môi trường (Environment)
+      description: Môi trường liên quan đến đề xuất
+      options:
+        - Dev (local)
+        - CI
+        - Khác
+    validations:
+      required: true

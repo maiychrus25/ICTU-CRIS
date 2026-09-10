@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
 """Kéo 410 trang hồ sơ giảng viên: số đếm công bố + định danh ngoài + danh sách công trình."""
 import json,re,sys,time,html
 sys.path.insert(0,'.'); import harvest as H
