@@ -23,13 +23,13 @@
 
 ```mermaid
 flowchart LR
-    REPO["repository.ictu.edu.vn\n(WordPress, đọc HTML)"] --> SYNC["sync\nsource_record, phiên bản, bất biến"]
-    SYNC --> NORM["normalize\nwork, field_provenance, author_mention"]
-    NORM --> PEOPLE["people\nperson, unit"]
-    PEOPLE --> LINK["link\nauthor_link, hàng đợi xác nhận"]
-    LINK --> DEDUP["dedup\nduplicate_group"]
-    DEDUP --> QUALITY["quality\nv_data_quality"]
-    QUALITY --> HUMAN(["Người quyết:\nxác nhận, gộp, giữ riêng"])
+    REPO["repository.ictu.edu.vn<br/>(WordPress, đọc HTML)"] --> SYNC["sync<br/>source_record, phiên bản, bất biến"]
+    SYNC --> NORM["normalize<br/>work, field_provenance, author_mention"]
+    NORM --> PEOPLE["people<br/>person, unit"]
+    PEOPLE --> LINK["link<br/>author_link, hàng đợi xác nhận"]
+    LINK --> DEDUP["dedup<br/>duplicate_group"]
+    DEDUP --> QUALITY["quality<br/>v_data_quality"]
+    QUALITY --> HUMAN(["Người quyết:<br/>xác nhận, gộp, giữ riêng"])
     PG[("PostgreSQL 16")]
     SYNC -.-> PG
     NORM -.-> PG
