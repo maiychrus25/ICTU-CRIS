@@ -46,6 +46,15 @@ def test_count_mismatch_becomes_warning(conn):
     assert run["status"] == "warning"
     assert run["warnings"][0]["expected"] == 12 and run["warnings"][0]["fetched"] == 1
 
+def test_revert_to_old_hash_creates_new_version_without_error(conn):
+    for raw in ({"title": "A"}, {"title": "B"}, {"title": "A"}):
+        sync.run_sync(conn, source="repository", scope="s", doc_type="bai_bao",
+                      records=[("u1", raw)], expected=1, full=True)
+    vs = rows(conn, "SELECT version, raw FROM source_record WHERE source_key='u1' ORDER BY version")
+    assert [v["version"] for v in vs] == [1, 2, 3]
+    assert vs[0]["raw"] == vs[2]["raw"] == {"title": "A"}
+    assert len(rows(conn, "SELECT 1 FROM sync_run")) == 3
+
 def test_sync_repository_merges_archive_and_detail(conn, monkeypatch):
     from cris.source import repository as R
     monkeypatch.setattr(R, "iter_archive", lambda path, fetch=None: iter([{"url": "https://x/bai-bao/a/", "title": "T"}]))
