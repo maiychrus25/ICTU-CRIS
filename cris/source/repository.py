@@ -154,6 +154,10 @@ def parse_detail(h, url):
     rec["abstract"] = text(ab.group(1))[:4000] if ab else None
     return rec
 
+def extract_orcid(h):
+    m = re.search(r'orcid\.org/(\d{4}-\d{4}-\d{4}-\d{3}[\dX])', h)
+    return m.group(1) if m else None
+
 def iter_archive(path, fetch=get, max_pages=400):
     seen, pg, total = set(), 1, None
     while pg <= max_pages:

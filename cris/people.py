@@ -52,7 +52,7 @@ def import_people(conn):
                             break
                     unit_id = ensure_unit(conn, a.get("jobTitle"))
                     vals = dict(display_name=display, name_norm=nn, degree_raw=a.get("degree") or deg,
-                                email=a.get("email"), orcid=a.get("orcid"), unit_id=unit_id,
+                                email=a.get("email"), orcid=(rec["raw"].get("detail") or {}).get("orcid") or a.get("orcid"), unit_id=unit_id,
                                 phone=a.get("phone"), dob=_dob(a.get("dob")))
                     cur.execute("SELECT id, name_keys FROM person WHERE source_record_id IN (SELECT id FROM source_record WHERE source=%s AND source_key=%s)",
                                 (rec["source"], rec["source_key"]))

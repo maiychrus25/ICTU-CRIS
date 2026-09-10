@@ -62,9 +62,12 @@ def sync_repository(conn, path, fetch=None, with_details=True, triggered_by=None
     def records():
         for arc in R.iter_archive(path, fetch=fetch):
             raw = {"archive": arc}
-            if with_details and doc_type != "giang_vien":
+            if with_details:
                 try:
-                    raw["detail"] = R.parse_detail(fetch(arc["url"]), arc["url"])
+                    page = fetch(arc["url"])
+                    raw["detail"] = R.parse_detail(page, arc["url"])
+                    if doc_type == "giang_vien":
+                        raw["detail"]["orcid"] = R.extract_orcid(page)
                 except Exception as e:      # trang chi tiết lỗi: ghi nhận, tiếp tục (UC-01 3a)
                     raw["detail_error"] = str(e)
             yield arc["url"], raw
