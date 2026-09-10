@@ -1,0 +1,111 @@
+// Copyright (c) 2026 ICTU-CRIS contributors
+// SPDX-License-Identifier: Apache-2.0
+
+"use client";
+
+import {
+  BarChart3, BookOpenCheck, CopyCheck, Info, Menu, Moon, Scale, Search,
+  Sun, UserRoundCheck,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+
+const navigation = [
+  { href: "/tra-cuu/", label: "Tra cứu", icon: Search },
+  { href: "/doi-chieu/", label: "Đối chiếu đề tài", icon: Scale },
+  { href: "/doi-soat/tac-gia/", label: "Hàng đợi tác giả", icon: UserRoundCheck },
+  { href: "/doi-soat/trung-lap/", label: "Hàng đợi nghi trùng", icon: CopyCheck },
+  { href: "/chat-luong-du-lieu/", label: "Chất lượng dữ liệu", icon: BarChart3 },
+  { href: "/ve/", label: "Về hệ thống", icon: Info },
+];
+
+const routeTitles = [
+  ["/doi-soat/trung-lap/chi-tiet", "Chi tiết nhóm nghi trùng"],
+  ["/doi-soat/trung-lap", "Hàng đợi nghi trùng"],
+  ["/doi-soat/tac-gia", "Hàng đợi tác giả"],
+  ["/chat-luong-du-lieu", "Chất lượng dữ liệu"],
+  ["/cong-trinh", "Chi tiết công trình"],
+  ["/giang-vien", "Hồ sơ giảng viên"],
+  ["/doi-chieu", "Đối chiếu đề tài"],
+  ["/tra-cuu", "Tra cứu"],
+  ["/ve", "Về hệ thống"],
+] as const;
+
+function Brand({ compact = false }: { compact?: boolean }) {
+  return (
+    <Link href="/tra-cuu/" className="flex h-16 items-center gap-3 px-4 text-sidebar-foreground">
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"><BookOpenCheck className="size-5" /></span>
+      {!compact && <span><strong className="block text-sm tracking-wide">ICTU-CRIS</strong><span className="block text-[11px] text-muted-foreground">Thông tin nghiên cứu</span></span>}
+    </Link>
+  );
+}
+
+function Navigation({ compact = false }: { compact?: boolean }) {
+  const pathname = usePathname();
+  return (
+    <nav aria-label="Điều hướng chính" className="space-y-1 px-2 py-3">
+      {navigation.map(({ href, label, icon: Icon }) => {
+        const active = pathname.startsWith(href.replace(/\/$/, ""));
+        return (
+          <Link key={href} href={href} title={compact ? label : undefined} aria-current={active ? "page" : undefined}
+            className={cn("flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", active && "bg-sidebar-accent text-sidebar-accent-foreground", compact && "justify-center px-0")}>
+            <Icon className="size-[18px] shrink-0" />
+            {!compact && <span>{label}</span>}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  return (
+    <Button variant="ghost" size="icon" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối" onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}>
+      <Sun className="size-4 dark:hidden" /><Moon className="hidden size-4 dark:block" />
+    </Button>
+  );
+}
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const title = routeTitles.find(([route]) => pathname.startsWith(route))?.[1] ?? "ICTU-CRIS";
+
+  return (
+    <div className="min-h-screen">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-16 border-r border-sidebar-border bg-sidebar md:flex md:flex-col lg:w-60">
+        <div className="lg:hidden"><Brand compact /></div><div className="hidden lg:block"><Brand /></div>
+        <div className="border-t border-sidebar-border lg:hidden"><Navigation compact /></div><div className="hidden border-t border-sidebar-border lg:block"><Navigation /></div>
+        <div className="mt-auto border-t border-sidebar-border p-3 text-center text-[11px] text-muted-foreground"><span className="hidden lg:inline">AI gợi ý, người quyết</span><span className="lg:hidden">v0.1</span></div>
+      </aside>
+
+      <div className="md:pl-16 lg:pl-60">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:px-6">
+          <Sheet>
+            <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden" aria-label="Mở điều hướng" />}><Menu /></SheetTrigger>
+            <SheetContent side="left" className="w-72 bg-sidebar p-0">
+              <SheetHeader className="sr-only"><SheetTitle>Điều hướng</SheetTitle><SheetDescription>Các khu vực của hệ thống</SheetDescription></SheetHeader>
+              <Brand /><div className="border-t border-sidebar-border"><Navigation /></div>
+            </SheetContent>
+          </Sheet>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{title}</p>
+            <p className="hidden truncate text-[11px] text-muted-foreground sm:block">ICTU-CRIS <span aria-hidden>·</span> {title}</p>
+          </div>
+          <form action="/tra-cuu/" className="relative hidden w-64 sm:block">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input name="q" aria-label="Tìm nhanh công trình" placeholder="Tìm nhanh công trình…" className="pl-8" />
+          </form>
+          <ThemeToggle />
+        </header>
+        <main className="mx-auto w-full max-w-[1440px] p-4 md:p-6">{children}</main>
+      </div>
+    </div>
+  );
+}

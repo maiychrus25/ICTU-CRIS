@@ -4,12 +4,14 @@ import pathlib
 import subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-EXT = {".py", ".sql", ".sh", ".yml", ".yaml"}
-COMMENT = {".sql": "--"}
+EXT = {".py", ".sql", ".sh", ".yml", ".yaml", ".ts", ".tsx", ".mjs"}
+COMMENT = {".sql": "--", ".ts": "//", ".tsx": "//", ".mjs": "//"}
+# Mã do công cụ sinh, không phải của dự án
+SKIP = ("frontend/components/ui/", "frontend/next-env.d.ts")
 
 def tracked_source_files():
     out = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
-    return [ROOT / p for p in out.split() if pathlib.Path(p).suffix in EXT]
+    return [ROOT / p for p in out.split() if pathlib.Path(p).suffix in EXT and not p.startswith(SKIP)]
 
 def test_every_source_file_has_spdx_header():
     missing = []
