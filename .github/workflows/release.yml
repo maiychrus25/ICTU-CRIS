@@ -44,7 +44,7 @@ jobs:
         run: |
           f="docs/release-notes/${GITHUB_REF_NAME}.md"
           if [ -f "$f" ]; then echo "path=$f" >> "$GITHUB_OUTPUT"; echo "dùng $f"; else echo "không có $f — chỉ dùng danh sách tự sinh"; fi
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           name: ICTU-CRIS ${{ github.ref_name }}
           body_path: ${{ steps.notes.outputs.path }}
