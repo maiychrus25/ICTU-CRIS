@@ -14,15 +14,18 @@ from cris.api.routes import (
     ai_public,
     audit,
     auth,
+    cite,
     compare,
     declarations,
     export,
+    feed,
     me,
     mentors,
     periods,
     persons,
     quality,
     queue,
+    recent,
     screen,
     search,
     stats,
@@ -46,7 +49,8 @@ def create_app(static_dir: str | os.PathLike | None = None) -> FastAPI:
     for r in (search.router, queue.router, compare.router, quality.router,
               stats.router, export.router, audit.router, periods.router, screen.router,
               persons.router, sync.router, auth.router, declarations.router, me.router,
-              mentors.router, ai_public.router, ai_map.router):
+              mentors.router, ai_public.router, ai_map.router,
+              cite.router, recent.router, feed.router):
         app.include_router(r)
 
     @app.get("/api/health", tags=["he-thong"])

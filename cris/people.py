@@ -3,7 +3,9 @@
 import hashlib
 import re
 from datetime import datetime
+
 import psycopg
+
 from cris import rules as RU
 from cris.db import tx
 
@@ -89,9 +91,12 @@ def import_people(conn):
                             break
                     display = RU.title_case_name(display)
                     unit_id = unit_from_job_title(conn, a.get("jobTitle"))
+                    # `rank` (học hàm GS/PGS, khác `degree_raw` học vị): ngoại lệ tối thiểu
+                    # ngoài phạm vi K1 thường không sửa `cris.people` — chỉ dòng vals dưới đây,
+                    # cột mới ở migration 0016 (nguồn: archive.rank, xem cris/source/repository.py).
                     vals = dict(display_name=display, name_norm=nn, degree_raw=a.get("degree") or deg,
                                 email=a.get("email"), orcid=(rec["raw"].get("detail") or {}).get("orcid") or a.get("orcid"), unit_id=unit_id,
-                                phone=a.get("phone"), dob=_dob(a.get("dob")))
+                                phone=a.get("phone"), dob=_dob(a.get("dob")), rank=a.get("rank"))
                     cur.execute("SELECT id, name_keys FROM person WHERE source_record_id IN (SELECT id FROM source_record WHERE source=%s AND source_key=%s)",
                                 (rec["source"], rec["source_key"]))
                     row = cur.fetchone()
@@ -99,12 +104,12 @@ def import_people(conn):
                     if row:
                         keys = sorted(set(row["name_keys"]) | {key})
                         cur.execute("""UPDATE person SET display_name=%s, name_norm=%s, degree_raw=%s, email=%s, orcid=%s, unit_id=%s,
-                                       phone=%s, dob=%s, name_keys=%s, source_record_id=%s WHERE id=%s""",
+                                       phone=%s, dob=%s, rank=%s, name_keys=%s, source_record_id=%s WHERE id=%s""",
                                     (*vals.values(), keys, rec["id"], row["id"]))
                         out["updated"] += 1
                     else:
-                        cur.execute("""INSERT INTO person(kind, source_record_id, display_name, name_norm, degree_raw, email, orcid, unit_id, phone, dob, name_keys)
-                                       VALUES ('lecturer',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", (rec["id"], *vals.values(), [key]))
+                        cur.execute("""INSERT INTO person(kind, source_record_id, display_name, name_norm, degree_raw, email, orcid, unit_id, phone, dob, rank, name_keys)
+                                       VALUES ('lecturer',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", (rec["id"], *vals.values(), [key]))
                         out["created"] += 1
             except psycopg.errors.IntegrityError as e:
                 out["errors"].append({"source_key": rec["source_key"], "error": str(e).splitlines()[0]})

@@ -6,8 +6,12 @@ liên kết/gán lại ở UI, thay ô nhập `person_id` thô.
 Khớp: khoá `name_keys` (GIN, không dấu, nguyên cụm tên — xem `cris/people.py`)
 khi gõ đủ họ tên, hoặc `display_name ILIKE` khi gõ một phần (có dấu như đã
 lưu). `works` đếm trên `v_person_publications` ở trạng thái liên kết sống."""
-from fastapi import APIRouter, Query
+from typing import Literal
 
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import HTMLResponse
+
+from cris import cv as cv_mod
 from cris import rules as RU
 from cris.api.deps import Conn
 from cris.api.schemas import PersonSearchRow
@@ -63,3 +67,14 @@ def search_persons(conn: Conn, q: str = "", kind: str = "", limit: int = Query(2
         rows = cur.fetchall()
     return [PersonSearchRow(id=r["id"], display_name=r["display_name"], degree=r["degree"],
                             unit_code=r["unit_code"], kind=r["kind"], works=r["works"]) for r in rows]
+
+
+@router.get("/persons/{pid}/cv")
+def person_cv(conn: Conn, pid: int, format: Literal["html"] = "html"):
+    """Lý lịch khoa học (K1): HTML in được, trang UI `window.print()`. Sinh
+    trong `cris.cv` (self-contained, escape mọi chuỗi) — tái dùng `cris.cite`
+    để mỗi công trình hiện đúng dạng APA đã có ở nơi khác."""
+    doc = cv_mod.render(conn, pid)
+    if doc is None:
+        raise HTTPException(404, f"không tìm thấy giảng viên #{pid}")
+    return HTMLResponse(content=doc)

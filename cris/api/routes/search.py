@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tra cứu công trình, chi tiết có xuất xứ từng trường, hồ sơ giảng viên, trục chủ đề.
 SQL chuyển nguyên từ UI HTML cũ (đã gỡ, xem CHANGELOG)."""
+import re
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -13,6 +14,9 @@ from cris.ai.provider import AIDisabled, get_provider
 from cris.api.deps import Conn, require_role
 from cris.api.schemas import (
     DOC_TYPE_LABELS,
+    FacetUnit,
+    FacetValue,
+    FacetYear,
     FieldEditIn,
     FieldEditOut,
     FieldRow,
@@ -26,6 +30,7 @@ from cris.api.schemas import (
     TopicKeyword,
     WorkDetail,
     WorkList,
+    WorksFacetsOut,
     WorkSummary,
 )
 
@@ -61,7 +66,27 @@ def _fmt_value(val):
     return str(val)
 
 
-def _works_query(q: str, doc_type: str, year: int | None, unit: str, topic: int | None):
+def _split_keywords(raw, limit=None):
+    """`keywords_raw` ("AI, học máy; thị giác máy tính") → danh sách đã strip,
+    bỏ rỗng, giữ thứ tự, không trùng; `limit` cắt bớt (chip ở `WorkSummary`)."""
+    if not raw:
+        return []
+    out, seen = [], set()
+    for part in re.split(r"[,;]", raw):
+        kw = part.strip()
+        if kw and kw not in seen:
+            seen.add(kw)
+            out.append(kw)
+    return out[:limit] if limit else out
+
+
+def _keyword_pattern(keyword):
+    """Regex ranh giới `[,;]`/đầu-cuối chuỗi cho `~*` — "AI" không khớp "AIoT"."""
+    return rf"(^|[,;])\s*{re.escape(keyword.strip())}\s*([,;]|$)"
+
+
+def _works_query(q: str, doc_type: str, year: int | None, unit: str, topic: int | None,
+                  pub_type: str = "", quartile: str = "", cohort: str = "", keyword: str = ""):
     """Dựng `from_sql`/`where_sql`/`params` cho bộ lọc công trình dùng chung giữa
     tra cứu (`list_works`) và xuất CSV (`routes/export.py`)."""
     from_sql = ("FROM v_work_current w "
@@ -87,11 +112,28 @@ def _works_query(q: str, doc_type: str, year: int | None, unit: str, topic: int 
         where.append("EXISTS (SELECT 1 FROM regexp_split_to_table(lower(w.keywords_raw), '[,;]') kw "
                      "JOIN ai_topic_keyword tk ON btrim(kw) = tk.keyword WHERE tk.topic_id = %s)")
         params.append(topic)
+    if pub_type:
+        where.append("%s = ANY(w.indexes)"); params.append(pub_type)
+    if quartile:
+        where.append("w.quartile = %s"); params.append(quartile)
+    if cohort:
+        where.append("w.cohort = %s"); params.append(cohort)
+    if keyword.strip():
+        where.append("w.keywords_raw ~* %s"); params.append(_keyword_pattern(keyword))
     where_sql = " AND ".join(where) if where else "TRUE"
     return from_sql, where_sql, params
 
 
-def _semantic_work_list(conn, q: str, doc_type: str, year, unit: str, topic, page: int):
+def _summary(r):
+    return WorkSummary(id=r["id"], title=r["title"], doc_type=r["doc_type"],
+                       doc_type_label=DOC_TYPE_LABELS.get(r["doc_type"], r["doc_type"]),
+                       year=r["year_issue"], doi=r["doi"], state=r["state"],
+                       needs_review=bool(r["needs_review"]), score=r.get("score"),
+                       keywords=_split_keywords(r.get("keywords_raw"), limit=6))
+
+
+def _semantic_work_list(conn, q: str, doc_type: str, year, unit: str, topic, page: int,
+                        pub_type: str = "", quartile: str = "", cohort: str = "", keyword: str = ""):
     """`mode=semantic`: top-k id từ `semantic_works` (embed `q`), giao với
     `_works_query` (giữ mọi bộ lọc trừ `q`, đã dùng để tìm theo nghĩa), sắp
     theo score giảm dần, phân trang. `None` nếu AI chưa bật — người gọi rơi
@@ -105,7 +147,8 @@ def _semantic_work_list(conn, q: str, doc_type: str, year, unit: str, topic, pag
         return WorkList(items=[], page=Page(page=page, per_page=PER_PAGE, total=0),
                         mode="semantic", note=ai_search.NOTE)
     score_of = {wid: score for wid, score in ranked}
-    from_sql, where_sql, params = _works_query("", doc_type, year, unit, topic)
+    from_sql, where_sql, params = _works_query("", doc_type, year, unit, topic,
+                                               pub_type, quartile, cohort, keyword)
     ranked_ids = [wid for wid, _ in ranked]
     with conn.cursor() as cur:
         cur.execute(f"SELECT DISTINCT w.id {from_sql} WHERE {where_sql} AND w.id = ANY(%s)", params + [ranked_ids])
@@ -117,17 +160,15 @@ def _semantic_work_list(conn, q: str, doc_type: str, year, unit: str, topic, pag
     items = []
     if page_ids:
         with conn.cursor() as cur:
-            cur.execute("SELECT id, title, doc_type, year_issue, doi, state, needs_review FROM work "
+            cur.execute("SELECT id, title, doc_type, year_issue, doi, state, needs_review, keywords_raw FROM work "
                         "WHERE id = ANY(%s)", (page_ids,))
             rows = {r["id"]: r for r in cur.fetchall()}
         for wid in page_ids:
             r = rows.get(wid)
             if r is None:
                 continue
-            items.append(WorkSummary(id=r["id"], title=r["title"], doc_type=r["doc_type"],
-                                     doc_type_label=DOC_TYPE_LABELS.get(r["doc_type"], r["doc_type"]),
-                                     year=r["year_issue"], doi=r["doi"], state=r["state"],
-                                     needs_review=bool(r["needs_review"]), score=score_of.get(wid)))
+            r = dict(r, score=score_of.get(wid))
+            items.append(_summary(r))
     return WorkList(items=items, page=Page(page=page, per_page=PER_PAGE, total=total),
                     mode="semantic", note=ai_search.NOTE)
 
@@ -135,26 +176,52 @@ def _semantic_work_list(conn, q: str, doc_type: str, year, unit: str, topic, pag
 @router.get("/works", response_model=WorkList)
 def list_works(conn: Conn, q: str = "", doc_type: str = "", year: int | None = None,
                unit: str = "", topic: int | None = None, mode: Literal["keyword", "semantic"] = "keyword",
+               pub_type: str = "", quartile: str = "", cohort: str = "", keyword: str = "",
                page: int = Query(1, ge=1)):
     note = None
     if mode == "semantic" and q.strip():
-        out = _semantic_work_list(conn, q, doc_type, year, unit, topic, page)
+        out = _semantic_work_list(conn, q, doc_type, year, unit, topic, page,
+                                  pub_type, quartile, cohort, keyword)
         if out is not None:
             return out
         note = ai_search.DISABLED_NOTE   # AI tắt: rơi về từ khoá bên dưới, kèm giải thích
-    from_sql, where_sql, params = _works_query(q, doc_type, year, unit, topic)
+    from_sql, where_sql, params = _works_query(q, doc_type, year, unit, topic, pub_type, quartile, cohort, keyword)
     with conn.cursor() as cur:
         cur.execute(f"SELECT count(DISTINCT w.id) AS n {from_sql} WHERE {where_sql}", params)
         total = cur.fetchone()["n"]
-        cur.execute(f"SELECT DISTINCT w.id, w.title, w.doc_type, w.year_issue, w.doi, w.state, w.needs_review "
-                    f"{from_sql} WHERE {where_sql} ORDER BY w.year_issue DESC NULLS LAST, w.id DESC LIMIT %s OFFSET %s",
+        cur.execute(f"SELECT DISTINCT w.id, w.title, w.doc_type, w.year_issue, w.doi, w.state, w.needs_review, "
+                    f"w.keywords_raw {from_sql} WHERE {where_sql} ORDER BY w.year_issue DESC NULLS LAST, w.id DESC "
+                    f"LIMIT %s OFFSET %s",
                     params + [PER_PAGE, (page - 1) * PER_PAGE])
         rows = cur.fetchall()
-    items = [WorkSummary(id=r["id"], title=r["title"], doc_type=r["doc_type"],
-                         doc_type_label=DOC_TYPE_LABELS.get(r["doc_type"], r["doc_type"]),
-                         year=r["year_issue"], doi=r["doi"], state=r["state"], needs_review=bool(r["needs_review"]))
-             for r in rows]
+    items = [_summary(r) for r in rows]
     return WorkList(items=items, page=Page(page=page, per_page=PER_PAGE, total=total), mode="keyword", note=note)
+
+
+@router.get("/works/facets", response_model=WorksFacetsOut)
+def works_facets(conn: Conn):
+    """Đếm theo `indexes` (nhãn "pub_type" — chưa có bảng nhãn tiếng Việt
+    trong `cris.rules`, giữ nguyên mã), `quartile`, `cohort`, năm và đơn vị
+    trên công trình sống (`v_work_current`, chưa gộp)."""
+    with conn.cursor() as cur:
+        cur.execute("""SELECT idx AS value, count(*) AS n FROM v_work_current w,
+                       LATERAL unnest(w.indexes) AS idx GROUP BY idx ORDER BY n DESC, idx""")
+        pub_types = [FacetValue(value=r["value"], label=r["value"], n=r["n"]) for r in cur.fetchall()]
+        cur.execute("""SELECT quartile AS value, count(*) AS n FROM v_work_current w
+                       WHERE quartile IS NOT NULL GROUP BY quartile ORDER BY quartile""")
+        quartiles = [FacetValue(value=r["value"], label=r["value"], n=r["n"]) for r in cur.fetchall()]
+        cur.execute("""SELECT cohort AS value, count(*) AS n FROM v_work_current w
+                       WHERE cohort IS NOT NULL GROUP BY cohort ORDER BY cohort DESC""")
+        cohorts = [FacetValue(value=r["value"], label=r["value"], n=r["n"]) for r in cur.fetchall()]
+        cur.execute("""SELECT year_issue AS value, count(*) AS n FROM v_work_current w
+                       WHERE year_issue IS NOT NULL GROUP BY year_issue ORDER BY year_issue DESC""")
+        years = [FacetYear(value=r["value"], n=r["n"]) for r in cur.fetchall()]
+        cur.execute("""SELECT u.id AS value, u.code, u.name, count(DISTINCT vu.work_id) AS n
+                       FROM v_work_unit vu JOIN unit u ON u.id = vu.unit_id
+                       JOIN work w ON w.id = vu.work_id AND w.merged_into_id IS NULL
+                       GROUP BY u.id, u.code, u.name ORDER BY n DESC, u.code""")
+        units = [FacetUnit(value=r["value"], code=r["code"], name=r["name"], n=r["n"]) for r in cur.fetchall()]
+    return WorksFacetsOut(pub_types=pub_types, quartiles=quartiles, cohorts=cohorts, years=years, units=units)
 
 
 @router.get("/works/{wid}", response_model=WorkDetail)
@@ -179,6 +246,15 @@ def work_detail(conn: Conn, wid: int):
                        LEFT JOIN person p ON p.id = l.person_id
                        WHERE m.work_id = %s AND m.position > 0 ORDER BY m.role, m.position""", (wid,))
         mentions = cur.fetchall()
+        cur.execute("SELECT raw FROM source_record WHERE id = %s", (w["primary_source_record_id"],))
+        src = cur.fetchone()
+    raw = (src["raw"] if src else {}) or {}
+    det = raw.get("detail") or {}
+    arc = raw.get("archive") or {}
+    pdf_list = det.get("pdf") or []
+    pdf_url = pdf_list[0] if pdf_list else None
+    source_url = det.get("url") or arc.get("url")
+    keywords = _split_keywords(w.get("keywords_raw"))
     fields = []
     for field, label in FIELD_LABELS:
         p = prov.get(field)
@@ -203,7 +279,7 @@ def work_detail(conn: Conn, wid: int):
     return WorkDetail(id=w["id"], title=w["title"], doc_type=w["doc_type"],
                       doc_type_label=DOC_TYPE_LABELS.get(w["doc_type"], w["doc_type"]), state=w["state"],
                       needs_review=bool(w["needs_review"]), has_manual=bool(w.get("has_manual")),
-                      fields=fields, mentions=ms)
+                      fields=fields, mentions=ms, pdf_url=pdf_url, source_url=source_url, keywords=keywords)
 
 
 @router.patch("/works/{wid}/fields", response_model=FieldEditOut)
@@ -252,7 +328,8 @@ def person_profile(conn: Conn, pid: int):
         by_type=by_type, by_year=dict(sorted(by_year.items())),
         publications=[PersonPublication(work_id=r["work_id"], title=r["title"], doc_type=r["doc_type"], year=r["year_issue"],
                                         doi=r["doi"], link_state=r["state"], confidence=r["confidence"]) for r in pubs],
-        pending_count=pending, last_sync=LastSync(**last) if last else None)
+        pending_count=pending, last_sync=LastSync(**last) if last else None,
+        rank=p.get("rank"), scholar_url=p.get("scholar_url"), citation_stats=None)
 
 
 @router.get("/topics", response_model=list[Topic])
@@ -284,14 +361,11 @@ def topic_detail(conn: Conn, tid: int):
                     (tid,))
         kws = cur.fetchall()
         from_sql, where_sql, params = _works_query("", "", None, "", tid)
-        cur.execute(f"SELECT DISTINCT w.id, w.title, w.doc_type, w.year_issue, w.doi, w.state, w.needs_review "
-                    f"{from_sql} WHERE {where_sql} ORDER BY w.year_issue DESC NULLS LAST, w.id DESC LIMIT 50",
+        cur.execute(f"SELECT DISTINCT w.id, w.title, w.doc_type, w.year_issue, w.doi, w.state, w.needs_review, "
+                    f"w.keywords_raw {from_sql} WHERE {where_sql} ORDER BY w.year_issue DESC NULLS LAST, w.id DESC LIMIT 50",
                     params)
         works = cur.fetchall()
-    items = [WorkSummary(id=r["id"], title=r["title"], doc_type=r["doc_type"],
-                         doc_type_label=DOC_TYPE_LABELS.get(r["doc_type"], r["doc_type"]),
-                         year=r["year_issue"], doi=r["doi"], state=r["state"], needs_review=bool(r["needs_review"]))
-             for r in works]
+    items = [_summary(r) for r in works]
     return TopicDetail(id=t["id"], label=t["label"], size=t["size"],
                        keywords=[TopicKeyword(keyword=r["keyword"], weight=r["weight"]) for r in kws],
                        works=items)

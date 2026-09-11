@@ -145,7 +145,17 @@ python -m cris user create-lecturers [--unit CODE] [--dry-run]     # tài khoả
   truy ngược được ai sửa và giá trị cũ.
 - **Tra cứu & hồ sơ** — tìm công trình theo từ khoá/loại/năm/đơn vị/chủ đề
   (gõ không dấu vẫn ra kết quả đúng), chi tiết có xuất xứ từng trường, hồ sơ
-  công bố giảng viên.
+  công bố giảng viên; lọc thêm theo chỉ mục/quartile/khoá/từ khoá riêng
+  (`GET /api/works/facets` đếm số lượng từng giá trị).
+- **Trích dẫn công trình** — APA 7, IEEE, BibTeX dựng từ metadata đã chuẩn
+  hoá (tác giả theo vai trong `author_mention`; đồ án/luận văn/luận án ghi
+  sinh viên là tác giả, GVHD là người hướng dẫn), tải trực tiếp tệp `.bib`.
+- **Lý lịch khoa học** — trang HTML in được (A4) cho từng giảng viên, gồm
+  học hàm/học vị, số liệu công bố theo loại/năm và danh sách công trình dạng
+  APA kèm liên kết DOI.
+- **Mới cập nhật & RSS** — `/api/recent` liệt kê công trình vừa thêm/đổi ở
+  lượt đồng bộ gần nhất; `/api/feed.xml` (RSS 2.0, công khai) cho các công cụ
+  theo dõi bên ngoài.
 - **Hàng đợi người quyết** — xác nhận liên kết tác giả, gộp/giữ riêng nghi
   trùng, luôn có gợi ý AI kèm lý do, quyết định cuối luôn thuộc về người dùng.
 - **Tổng quan cho lãnh đạo** (`/tong-quan/`) — công trình theo năm × loại, theo

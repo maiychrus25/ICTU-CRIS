@@ -30,6 +30,22 @@
   `share` cộng ≈ 1 mỗi khoá/năm. `GET /api/ai/coauthors?min_works=` đồ thị giảng viên cùng
   đứng tên công trình đã liên kết (`cris/ai/coauthors.py`), `weight` = số công trình chung,
   cắt tối đa 300 nút theo số công trình.
+- Trích dẫn, bộ lọc/facets công trình, lý lịch khoa học, mới cập nhật và RSS (lát cắt K1):
+  `GET /api/works/{id}/citation?style=apa|ieee|bibtex` dựng từ metadata đã chuẩn hoá
+  (`cris/cite.py`, tác giả theo vai trong `author_mention`; đồ án/luận văn/luận án ghi
+  sinh viên là tác giả, GVHD là người hướng dẫn; `download=1` tải `.bib` kèm
+  `Content-Disposition`). `GET /api/works/{id}` thêm `pdf_url`/`source_url` (từ bản ghi
+  nguồn hiện hành) và `keywords` (tách `keywords_raw`); `WorkSummary` thêm `keywords` (tối
+  đa 6) cho chip ở danh sách. `GET /api/works` thêm bộ lọc `pub_type` (khớp `indexes`),
+  `quartile`, `cohort`, `keyword` (ranh giới `[,;]`, không phân biệt hoa/thường — "AI"
+  không khớp "AIoT"); `GET /api/works/facets` đếm theo từng giá trị trên công trình sống.
+  `GET /api/persons/{id}` thêm `rank` (học hàm — cột mới `person.rank`, migration
+  `0016_person_rank.sql`, `cris.people.import_people` cập nhật từ `archive.rank`) và
+  `scholar_url`. `GET /api/persons/{id}/cv?format=html` sinh lý lịch khoa học tự chứa
+  (`cris/cv.py`, escape toàn bộ, A4, tái dùng `cris.cite.apa`). `GET /api/recent?limit=`
+  công trình thêm/đổi ở lượt đồng bộ gần nhất đã xong (`cris/api/routes/recent.py`).
+  `GET /api/feed.xml` RSS 2.0 công khai 20 công trình mới nhất (`cris/api/routes/feed.py`,
+  đường dẫn công khai đọc từ `CRIS_PUBLIC_URL`).
 
 ### Fixed
 
