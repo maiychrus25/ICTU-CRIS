@@ -36,6 +36,7 @@ services:
       CRIS_AI_MODEL_DIR: /models
     volumes:
       - cris_models:/models                # mô hình AI tải một lần, giữ qua các lần dựng lại
+      - cris_data:/data                    # tệp minh chứng (CRIS_DATA_DIR)
     ports:
       - "${CRIS_PORT:-8000}:8000"
     command: ["serve", "--host", "0.0.0.0", "--port", "8000"]
@@ -43,3 +44,4 @@ services:
 volumes:
   cris_pg: {}
   cris_models: {}
+  cris_data: {}
