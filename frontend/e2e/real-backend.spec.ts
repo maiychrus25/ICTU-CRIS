@@ -13,6 +13,11 @@ test.beforeAll(async () => {
 });
 
 test.beforeEach(async ({ page }) => {
+  await page.route("**/api/**", async (route) => {
+    const url = new URL(route.request().url());
+    url.host = "localhost:8000";
+    await route.fulfill({ response: await route.fetch({ url: url.toString() }) });
+  });
   const errors: string[] = [];
   runtimeErrors.set(page, errors);
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
@@ -22,6 +27,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
   expect(runtimeErrors.get(page), "Trang không được phát sinh pageerror hoặc console.error").toEqual([]);
 });
 

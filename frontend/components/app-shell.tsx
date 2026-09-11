@@ -126,16 +126,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-16 border-r border-sidebar-border bg-sidebar md:flex md:flex-col lg:w-60">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
         <div className="lg:hidden"><Brand compact /></div><div className="hidden lg:block"><Brand /></div>
         <div className="border-t border-sidebar-border lg:hidden"><Navigation compact /></div><div className="hidden border-t border-sidebar-border lg:block"><Navigation /></div>
         <div className="mt-auto lg:hidden"><Account compact /></div><div className="mt-auto hidden lg:block"><Account /></div>
       </aside>
 
-      <div className="md:pl-16 lg:pl-60">
+      <div className="lg:pl-60">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:px-6">
           <Sheet>
-            <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden" aria-label="Mở điều hướng" />}><Menu /></SheetTrigger>
+            <SheetTrigger render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label="Mở điều hướng" />}><Menu /></SheetTrigger>
             <SheetContent side="left" className="flex w-72 flex-col bg-sidebar p-0">
               <SheetHeader className="sr-only"><SheetTitle>Điều hướng</SheetTitle><SheetDescription>Các khu vực của hệ thống</SheetDescription></SheetHeader>
               <Brand /><div className="flex-1 overflow-y-auto border-t border-sidebar-border"><Navigation /></div><Account />
