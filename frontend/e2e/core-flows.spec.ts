@@ -96,6 +96,32 @@ test("tra cứu và mở bảng xuất xứ công trình", async ({ page }) => {
   await expect(page.getByRole("columnheader", { name: "Nguồn", exact: true })).toBeVisible();
 });
 
+test("chỉnh tay tiêu đề bắt buộc lý do và ghi nhận xuất xứ", async ({ page }) => {
+  await page.goto("/cong-trinh/?id=1");
+  await page.getByRole("button", { name: "Chỉnh sửa Tiêu đề" }).click();
+
+  const dialog = page.getByRole("dialog");
+  const reason = dialog.getByLabel("Lý do *");
+  await dialog.getByLabel("Giá trị mới *").fill("Xây dựng website quản lý thư viện trường THPT");
+  await dialog.getByRole("button", { name: "Lưu chỉnh sửa" }).click();
+  await expect(dialog).toBeVisible();
+  expect(await reason.evaluate((element: HTMLTextAreaElement) => element.validity.valid)).toBe(false);
+
+  await reason.fill("Đối chiếu lại bản ghi gốc của khoa.");
+  await dialog.getByRole("button", { name: "Lưu chỉnh sửa" }).click();
+  await expect(page.getByText("Đã chỉnh tay", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Xây dựng website quản lý thư viện trường THPT", exact: true })).toBeVisible();
+});
+
+test("hồ sơ nháp được trình khoa duyệt bởi chuyên viên", async ({ page }) => {
+  await page.goto("/ke-khai/?id=601");
+  await expect(page.locator('[data-slot="badge"]').filter({ hasText: /^Nháp$/ }).first()).toBeVisible();
+  await page.getByRole("button", { name: "Trình khoa duyệt" }).click();
+
+  await expect(page.getByText("Đã trình khoa duyệt.")).toBeVisible();
+  await expect(page.locator('[data-slot="badge"]').filter({ hasText: /^Chờ khoa duyệt$/ }).first()).toBeVisible();
+});
+
 test("quyết định liên kết tác giả dùng lý do và bộ chọn người", async ({ page }) => {
   await page.goto("/doi-soat/tac-gia/");
   await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();

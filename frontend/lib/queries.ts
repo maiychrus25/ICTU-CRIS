@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type {
   AuditFilters, CompareIn, DeclarationCreateIn, DeclarationEvidenceIn, DeclarationStateIn,
-  DecideAuthorsIn, DecideDupIn, LoginIn, PeriodOpenIn, ScreenFilters, WorkFilters,
+  DecideAuthorsIn, DecideDupIn, FieldEditIn, LoginIn, PeriodOpenIn, ScreenFilters, WorkFilters,
 } from "@/lib/types";
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: api.getMe, staleTime: 60_000 });
@@ -19,6 +19,7 @@ export function useOfficerAccess() {
 
 export const useWorks = (filters: WorkFilters, enabled = true) => useQuery({ queryKey: ["works", filters], queryFn: () => api.getWorks(filters), enabled });
 export const useWork = (id: number | null) => useQuery({ queryKey: ["work", id], queryFn: () => api.getWork(id!), enabled: id !== null });
+export const useEditWorkField = (id: number) => useMutation({ mutationFn: (input: FieldEditIn) => api.editWorkField(id, input) });
 export const usePerson = (id: number | null) => useQuery({ queryKey: ["person", id], queryFn: () => api.getPerson(id!), enabled: id !== null });
 export const usePersonSearch = (q: string) => useQuery({ queryKey: ["person-search", q], queryFn: () => api.searchPersons(q), enabled: q.length > 0 });
 export const useTopics = () => useQuery({ queryKey: ["topics"], queryFn: api.getTopics });
@@ -46,6 +47,7 @@ export const useAddDeclarationEvidence = () => useMutation({ mutationFn: ({ id, 
 export const useOpenPeriod = () => useMutation({ mutationFn: (input: PeriodOpenIn) => api.openPeriod(input) });
 export const useClosePeriod = (id: number) => useMutation({ mutationFn: () => api.closePeriod(id) });
 export const useCancelPeriod = (id: number) => useMutation({ mutationFn: () => api.cancelPeriod(id) });
+export const useFinalizePeriod = (id: number) => useMutation({ mutationFn: () => api.finalizePeriod(id) });
 export const useSyncRuns = (page: number) => useQuery({ queryKey: ["sync-runs", page], queryFn: () => api.getSyncRuns(page) });
 export const useSyncRun = (id: number | null) => useQuery({ queryKey: ["sync-run", id], queryFn: () => api.getSyncRun(id!), enabled: id !== null });
 export const useHealth = () => useQuery({ queryKey: ["health"], queryFn: api.getHealth });

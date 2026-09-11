@@ -11,7 +11,7 @@ import type {
   AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DeclarationCreateIn,
   DeclarationDetail, DeclarationEvidenceIn, DeclarationList, DeclarationRow, DeclarationStateIn,
   DecideAuthorsIn, DecideDupIn, DecideResult, DupGroupDetail, DupGroupList, EvidenceOut, HealthOut, PeriodOpenIn, PeriodOut, PeriodProgress,
-  LoginIn, LogoutOut, MeOut, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
+  FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, PeriodFinalizeOut, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
   UserOut,
   WorkDetail, WorkFilters, WorkList,
   ScreenCohortSummary, ScreenFilters, ScreenList,
@@ -27,6 +27,9 @@ export class ApiError extends Error {
 }
 
 let mockUser = meFixture.user;
+const mockWorks = structuredClone(worksFixture);
+const mockWorkDetails = structuredClone(workDetailsFixture);
+const mockPeriods = structuredClone(periodsFixture);
 const mockDeclarations = structuredClone(declarationsFixture);
 const mockDeclarationDetails = structuredClone(declarationDetailsFixture);
 const mockPeriodProgress = structuredClone(periodProgressFixture);
@@ -54,14 +57,41 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     data = { ok: true };
   }
   else if (url.pathname === "/api/works") {
-    const q = url.searchParams.get("q")?.toLocaleLowerCase("vi") ?? "";
+    const q = url.searchParams.get("q")?.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "") ?? "";
     const docType = url.searchParams.get("doc_type");
     const year = url.searchParams.get("year");
     const topic = Number(url.searchParams.get("topic")) || null;
     const topicWorkIds = topic ? new Set(topicDetailsFixture[topic]?.works.map((work) => work.id) ?? []) : null;
-    const items = worksFixture.items.filter((work) => (!q || work.title?.toLocaleLowerCase("vi").includes(q)) && (!docType || work.doc_type === docType) && (!year || work.year === Number(year)) && (!topicWorkIds || topicWorkIds.has(work.id)));
-    data = { items, page: { ...worksFixture.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
-  } else if (/^\/api\/works\/\d+$/.test(url.pathname)) data = workDetailsFixture[id];
+    const items = mockWorks.items.filter((work) => (!q || work.title?.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)) && (!docType || work.doc_type === docType) && (!year || work.year === Number(year)) && (!topicWorkIds || topicWorkIds.has(work.id)));
+    data = { items, page: { ...mockWorks.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
+  } else if (/^\/api\/works\/\d+\/fields$/.test(url.pathname) && init?.method === "PATCH") {
+    const workId = Number(url.pathname.split("/").at(-2));
+    const work = mockWorkDetails[workId];
+    const body = JSON.parse(String(init.body)) as FieldEditIn;
+    const editable = new Set(["title", "doi", "year_issue", "journal", "volume", "pub_type_raw", "cohort", "abstract", "keywords_raw"]);
+    if (!editable.has(body.field)) throw new ApiError(400, `không cho phép chỉnh trường '${body.field}'`);
+    if (!body.reason?.trim()) throw new ApiError(409, "cần ghi lý do chỉnh sửa");
+    if (!work) data = undefined;
+    else {
+      const field = work.fields.find((item) => item.field === body.field);
+      const old = field?.value ?? null;
+      const value = body.field === "year_issue" && body.value !== null && String(body.value).trim() !== "" ? Number(body.value) : body.value;
+      if (body.field === "year_issue" && typeof value === "number" && !Number.isFinite(value)) throw new ApiError(409, `năm phát hành không hợp lệ: '${String(body.value)}'`);
+      if (body.field === "title" && !String(value ?? "").trim()) throw new ApiError(409, "tiêu đề không được để trống");
+      if (field) {
+        field.value = value === null ? null : String(value);
+        field.raw = old;
+        field.source = `Chỉnh tay bởi ${mockUser?.display_name ?? "Người dùng"}, lúc ${new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short" }).format(new Date())}`;
+      }
+      work.has_manual = true;
+      if (body.field === "title") {
+        work.title = String(value);
+        const summary = mockWorks.items.find((item) => item.id === workId);
+        if (summary) summary.title = String(value);
+      }
+      data = { field: body.field, old, new: value } satisfies FieldEditOut;
+    }
+  } else if (/^\/api\/works\/\d+$/.test(url.pathname)) data = mockWorkDetails[id];
   else if (/^\/api\/persons\/\d+$/.test(url.pathname)) data = id === personFixture.id ? personFixture : undefined;
   else if (url.pathname === "/api/persons") {
     const q = url.searchParams.get("q")?.toLocaleLowerCase("vi") ?? "";
@@ -103,10 +133,12 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const items = auditFixture.items.filter((row) => (!entity || row.entity === entity) && (!entityId || row.entity_id === Number(entityId)));
     data = { items, page: { ...auditFixture.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
   }
-  else if (url.pathname === "/api/periods" && !init?.method) data = periodsFixture;
+  else if (url.pathname === "/api/periods" && !init?.method) data = mockPeriods;
   else if (url.pathname === "/api/periods" && init?.method === "POST") {
     const body = JSON.parse(String(init.body)) as PeriodOpenIn;
-    data = { ...body, id: 404, criteria: body.criteria ?? null, state: "DangMo", opens_at: new Date().toISOString(), created_at: new Date().toISOString() };
+    const period = { ...body, id: 404, criteria: body.criteria ?? null, state: "DangMo", opens_at: new Date().toISOString(), created_at: new Date().toISOString() };
+    mockPeriods.unshift(period);
+    data = period;
   }
   else if (/^\/api\/periods\/\d+\/declarations$/.test(url.pathname) && !init?.method) {
     const periodId = Number(url.pathname.split("/").at(-2));
@@ -116,7 +148,7 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   }
   else if (/^\/api\/periods\/\d+\/declarations$/.test(url.pathname) && init?.method === "POST") {
     const periodId = Number(url.pathname.split("/").at(-2));
-    const period = periodsFixture.find((item) => item.id === periodId);
+    const period = mockPeriods.find((item) => item.id === periodId);
     const body = JSON.parse(String(init.body)) as DeclarationCreateIn;
     const work = workItems.find((item) => item.id === body.work_id);
     const unit = statsFixture.by_unit.find((item) => item.unit_id === body.unit_id);
@@ -149,9 +181,22 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const body = JSON.parse(String(init?.body)) as DeclarationStateIn;
     if (!detail) data = undefined;
     else {
-      const allowed = new Set(["Nhap:ChoBoSung", "ChoBoSung:Nhap", "Nhap:Rut", "ChoBoSung:Rut"]);
-      if (!allowed.has(`${detail.state}:${body.to_state}`)) throw new ApiError(409, `không thể chuyển hồ sơ từ ${detail.state} sang ${body.to_state}`);
-      if ((body.to_state === "ChoBoSung" || body.to_state === "Rut") && !body.reason?.trim()) throw new ApiError(409, `chuyển sang ${body.to_state} bắt buộc phải nêu lý do`);
+      const transitions: Record<string, { roles: string[]; reason?: boolean }> = {
+        "Nhap:ChoKhoaDuyet": { roles: ["faculty_officer", "rd_officer"] },
+        "ChoKhoaDuyet:KhoaDaDuyet": { roles: ["faculty_head"] },
+        "ChoKhoaDuyet:Nhap": { roles: ["faculty_head"], reason: true },
+        "KhoaDaDuyet:ChoPhongKiemTra": { roles: ["faculty_head", "rd_officer"] },
+        "ChoPhongKiemTra:DatYeuCau": { roles: ["rd_officer"] },
+        "ChoPhongKiemTra:Nhap": { roles: ["rd_officer"], reason: true },
+        "Nhap:ChoBoSung": { roles: ["faculty_officer", "rd_officer"], reason: true },
+        "ChoBoSung:Nhap": { roles: ["faculty_officer", "rd_officer"] },
+        "Nhap:Rut": { roles: ["faculty_officer", "rd_officer"], reason: true },
+        "ChoBoSung:Rut": { roles: ["faculty_officer", "rd_officer"], reason: true },
+      };
+      const transition = transitions[`${detail.state}:${body.to_state}`];
+      if (!transition) throw new ApiError(409, `không thể chuyển hồ sơ từ ${detail.state} sang ${body.to_state}`);
+      if (!transition.roles.some((role) => mockUser?.roles.includes(role))) throw new ApiError(403, `cần vai trò: ${transition.roles.join(", ")}`);
+      if (transition.reason && !body.reason?.trim()) throw new ApiError(409, `chuyển sang ${body.to_state} bắt buộc phải nêu lý do`);
       const fromState = detail.state;
       const now = new Date().toISOString();
       detail.state = body.to_state;
@@ -184,10 +229,41 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   }
   else if (/^\/api\/declarations\/\d+$/.test(url.pathname)) data = mockDeclarationDetails[id];
   else if (/^\/api\/periods\/\d+\/progress$/.test(url.pathname)) data = mockPeriodProgress[Number(url.pathname.split("/").at(-2))];
+  else if (/^\/api\/periods\/\d+\/finalize$/.test(url.pathname)) {
+    const periodId = Number(url.pathname.split("/").at(-2));
+    const period = mockPeriods.find((item) => item.id === periodId);
+    if (period?.state !== "DaDongNop") throw new ApiError(409, "chỉ chốt kỳ khi kỳ báo cáo đã đóng nộp");
+    const skipped: PeriodFinalizeOut["skipped"] = [];
+    let finalized = 0;
+    for (const row of mockDeclarations[periodId] ?? []) {
+      if (row.state === "DatYeuCau") {
+        row.state = "DaChot";
+        const detail = mockDeclarationDetails[row.id];
+        const now = new Date().toISOString();
+        row.updated_at = now;
+        row.last_event_at = now;
+        if (detail) {
+          detail.state = "DaChot";
+          detail.updated_at = now;
+          detail.events.push({ id: Date.now(), from_state: "DatYeuCau", to_state: "DaChot", actor_id: mockUser?.id ?? 1, reason: null, at: now });
+        }
+        const progressUnit = mockPeriodProgress[periodId]?.units.find((item) => item.unit_id === row.unit_id);
+        if (progressUnit) {
+          progressUnit.counts.DatYeuCau = Math.max(0, (progressUnit.counts.DatYeuCau ?? 0) - 1);
+          progressUnit.counts.DaChot = (progressUnit.counts.DaChot ?? 0) + 1;
+        }
+        finalized += 1;
+      } else skipped.push({ id: row.id, state: row.state });
+    }
+    data = { finalized, skipped } satisfies PeriodFinalizeOut;
+  }
   else if (/^\/api\/periods\/\d+\/(close|cancel)$/.test(url.pathname)) {
     const periodId = Number(url.pathname.split("/").at(-2));
-    const period = periodsFixture.find((item) => item.id === periodId);
-    data = period ? { ...period, state: url.pathname.endsWith("/close") ? "DaDongNop" : "Huy" } : undefined;
+    const period = mockPeriods.find((item) => item.id === periodId);
+    const state = url.pathname.endsWith("/close") ? "DaDongNop" : "Huy";
+    if (period) period.state = state;
+    if (mockPeriodProgress[periodId]) mockPeriodProgress[periodId].state = state;
+    data = period;
   }
   else if (url.pathname === "/api/sync/runs") data = { ...syncRunsFixture, page: { ...syncRunsFixture.page, page: Number(url.searchParams.get("page") ?? 1) } };
   else if (/^\/api\/sync\/runs\/\d+$/.test(url.pathname)) data = syncRunDetailsFixture[id];
@@ -210,10 +286,10 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
     if (typeof window !== "undefined" && path !== "/api/auth/login") {
       if (error.status === 401) {
         error.handled = true;
-        window.dispatchEvent(new CustomEvent("cris:api-error", { detail: { status: 401 } }));
+        window.dispatchEvent(new CustomEvent("cris:api-error", { detail: { status: 401, detail: error.detail } }));
       } else if (error.status === 403) {
         error.handled = true;
-        window.dispatchEvent(new CustomEvent("cris:api-error", { detail: { status: 403 } }));
+        window.dispatchEvent(new CustomEvent("cris:api-error", { detail: { status: 403, detail: error.detail } }));
       }
     }
     throw error;
@@ -227,6 +303,7 @@ export const api = {
   logout: () => apiRequest<LogoutOut>("/api/auth/logout", { method: "POST" }),
   getWorks: (filters: WorkFilters = {}) => apiRequest<WorkList>(`/api/works${queryString({ q: filters.q, doc_type: filters.doc_type, year: filters.year, unit: filters.unit, topic: filters.topic, page: filters.page })}`),
   getWork: (id: number) => apiRequest<WorkDetail>(`/api/works/${id}`),
+  editWorkField: (id: number, input: FieldEditIn) => apiRequest<FieldEditOut>(`/api/works/${id}/fields`, { method: "PATCH", body: JSON.stringify(input) }),
   getPerson: (id: number) => apiRequest<PersonProfile>(`/api/persons/${id}`),
   searchPersons: (q: string, limit = 20) => apiRequest<PersonSearchRow[]>(`/api/persons${queryString({ q, limit })}`),
   getTopics: () => apiRequest<Topic[]>("/api/topics"),
@@ -254,6 +331,7 @@ export const api = {
   openPeriod: (input: PeriodOpenIn) => apiRequest<PeriodOut>("/api/periods", { method: "POST", body: JSON.stringify(input) }),
   closePeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/close`, { method: "POST" }),
   cancelPeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/cancel`, { method: "POST" }),
+  finalizePeriod: (id: number) => apiRequest<PeriodFinalizeOut>(`/api/periods/${id}/finalize`, { method: "POST" }),
   getSyncRuns: (page = 1) => apiRequest<SyncRunList>(`/api/sync/runs${queryString({ page })}`),
   getSyncRun: (id: number) => apiRequest<SyncRunDetail>(`/api/sync/runs/${id}`),
   getHealth: () => apiRequest<HealthOut>("/api/health"),

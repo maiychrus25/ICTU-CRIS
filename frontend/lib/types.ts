@@ -18,6 +18,8 @@ export interface WorkDetail {
   id: number; title: string | null; doc_type: string; doc_type_label: string; state: string;
   needs_review: boolean; has_manual: boolean; fields: FieldRow[]; mentions: MentionRow[];
 }
+export interface FieldEditIn { field: string; value: unknown; reason: string }
+export interface FieldEditOut { field: string; old: unknown; new: unknown }
 export interface PersonPublication {
   work_id: number; title: string | null; doc_type: string; year: number | null; doi: string | null;
   link_state: string; confidence: string | null;
@@ -101,7 +103,7 @@ export interface AboutOut {
 }
 export interface LoginIn { email: string; password: string }
 export interface UserOut {
-  id: number; email: string; display_name: string; roles: string[]; unit_id: number | null;
+  id: number; email: string; display_name: string; roles: string[]; unit_id: number | null; unit_code: string | null;
 }
 export interface MeOut { user: UserOut | null; auth_required: boolean }
 export interface LogoutOut { ok: boolean }
@@ -135,7 +137,9 @@ export interface PeriodUnitProgress {
 export interface PeriodProgress {
   period_id: number; state: string; due_at: string | null; days_remaining: number | null; units: PeriodUnitProgress[];
 }
-export type DeclarationState = "Nhap" | "ChoBoSung" | "Rut";
+export interface PeriodFinalizeOut { finalized: number; skipped: { id: number; state: string }[] }
+export type DeclarationState = "Nhap" | "ChoBoSung" | "ChoKhoaDuyet" | "KhoaDaDuyet" | "ChoPhongKiemTra" | "DatYeuCau" | "DaChot" | "Rut";
+export type DeclarationTransitionState = Exclude<DeclarationState, "DaChot">;
 export type EvidenceKind = "link" | "file" | "note";
 export interface DeclarationRow {
   id: number; period_id: number; work_id: number; work_title: string | null; doc_type: string;
@@ -144,7 +148,7 @@ export interface DeclarationRow {
 }
 export interface DeclarationList { items: DeclarationRow[] }
 export interface DeclarationCreateIn { work_id: number; unit_id: number; note?: string | null }
-export interface DeclarationStateIn { to_state: DeclarationState; reason?: string | null }
+export interface DeclarationStateIn { to_state: DeclarationTransitionState; reason?: string | null }
 export interface DeclarationEvidenceIn {
   kind: EvidenceKind; url?: string | null; file_name?: string | null; note?: string | null;
 }

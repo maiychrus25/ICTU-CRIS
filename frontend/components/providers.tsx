@@ -15,8 +15,8 @@ function ApiErrorHandler() {
   const router = useRouter();
   useEffect(() => {
     function handle(event: Event) {
-      const status = (event as CustomEvent<{ status: number }>).detail.status;
-      if (status === 403) return void toast.error("Bạn không có quyền");
+      const { status, detail } = (event as CustomEvent<{ status: number; detail: string }>).detail;
+      if (status === 403) return void toast.error(detail);
       toast.error("Cần đăng nhập");
       if (!window.location.pathname.startsWith("/dang-nhap")) {
         const next = `${window.location.pathname}${window.location.search}`;

@@ -15,7 +15,9 @@ export const stateLabels: Record<string, string> = {
   DaBacBo: "Đã bác bỏ", NghiTrung: "Nghi trùng", DaGop: "Đã gộp", GiuRieng: "Giữ riêng",
   BoQua: "Đã bỏ qua", Tho: "Dữ liệu thô", DaChuanHoa: "Đã chuẩn hoá",
   ChuanBi: "Chuẩn bị", DangMo: "Đang mở", DaDongNop: "Đã đóng nộp", Huy: "Đã huỷ",
-  Nhap: "Nháp", ChoBoSung: "Chờ bổ sung", Rut: "Đã rút",
+  Nhap: "Nháp", ChoBoSung: "Chờ bổ sung", ChoKhoaDuyet: "Chờ khoa duyệt",
+  KhoaDaDuyet: "Khoa đã duyệt", ChoPhongKiemTra: "Chờ phòng kiểm tra",
+  DatYeuCau: "Đạt yêu cầu", DaChot: "Đã chốt", Rut: "Đã rút",
   active: "Đang hoạt động", vanished: "Đã biến mất",
   running: "Đang chạy", ok: "Thành công", success: "Thành công", warning: "Có cảnh báo", failed: "Thất bại",
 };
@@ -33,7 +35,7 @@ export const roleLabels: Record<string, string> = {
 
 export const userRoleLabels: Record<string, string> = {
   rd_officer: "Chuyên viên KHCN", lecturer: "Giảng viên", school_leader: "Lãnh đạo",
-  admin: "Quản trị", faculty_officer: "Chuyên viên khoa",
+  admin: "Quản trị", faculty_officer: "Chuyên viên khoa", faculty_head: "Trưởng khoa",
 };
 
 export const officerRoleRequired = "Cần vai trò Chuyên viên KHCN";
