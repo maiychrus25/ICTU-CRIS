@@ -298,6 +298,7 @@ class UserOut(BaseModel):
     display_name: str
     roles: list[str] = Field(default_factory=list)
     unit_id: int | None = None
+    unit_code: str | None = None
 
 
 class MeOut(BaseModel):
@@ -412,6 +413,16 @@ class PeriodProgress(BaseModel):
     units: list[PeriodUnitProgress]
 
 
+class PeriodFinalizeSkipped(BaseModel):
+    id: int
+    state: str
+
+
+class PeriodFinalizeOut(BaseModel):
+    finalized: int
+    skipped: list[PeriodFinalizeSkipped]
+
+
 # ---------- kê khai công trình vào kỳ (G3) ----------
 class DeclarationRow(BaseModel):
     id: int
@@ -441,7 +452,7 @@ class DeclarationCreateIn(BaseModel):
 
 
 class DeclarationStateIn(BaseModel):
-    to_state: Literal["Nhap", "ChoBoSung", "Rut"]
+    to_state: Literal["Nhap", "ChoBoSung", "ChoKhoaDuyet", "KhoaDaDuyet", "ChoPhongKiemTra", "DatYeuCau", "Rut"]
     reason: str | None = None
 
 

@@ -142,8 +142,11 @@ Nguyên tắc: AI **chỉ ghi vào bảng gợi ý của nó** (`ai_embedding`, 
 | FR-K-01 | Lược đồ `period`, `declaration` (duy nhất theo kỳ + công trình + đơn vị), `evidence`, `declaration_event` | ✅ |
 | FR-K-02 | Mở kỳ gắn bộ quy tắc đang hoạt động tại thời điểm mở; đóng nộp; huỷ; mọi chuyển trạng thái ghi `audit_log` | ✅ |
 | FR-K-03 | Tiến độ theo đơn vị cho một kỳ | ✅ |
-| FR-K-04..05 | Kê khai công trình vào kỳ đang mở (`cris/declare.py`, API `/api/periods/{id}/declarations`, `/api/declarations/{id}`), chuyển trạng thái `Nhap`/`ChoBoSung`/`Rut` kèm lý do bắt buộc, thêm minh chứng (`link`/`file`/`note`) | ✅ |
-| FR-K-06..09 | Gợi ý theo khoa, kiểm tra hai mức (khoa duyệt/phòng kiểm tra), giao diện lập hồ sơ | ⏳ ngoài bản dự thi |
+| FR-K-04..05 | Kê khai công trình vào kỳ đang mở (`cris/declare.py`, API `/api/periods/{id}/declarations`, `/api/declarations/{id}`), thêm minh chứng (`link`/`file`/`note`) | ✅ |
+| FR-K-06 | Kiểm tra hai mức theo `docs/ba/03-state.md` §3.2: `Nhap → ChoKhoaDuyet → KhoaDaDuyet → ChoPhongKiemTra → DatYeuCau`, mỗi bước gắn vai trò (`faculty_officer`/`faculty_head`/`rd_officer`) và có thể trả về `Nhap` kèm lý do bắt buộc; nhánh chuẩn bị cũ `ChoBoSung`/`Rut` giữ nguyên | ✅ |
+| FR-K-07 | Phạm vi đơn vị (NFR-02): vai trò cấp khoa chỉ kê khai/xem/chuyển trạng thái hồ sơ của đơn vị mình, lọc ở tầng SQL — `cris.declare.set_state`/`add_declaration`/`list_declarations` (`actor_roles`, `actor_unit_id`), API qua `cris.api.deps.current_user` | ✅ |
+| FR-K-08 | Chốt kỳ báo cáo (`finalize_period`, `POST /api/periods/{id}/finalize`, vai trò `rd_officer`): kỳ phải `DaDongNop`, mọi hồ sơ `DatYeuCau` → `DaChot`, hồ sơ chưa đạt liệt kê trong `skipped` | ✅ |
+| FR-K-09 | Gợi ý theo khoa, giao diện lập hồ sơ | ⏳ ngoài bản dự thi |
 
 ### 3.6 Dòng lệnh (FR-C)
 

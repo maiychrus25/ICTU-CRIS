@@ -8,7 +8,8 @@ from cris.db import tx
 # Kỳ báo cáo chỉ đi qua các trạng thái thuộc phạm vi lát cắt K; "duyệt/trả lại"
 # (lát cắt D) và "chốt kỳ/báo cáo" (lát cắt R) sẽ mở rộng bảng này ở lát cắt sau.
 PERIOD_STATES = ("ChuanBi", "DangMo", "DaDongNop", "Huy")
-DECLARATION_STATES = ("Nhap", "ChoBoSung", "Rut")
+DECLARATION_STATES = ("Nhap", "ChoBoSung", "ChoKhoaDuyet", "KhoaDaDuyet", "ChoPhongKiemTra",
+                       "DatYeuCau", "DaChot", "Rut")
 
 # Kind của rule_set gắn vào kỳ khi mở (BR-05). "year_rule" là kind duy nhất trong
 # rules.RULES_V1 chưa gắn với một khâu nghiệp vụ cụ thể nào (thân rỗng, để dành);

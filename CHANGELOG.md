@@ -20,6 +20,32 @@
   `EDITABLE` (kèm danh sách trường cho phép), 404 nếu không có công trình,
   409 cho lỗi nghiệp vụ (`cris/api/routes/search.py`). `ACTION_LABELS` thêm
   `work.edit` "Chỉnh tay trường dữ liệu".
+- Kê khai hai cấp theo `docs/ba/03-state.md` §3.2 (lát cắt H1, NFR-02/NFR-03):
+  hồ sơ kê khai đi qua `Nhap → ChoKhoaDuyet → KhoaDaDuyet → ChoPhongKiemTra →
+  DatYeuCau → DaChot`, mỗi bước gắn vai trò (`faculty_officer`, `faculty_head`,
+  `rd_officer`) và có thể trả về `Nhap` kèm lý do bắt buộc
+  (`cris/declare.py` — `_TRANSITIONS`, `set_state(..., actor_roles,
+  actor_unit_id)`); nhánh chuẩn bị cũ `ChoBoSung`/`Rut` giữ nguyên, chỉ chạy
+  được khi kỳ chưa đóng nộp. Migration `0010_declaration_states.sql` mở CHECK
+  `declaration.state` cho đủ 8 trạng thái; `period.DECLARATION_STATES` cập
+  nhật cùng bộ.
+- Phạm vi đơn vị (NFR-02): vai trò cấp khoa chỉ kê khai, xem và chuyển trạng
+  thái được hồ sơ của đơn vị mình — lọc ở tầng SQL (`add_declaration`,
+  `list_declarations` nhận `actor_roles`/`actor_unit_id`), không chỉ ẩn trên
+  giao diện; sai vai trò hoặc khác đơn vị → `PermissionError` (API 403).
+- `finalize_period(conn, period_id, actor_id)` — `POST
+  /api/periods/{id}/finalize` (vai trò `rd_officer`): kỳ phải `DaDongNop`,
+  mọi hồ sơ `DatYeuCau` → `DaChot`, trả `{finalized, skipped: [{id, state}]}`;
+  ghi `audit_log('declaration.DaChot')` từng hồ sơ được chốt và một
+  `audit_log('period.finalize')` cho kỳ.
+- `cris.api.deps.current_user(conn, request)` → `{id, roles, unit_id,
+  unit_code}` (chế độ mở vẫn dùng được header `X-CRIS-User` để thử vai);
+  `GET /api/auth/me` và `POST /api/auth/login` trả thêm `unit_code`. CLI
+  `python -m cris user create --email --name --roles a,b [--unit CODE]
+  [--password]` và `user set-unit --email --unit CODE`. `ACTION_LABELS` thêm
+  `declaration.ChoKhoaDuyet`, `declaration.KhoaDaDuyet`,
+  `declaration.ChoPhongKiemTra`, `declaration.DatYeuCau`, `declaration.DaChot`,
+  `period.finalize`.
 
 ### Changed
 

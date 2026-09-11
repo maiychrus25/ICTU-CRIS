@@ -38,9 +38,15 @@ def _record_failure(email: str) -> None:
     _failures.setdefault(email, []).append(time.monotonic())
 
 
-def _user_out(row) -> UserOut:
+def _user_out(conn, row) -> UserOut:
+    unit_code = None
+    if row["unit_id"] is not None:
+        with conn.cursor() as cur:
+            cur.execute("SELECT code FROM unit WHERE id=%s", (row["unit_id"],))
+            u = cur.fetchone()
+        unit_code = u["code"] if u else None
     return UserOut(id=row["id"], email=row["email"], display_name=row["display_name"],
-                   roles=row["roles"] or [], unit_id=row["unit_id"])
+                   roles=row["roles"] or [], unit_id=row["unit_id"], unit_code=unit_code)
 
 
 @router.post("/login", response_model=UserOut)
@@ -56,7 +62,7 @@ def login(conn: Conn, request: Request, response: Response, body: LoginIn):
     token = auth_mod.create_session(conn, user["id"], request.headers.get("user-agent"))
     response.set_cookie(auth_mod.COOKIE_NAME, token, httponly=True, samesite="lax",
                         secure=_cookie_secure(), max_age=int(auth_mod.SESSION_TTL.total_seconds()))
-    return _user_out(user)
+    return _user_out(conn, user)
 
 
 @router.post("/logout")
@@ -73,4 +79,4 @@ def me(conn: Conn, request: Request):
     required = auth_mod.auth_required(conn)
     token = request.cookies.get(auth_mod.COOKIE_NAME)
     user = auth_mod.session_user(conn, token) if token else None
-    return MeOut(user=_user_out(user) if user else None, auth_required=required)
+    return MeOut(user=_user_out(conn, user) if user else None, auth_required=required)

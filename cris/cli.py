@@ -5,8 +5,10 @@ import getpass
 import json
 import os
 import sys
+
 from cris import auth, db, dedup, link, normalize, people, quality, rules, sync
 from cris.source import repository as R
+
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="cris")
@@ -31,6 +33,15 @@ def main(argv=None):
     sp = us.add_parser("set-password", help="đọc mật khẩu từ biến CRIS_PASSWORD hoặc hỏi (getpass)")
     sp.add_argument("email")
     us.add_parser("list")
+    uc = us.add_parser("create", help="tạo tài khoản mới (lát cắt H1)")
+    uc.add_argument("--email", required=True)
+    uc.add_argument("--name", required=True)
+    uc.add_argument("--roles", required=True, help="phân tách bằng dấu phẩy, vd: faculty_officer,rd_officer")
+    uc.add_argument("--unit", help="mã đơn vị (unit.code)")
+    uc.add_argument("--password", help="đặt mật khẩu ngay; mặc định không đặt (giữ chế độ mở, NFR-01)")
+    su = us.add_parser("set-unit", help="gán/đổi đơn vị của một tài khoản")
+    su.add_argument("--email", required=True)
+    su.add_argument("--unit", required=True, help="mã đơn vị (unit.code)")
     a = ap.parse_args(argv)
     if a.cmd == "serve":
         import uvicorn
@@ -56,7 +67,10 @@ def main(argv=None):
     elif a.cmd == "dedup":
         print(dedup.find_duplicates(conn))
     elif a.cmd == "ai":
-        from cris.ai import embed as ai_embed, provider as ai_provider   # import muộn: gói lõi không cần onnxruntime
+        from cris.ai import (  # import muộn: gói lõi không cần onnxruntime
+            embed as ai_embed,
+        )
+        from cris.ai import provider as ai_provider
         if a.ai_cmd == "download":
             from cris.ai.local import ensure_model
             print(ensure_model(log=lambda m: print(m, file=sys.stderr)))
@@ -93,6 +107,45 @@ def main(argv=None):
                 print(json.dumps({k: row[k] for k in
                                   ("id", "email", "display_name", "roles", "unit_id", "active", "has_password")},
                                  ensure_ascii=False))
+        elif a.user_cmd == "create":
+            roles = [r.strip() for r in a.roles.split(",") if r.strip()]
+            unit_id = None
+            if a.unit:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT id FROM unit WHERE code=%s", (a.unit,))
+                    urow = cur.fetchone()
+                if urow is None:
+                    conn.rollback(); conn.close()
+                    print(f"không tìm thấy đơn vị có mã: {a.unit}", file=sys.stderr)
+                    sys.exit(1)
+                unit_id = urow["id"]
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO app_user(email, display_name, roles, unit_id) VALUES (%s,%s,%s,%s) RETURNING id",
+                    (a.email, a.name, roles, unit_id))
+                uid = cur.fetchone()["id"]
+            conn.commit()
+            if a.password:
+                auth.set_password(conn, a.email, a.password)
+            print(f"đã tạo #{uid} ({a.email}, vai trò: {', '.join(roles)}"
+                  f"{', đơn vị: ' + a.unit if a.unit else ''})")
+        elif a.user_cmd == "set-unit":
+            with conn.cursor() as cur:
+                cur.execute("SELECT id FROM unit WHERE code=%s", (a.unit,))
+                urow = cur.fetchone()
+            if urow is None:
+                conn.rollback(); conn.close()
+                print(f"không tìm thấy đơn vị có mã: {a.unit}", file=sys.stderr)
+                sys.exit(1)
+            with conn.cursor() as cur:
+                cur.execute("UPDATE app_user SET unit_id=%s WHERE email=%s RETURNING id", (urow["id"], a.email))
+                urow2 = cur.fetchone()
+            if urow2 is None:
+                conn.rollback(); conn.close()
+                print(f"không tìm thấy người dùng: {a.email}", file=sys.stderr)
+                sys.exit(1)
+            conn.commit()
+            print(f"đã gán #{urow2['id']} ({a.email}) vào đơn vị {a.unit}")
     conn.close()
 
 if __name__ == "__main__":

@@ -112,6 +112,20 @@ def test_login_rate_limited_after_five_failures(client, conn, user_id):
     assert r2.status_code == 429
 
 
+def test_login_reports_unit_code_for_scoped_role(client, conn, user_id):
+    """lát cắt H1: `GET /api/auth/me` trả thêm `unit_code` cho vai trò cấp khoa."""
+    unit_id = q(conn, "INSERT INTO unit(code, name) VALUES (%s,%s) RETURNING id",
+               "khoa-auth-h1", "Khoa Đăng nhập H1")[0]["id"]
+    uid, email = mk_user(conn, ["faculty_officer"], password="MatKhauKhoa!4", email="khoa.h1@ictu.test")
+    q(conn, "UPDATE app_user SET unit_id=%s WHERE id=%s", unit_id, uid)
+    conn.commit()
+    r = client.post("/api/auth/login", json={"email": email, "password": "MatKhauKhoa!4"})
+    assert r.status_code == 200, r.text
+    assert r.json()["unit_code"] == "khoa-auth-h1"
+    me = client.get("/api/auth/me").json()
+    assert me["user"]["unit_code"] == "khoa-auth-h1"
+
+
 def test_login_success_sets_cookie_and_me_reflects_user(client, conn, user_id):
     auth.set_password(conn, "rd@ictu.test", "MatKhauManh!1")
     r = client.post("/api/auth/login", json={"email": "rd@ictu.test", "password": "MatKhauManh!1"})

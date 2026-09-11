@@ -1,15 +1,17 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
-"""Kê khai công trình vào kỳ báo cáo (lát cắt K, G3): lớp mỏng gọi
-`cris.declare`. `ValueError` từ tầng nghiệp vụ (kỳ chưa mở, đã kê khai, sai
-bước chuyển trạng thái, thiếu lý do...) → 409; không tìm thấy kỳ/hồ sơ theo id
-trên đường dẫn → 404. Mọi POST cần vai trò `rd_officer` (NFR-01/G2)."""
+"""Kê khai công trình vào kỳ báo cáo (lát cắt K, G3, nâng cấp H1): lớp mỏng
+gọi `cris.declare`. `ValueError` từ tầng nghiệp vụ (kỳ chưa mở, đã kê khai, sai
+bước chuyển trạng thái, thiếu lý do...) → 409; `PermissionError` (sai vai trò
+hoặc khác đơn vị, NFR-02/NFR-03) → 403; không tìm thấy kỳ/hồ sơ theo id trên
+đường dẫn → 404. Kê khai và chuyển trạng thái dùng `current_user` để tầng
+nghiệp vụ kiểm vai trò/đơn vị; thêm minh chứng vẫn cần vai trò `rd_officer`."""
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from cris import declare
-from cris.api.deps import Conn, require_role
+from cris.api.deps import Conn, CurrentUser, require_role
 from cris.api.schemas import (
     DOC_TYPE_LABELS,
     DeclarationCreateIn,
@@ -60,18 +62,22 @@ def _row_from_detail(data):
 
 
 @router.get("/periods/{pid}/declarations", response_model=DeclarationList)
-def list_declarations(conn: Conn, pid: int, unit_id: int | None = None):
+def list_declarations(conn: Conn, user: CurrentUser, pid: int, unit_id: int | None = None):
     _fetch_period(conn, pid)
-    rows = declare.list_declarations(conn, pid, unit_id=unit_id)
+    rows = declare.list_declarations(conn, pid, unit_id=unit_id,
+                                     actor_roles=user["roles"], actor_unit_id=user["unit_id"])
     return DeclarationList(items=[_row_out(r) for r in rows])
 
 
 @router.post("/periods/{pid}/declarations", response_model=DeclarationRow, status_code=201)
-def add_declaration(conn: Conn, actor: RdOfficer, pid: int, body: DeclarationCreateIn):
+def add_declaration(conn: Conn, user: CurrentUser, pid: int, body: DeclarationCreateIn):
     _fetch_period(conn, pid)
     try:
         did = declare.add_declaration(conn, period_id=pid, work_id=body.work_id, unit_id=body.unit_id,
-                                      actor_id=actor, note=body.note)
+                                      actor_id=user["id"], note=body.note,
+                                      actor_roles=user["roles"], actor_unit_id=user["unit_id"])
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
     return _row_from_detail(declare.get_declaration(conn, did))
@@ -97,10 +103,13 @@ def declaration_detail(conn: Conn, did: int):
 
 
 @router.post("/declarations/{did}/state", response_model=DeclarationRow)
-def set_declaration_state(conn: Conn, actor: RdOfficer, did: int, body: DeclarationStateIn):
+def set_declaration_state(conn: Conn, user: CurrentUser, did: int, body: DeclarationStateIn):
     _fetch_declaration(conn, did)
     try:
-        declare.set_state(conn, did, body.to_state, actor, reason=body.reason)
+        declare.set_state(conn, did, body.to_state, user["id"], reason=body.reason,
+                          actor_roles=user["roles"], actor_unit_id=user["unit_id"])
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
     return _row_from_detail(declare.get_declaration(conn, did))

@@ -29,16 +29,10 @@ def _cookie_user(conn, request: Request):
     return auth_mod.session_user(conn, token) if token else None
 
 
-def get_actor_id(conn: Conn, request: Request,
-                  x_cris_user: Annotated[str | None, Header(alias="X-CRIS-User")] = None) -> int:
-    """Người thao tác.
-
-    `auth_required` (đã có người đặt mật khẩu, NFR-01): bắt buộc cookie phiên
-    `cris_session` hợp lệ, bỏ qua header `X-CRIS-User` → 401 nếu chưa đăng nhập.
-
-    Chế độ mở (chưa ai đặt mật khẩu): giữ hành vi cũ — nhận id qua header
-    `X-CRIS-User`, nếu không thì người dùng `rd_officer` đầu tiên; không có ai → 503.
-    """
+def _resolve_actor_id(conn, request: Request, x_cris_user: str | None) -> int:
+    """Chọn actor: `auth_required` → bắt buộc cookie phiên hợp lệ (401 nếu
+    không); chế độ mở → header `X-CRIS-User`, nếu không thì `rd_officer` đầu
+    tiên (503 nếu chưa có ai). Dùng chung cho `get_actor_id` và `current_user`."""
     if auth_mod.auth_required(conn):
         user = _cookie_user(conn, request)
         if user is None:
@@ -62,7 +56,41 @@ def get_actor_id(conn: Conn, request: Request,
     return row["id"]
 
 
+def get_actor_id(conn: Conn, request: Request,
+                  x_cris_user: Annotated[str | None, Header(alias="X-CRIS-User")] = None) -> int:
+    """Người thao tác.
+
+    `auth_required` (đã có người đặt mật khẩu, NFR-01): bắt buộc cookie phiên
+    `cris_session` hợp lệ, bỏ qua header `X-CRIS-User` → 401 nếu chưa đăng nhập.
+
+    Chế độ mở (chưa ai đặt mật khẩu): giữ hành vi cũ — nhận id qua header
+    `X-CRIS-User`, nếu không thì người dùng `rd_officer` đầu tiên; không có ai → 503.
+    """
+    return _resolve_actor_id(conn, request, x_cris_user)
+
+
 Actor = Annotated[int, Depends(get_actor_id)]
+
+
+def current_user(conn: Conn, request: Request,
+                  x_cris_user: Annotated[str | None, Header(alias="X-CRIS-User")] = None) -> dict:
+    """Người thao tác đầy đủ: `{id, roles, unit_id, unit_code}`.
+
+    Chọn actor theo đúng quy tắc `get_actor_id` (chế độ mở vẫn dùng được
+    header `X-CRIS-User` để thử vai). Trả thêm `roles`/`unit_id`/`unit_code`
+    để tầng nghiệp vụ (`cris.declare`) kiểm vai trò và phạm vi đơn vị (NFR-02).
+    """
+    actor_id = _resolve_actor_id(conn, request, x_cris_user)
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT u.id, u.roles, u.unit_id, un.code AS unit_code "
+            "FROM app_user u LEFT JOIN unit un ON un.id = u.unit_id WHERE u.id=%s",
+            (actor_id,))
+        row = cur.fetchone()
+    return {"id": row["id"], "roles": row["roles"] or [], "unit_id": row["unit_id"], "unit_code": row["unit_code"]}
+
+
+CurrentUser = Annotated[dict, Depends(current_user)]
 
 
 def require_role(*roles: str):

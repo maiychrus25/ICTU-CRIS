@@ -1,15 +1,23 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
-"""Kỳ báo cáo (lát cắt K, phần đọc + mở/đóng): lớp mỏng gọi `cris.period`.
-`ValueError` từ tầng nghiệp vụ (mã kỳ trùng, sai trạng thái, không tìm thấy kỳ...) → 409.
-Mọi POST cần vai trò `rd_officer` (NFR-01/G2)."""
+"""Kỳ báo cáo (lát cắt K, phần đọc + mở/đóng; chốt kỳ ở lát cắt H1): lớp mỏng
+gọi `cris.period`/`cris.declare`. `ValueError` từ tầng nghiệp vụ (mã kỳ trùng,
+sai trạng thái, không tìm thấy kỳ, kỳ chưa đóng nộp khi chốt...) → 409. Mọi
+POST cần vai trò `rd_officer` (NFR-01/G2)."""
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from cris import declare
 from cris import period as period_mod
 from cris.api.deps import Conn, require_role
-from cris.api.schemas import PeriodOpenIn, PeriodOut, PeriodProgress, PeriodUnitProgress
+from cris.api.schemas import (
+    PeriodFinalizeOut,
+    PeriodOpenIn,
+    PeriodOut,
+    PeriodProgress,
+    PeriodUnitProgress,
+)
 
 router = APIRouter(prefix="/api/periods", tags=["ky-bao-cao"])
 RdOfficer = Annotated[int, Depends(require_role("rd_officer"))]
@@ -71,3 +79,13 @@ def cancel_period(conn: Conn, actor: RdOfficer, pid: int):
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
     return _out(_fetch(conn, pid))
+
+
+@router.post("/{pid}/finalize", response_model=PeriodFinalizeOut)
+def finalize_period(conn: Conn, actor: RdOfficer, pid: int):
+    _fetch(conn, pid)
+    try:
+        result = declare.finalize_period(conn, pid, actor)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    return PeriodFinalizeOut(finalized=result["finalized"], skipped=result["skipped"])
