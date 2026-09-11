@@ -21,7 +21,7 @@ export const stateLabels: Record<string, string> = {
 };
 
 export const entityLabels: Record<string, string> = {
-  author_link: "Liên kết tác giả", duplicate_group: "Nhóm nghi trùng", period: "Kỳ báo cáo",
+  author_link: "Liên kết tác giả", duplicate_group: "Nhóm nghi trùng", period: "Kỳ báo cáo", declaration: "Hồ sơ kê khai",
   source_record: "Bản ghi nguồn", author_mention: "Lượt tên",
 };
 

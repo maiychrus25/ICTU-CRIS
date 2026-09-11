@@ -57,6 +57,33 @@ test("mở kỳ báo cáo bị chặn khi thiếu mã", async ({ page }) => {
   expect(await code.evaluate((element: HTMLInputElement) => element.validity.valid)).toBe(false);
 });
 
+test("kê khai công trình và chặn yêu cầu bổ sung thiếu lý do", async ({ page }) => {
+  await page.goto("/ky-bao-cao/");
+  await page.getByRole("link", { name: "Báo cáo công trình năm 2026", exact: true }).click();
+  await page.getByRole("tab", { name: "Hồ sơ kê khai" }).click();
+
+  await page.getByRole("button", { name: "Kê khai công trình" }).click();
+  const createDialog = page.getByRole("dialog");
+  await createDialog.getByRole("combobox", { name: "Tìm công trình" }).fill("Thiết kế hệ thống tưới cây");
+  await createDialog.getByRole("option", { name: /Thiết kế hệ thống tưới cây tự động/ }).click();
+  await createDialog.getByRole("combobox", { name: "Đơn vị kê khai" }).click();
+  await page.getByRole("option", { name: "KHMT — Khoa Khoa học máy tính" }).click();
+  await createDialog.getByLabel("Ghi chú").fill("Kê khai từ kiểm thử giao diện.");
+  await createDialog.getByRole("button", { name: "Kê khai", exact: true }).click();
+
+  await expect(page.getByText("Đã kê khai công trình vào kỳ báo cáo.")).toBeVisible();
+  const row = page.getByRole("row", { name: /Thiết kế hệ thống tưới cây tự động/ });
+  await expect(row).toContainText("Nháp");
+  await row.getByRole("button", { name: /Hành động hồ sơ/ }).click();
+  await page.getByRole("menuitem", { name: "Yêu cầu bổ sung" }).click();
+
+  const reasonDialog = page.getByRole("dialog");
+  const reason = reasonDialog.getByLabel("Lý do *");
+  await reasonDialog.getByRole("button", { name: "Yêu cầu bổ sung" }).click();
+  await expect(reasonDialog).toBeVisible();
+  expect(await reason.evaluate((element: HTMLTextAreaElement) => element.validity.valid)).toBe(false);
+});
+
 test("tra cứu và mở bảng xuất xứ công trình", async ({ page }) => {
   await page.goto("/tra-cuu/");
   await page.getByLabel("Từ khoá").fill("Xây dựng website quản lý thư viện");

@@ -135,6 +135,31 @@ export interface PeriodUnitProgress {
 export interface PeriodProgress {
   period_id: number; state: string; due_at: string | null; days_remaining: number | null; units: PeriodUnitProgress[];
 }
+export type DeclarationState = "Nhap" | "ChoBoSung" | "Rut";
+export type EvidenceKind = "link" | "file" | "note";
+export interface DeclarationRow {
+  id: number; period_id: number; work_id: number; work_title: string | null; doc_type: string;
+  doc_type_label: string; unit_id: number; unit_code: string; state: DeclarationState;
+  note: string | null; evidence_count: number; last_event_at: string | null; created_at: string; updated_at: string;
+}
+export interface DeclarationList { items: DeclarationRow[] }
+export interface DeclarationCreateIn { work_id: number; unit_id: number; note?: string | null }
+export interface DeclarationStateIn { to_state: DeclarationState; reason?: string | null }
+export interface DeclarationEvidenceIn {
+  kind: EvidenceKind; url?: string | null; file_name?: string | null; note?: string | null;
+}
+export interface EvidenceOut {
+  id: number; kind: string; url: string | null; file_name: string | null; note: string | null;
+  added_by: number | null; added_at: string;
+}
+export interface DeclarationEventOut {
+  id: number; from_state: string | null; to_state: string; actor_id: number | null; reason: string | null; at: string;
+}
+export interface DeclarationDetail {
+  id: number; period_id: number; work_id: number; work_title: string | null; doc_type: string;
+  doc_type_label: string; unit_id: number; unit_code: string; state: DeclarationState; note: string | null;
+  created_at: string; updated_at: string; events: DeclarationEventOut[]; evidence: EvidenceOut[];
+}
 export interface SyncRunSummary {
   id: number; source: string; scope: string; status: string; started_at: string; finished_at: string | null;
   duration_s: number | null; added: number; changed: number; vanished: number; errors: unknown[]; warnings: unknown[];

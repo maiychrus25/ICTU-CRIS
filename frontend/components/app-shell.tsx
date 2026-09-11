@@ -36,6 +36,7 @@ const navigation = [
 ];
 
 const routeTitles = [
+  ["/ke-khai", "Chi tiết hồ sơ kê khai"],
   ["/dong-bo/chi-tiet", "Chi tiết lượt đồng bộ"],
   ["/chu-de/chi-tiet", "Chi tiết chủ đề"],
   ["/ky-bao-cao/chi-tiet", "Chi tiết kỳ báo cáo"],

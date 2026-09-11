@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-  aboutFixture, auditFixture, authorQueueFixture, compareFixture, duplicateDetailFixture, duplicateGroupsFixture,
-  healthFixture, periodProgressFixture, periodsFixture, personFixture, qualityFixture, statsFixture,
+  aboutFixture, auditFixture, authorQueueFixture, compareFixture, declarationDetailsFixture, declarationsFixture,
+  duplicateDetailFixture, duplicateGroupsFixture, healthFixture, periodProgressFixture, periodsFixture, personFixture, qualityFixture, statsFixture,
   meFixture, personsFixture, screenCohortsFixture, screenFixture, syncRunDetailsFixture, syncRunsFixture,
-  topicDetailsFixture, topicsFixture, workDetailsFixture, worksFixture,
+  topicDetailsFixture, topicsFixture, workDetailsFixture, workItems, worksFixture,
 } from "@/lib/fixtures";
 import type {
-  AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DecideAuthorsIn, DecideDupIn,
-  DecideResult, DupGroupDetail, DupGroupList, HealthOut, PeriodOpenIn, PeriodOut, PeriodProgress,
+  AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DeclarationCreateIn,
+  DeclarationDetail, DeclarationEvidenceIn, DeclarationList, DeclarationRow, DeclarationStateIn,
+  DecideAuthorsIn, DecideDupIn, DecideResult, DupGroupDetail, DupGroupList, EvidenceOut, HealthOut, PeriodOpenIn, PeriodOut, PeriodProgress,
   LoginIn, LogoutOut, MeOut, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
   UserOut,
   WorkDetail, WorkFilters, WorkList,
@@ -26,6 +27,9 @@ export class ApiError extends Error {
 }
 
 let mockUser = meFixture.user;
+const mockDeclarations = structuredClone(declarationsFixture);
+const mockDeclarationDetails = structuredClone(declarationDetailsFixture);
+const mockPeriodProgress = structuredClone(periodProgressFixture);
 
 function queryString(params: Record<string, string | number | undefined>) {
   const query = new URLSearchParams();
@@ -104,7 +108,82 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const body = JSON.parse(String(init.body)) as PeriodOpenIn;
     data = { ...body, id: 404, criteria: body.criteria ?? null, state: "DangMo", opens_at: new Date().toISOString(), created_at: new Date().toISOString() };
   }
-  else if (/^\/api\/periods\/\d+\/progress$/.test(url.pathname)) data = periodProgressFixture[Number(url.pathname.split("/").at(-2))];
+  else if (/^\/api\/periods\/\d+\/declarations$/.test(url.pathname) && !init?.method) {
+    const periodId = Number(url.pathname.split("/").at(-2));
+    const unitId = Number(url.searchParams.get("unit_id")) || null;
+    const items = mockDeclarations[periodId];
+    data = items ? { items: unitId ? items.filter((row) => row.unit_id === unitId) : items } : undefined;
+  }
+  else if (/^\/api\/periods\/\d+\/declarations$/.test(url.pathname) && init?.method === "POST") {
+    const periodId = Number(url.pathname.split("/").at(-2));
+    const period = periodsFixture.find((item) => item.id === periodId);
+    const body = JSON.parse(String(init.body)) as DeclarationCreateIn;
+    const work = workItems.find((item) => item.id === body.work_id);
+    const unit = statsFixture.by_unit.find((item) => item.unit_id === body.unit_id);
+    if (period?.state !== "DangMo") throw new ApiError(409, "chỉ kê khai được khi kỳ báo cáo đang mở");
+    if (mockDeclarations[periodId]?.some((row) => row.work_id === body.work_id && row.unit_id === body.unit_id)) throw new ApiError(409, "đã kê khai");
+    if (!work || !unit) throw new ApiError(409, "công trình hoặc đơn vị không hợp lệ");
+    const now = new Date().toISOString();
+    const row: DeclarationRow = {
+      id: Math.max(600, ...Object.keys(mockDeclarationDetails).map(Number)) + 1,
+      period_id: periodId, work_id: work.id, work_title: work.title, doc_type: work.doc_type,
+      doc_type_label: work.doc_type_label, unit_id: unit.unit_id, unit_code: unit.code,
+      state: "Nhap", note: body.note ?? null, evidence_count: 0, last_event_at: now, created_at: now, updated_at: now,
+    };
+    mockDeclarations[periodId] ??= [];
+    mockDeclarations[periodId].unshift(row);
+    mockDeclarationDetails[row.id] = {
+      ...row, events: [{ id: Date.now(), from_state: null, to_state: "Nhap", actor_id: mockUser?.id ?? 1, reason: null, at: now }], evidence: [],
+    };
+    const progress = mockPeriodProgress[periodId];
+    const progressUnit = progress?.units.find((item) => item.unit_id === unit.unit_id);
+    if (progressUnit) {
+      progressUnit.counts.Nhap = (progressUnit.counts.Nhap ?? 0) + 1;
+      progressUnit.total += 1;
+    }
+    data = row;
+  }
+  else if (/^\/api\/declarations\/\d+\/state$/.test(url.pathname)) {
+    const declarationId = Number(url.pathname.split("/").at(-2));
+    const detail = mockDeclarationDetails[declarationId];
+    const body = JSON.parse(String(init?.body)) as DeclarationStateIn;
+    if (!detail) data = undefined;
+    else {
+      const allowed = new Set(["Nhap:ChoBoSung", "ChoBoSung:Nhap", "Nhap:Rut", "ChoBoSung:Rut"]);
+      if (!allowed.has(`${detail.state}:${body.to_state}`)) throw new ApiError(409, `không thể chuyển hồ sơ từ ${detail.state} sang ${body.to_state}`);
+      if ((body.to_state === "ChoBoSung" || body.to_state === "Rut") && !body.reason?.trim()) throw new ApiError(409, `chuyển sang ${body.to_state} bắt buộc phải nêu lý do`);
+      const fromState = detail.state;
+      const now = new Date().toISOString();
+      detail.state = body.to_state;
+      detail.updated_at = now;
+      detail.events.push({ id: Date.now(), from_state: fromState, to_state: body.to_state, actor_id: mockUser?.id ?? 1, reason: body.reason ?? null, at: now });
+      const row = Object.values(mockDeclarations).flat().find((item) => item.id === declarationId)!;
+      row.state = body.to_state;
+      row.updated_at = now;
+      row.last_event_at = now;
+      const progressUnit = mockPeriodProgress[detail.period_id]?.units.find((item) => item.unit_id === detail.unit_id);
+      if (progressUnit) {
+        progressUnit.counts[fromState] = Math.max(0, (progressUnit.counts[fromState] ?? 0) - 1);
+        progressUnit.counts[body.to_state] = (progressUnit.counts[body.to_state] ?? 0) + 1;
+      }
+      data = row;
+    }
+  }
+  else if (/^\/api\/declarations\/\d+\/evidence$/.test(url.pathname)) {
+    const declarationId = Number(url.pathname.split("/").at(-2));
+    const detail = mockDeclarationDetails[declarationId];
+    const body = JSON.parse(String(init?.body)) as DeclarationEvidenceIn;
+    if (!detail) data = undefined;
+    else {
+      const evidence: EvidenceOut = { id: Date.now(), kind: body.kind, url: body.url ?? null, file_name: body.file_name ?? null, note: body.note ?? null, added_by: mockUser?.id ?? 1, added_at: new Date().toISOString() };
+      detail.evidence.push(evidence);
+      const row = Object.values(mockDeclarations).flat().find((item) => item.id === declarationId)!;
+      row.evidence_count += 1;
+      data = evidence;
+    }
+  }
+  else if (/^\/api\/declarations\/\d+$/.test(url.pathname)) data = mockDeclarationDetails[id];
+  else if (/^\/api\/periods\/\d+\/progress$/.test(url.pathname)) data = mockPeriodProgress[Number(url.pathname.split("/").at(-2))];
   else if (/^\/api\/periods\/\d+\/(close|cancel)$/.test(url.pathname)) {
     const periodId = Number(url.pathname.split("/").at(-2));
     const period = periodsFixture.find((item) => item.id === periodId);
@@ -167,6 +246,11 @@ export const api = {
   getAudit: (filters: AuditFilters = {}) => apiRequest<AuditList>(`/api/audit${queryString({ entity: filters.entity, entity_id: filters.entity_id, actor: filters.actor, page: filters.page })}`),
   getPeriods: () => apiRequest<PeriodOut[]>("/api/periods"),
   getPeriodProgress: (id: number) => apiRequest<PeriodProgress>(`/api/periods/${id}/progress`),
+  getDeclarations: (periodId: number, unitId?: number) => apiRequest<DeclarationList>(`/api/periods/${periodId}/declarations${queryString({ unit_id: unitId })}`),
+  addDeclaration: (periodId: number, input: DeclarationCreateIn) => apiRequest<DeclarationRow>(`/api/periods/${periodId}/declarations`, { method: "POST", body: JSON.stringify(input) }),
+  getDeclaration: (id: number) => apiRequest<DeclarationDetail>(`/api/declarations/${id}`),
+  setDeclarationState: (id: number, input: DeclarationStateIn) => apiRequest<DeclarationRow>(`/api/declarations/${id}/state`, { method: "POST", body: JSON.stringify(input) }),
+  addDeclarationEvidence: (id: number, input: DeclarationEvidenceIn) => apiRequest<EvidenceOut>(`/api/declarations/${id}/evidence`, { method: "POST", body: JSON.stringify(input) }),
   openPeriod: (input: PeriodOpenIn) => apiRequest<PeriodOut>("/api/periods", { method: "POST", body: JSON.stringify(input) }),
   closePeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/close`, { method: "POST" }),
   cancelPeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/cancel`, { method: "POST" }),

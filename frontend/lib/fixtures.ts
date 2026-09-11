@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type {
-  AboutOut, AuditList, AuthorQueueList, CompareOut, DupGroupDetail, DupGroupList, HealthOut, MeOut,
+  AboutOut, AuditList, AuthorQueueList, CompareOut, DeclarationDetail, DeclarationRow, DupGroupDetail, DupGroupList, HealthOut, MeOut,
   PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail,
   SyncRunList, Topic, TopicDetail, WorkDetail, WorkList, WorkSummary, ScreenCohortSummary, ScreenList,
 } from "@/lib/types";
@@ -229,6 +229,30 @@ export const periodProgressFixture: Record<number, PeriodProgress> = {
   ] },
   403: { period_id: 403, state: "ChuanBi", due_at: "2027-01-31T16:59:59Z", days_remaining: 142, units: [] },
 };
+
+export const declarationsFixture: Record<number, DeclarationRow[]> = {
+  401: [
+    { id: 603, period_id: 401, work_id: 4, work_title: workItems[3].title, doc_type: "luan_van", doc_type_label: "Luận văn", unit_id: 3, unit_code: "HTTT", state: "Rut", note: "Hồ sơ rút theo đề nghị của đơn vị.", evidence_count: 0, last_event_at: "2026-09-09T09:20:00Z", created_at: "2026-09-04T02:00:00Z", updated_at: "2026-09-09T09:20:00Z" },
+    { id: 602, period_id: 401, work_id: 3, work_title: workItems[2].title, doc_type: "do_an", doc_type_label: "Đồ án", unit_id: 2, unit_code: "KHMT", state: "ChoBoSung", note: "Kê khai bổ sung theo đợt tháng 9.", evidence_count: 1, last_event_at: "2026-09-08T08:30:00Z", created_at: "2026-09-03T02:00:00Z", updated_at: "2026-09-08T08:30:00Z" },
+    { id: 601, period_id: 401, work_id: 2, work_title: workItems[1].title, doc_type: "bai_bao", doc_type_label: "Bài báo", unit_id: 1, unit_code: "CNTT", state: "Nhap", note: null, evidence_count: 1, last_event_at: "2026-09-02T03:10:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-02T03:10:00Z" },
+  ],
+  402: [],
+  403: [],
+};
+
+export const declarationDetailsFixture: Record<number, DeclarationDetail> = Object.fromEntries(
+  Object.values(declarationsFixture).flat().map((row) => [row.id, {
+    id: row.id, period_id: row.period_id, work_id: row.work_id, work_title: row.work_title,
+    doc_type: row.doc_type, doc_type_label: row.doc_type_label, unit_id: row.unit_id,
+    unit_code: row.unit_code, state: row.state, note: row.note, created_at: row.created_at,
+    updated_at: row.updated_at,
+    events: row.id === 602 ? [
+      { id: 701, from_state: null, to_state: "Nhap", actor_id: 1, reason: null, at: row.created_at },
+      { id: 702, from_state: "Nhap", to_state: "ChoBoSung", actor_id: 1, reason: "Cần bổ sung đường dẫn công bố.", at: row.updated_at },
+    ] : [{ id: 700 + row.id, from_state: null, to_state: "Nhap", actor_id: 1, reason: null, at: row.created_at }],
+    evidence: row.evidence_count ? [{ id: 800 + row.id, kind: "link", url: "https://doi.org/10.15625/ictu.2025.102", file_name: null, note: "Đường dẫn DOI của công trình.", added_by: 1, added_at: row.created_at }] : [],
+  } satisfies DeclarationDetail]),
+) as Record<number, DeclarationDetail>;
 
 export const syncRunsFixture: SyncRunList = {
   page: { page: 1, per_page: 20, total: 2 },
