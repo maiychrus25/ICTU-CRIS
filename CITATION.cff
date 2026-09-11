@@ -11,8 +11,8 @@ abstract: >-
 authors:
   - name: "ICTU-CRIS contributors"
     alias: maiychrus25
-version: 0.1.0
-date-released: "2026-09-10"
+version: 0.2.0
+date-released: "2026-09-11"
 license: Apache-2.0
 repository-code: "https://github.com/maiychrus25/ICTU-CRIS"
 keywords:

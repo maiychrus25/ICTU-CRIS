@@ -91,12 +91,12 @@ sẵn thành HTML/CSS/JS tĩnh (`next build`, `output: "export"`), FastAPI phụ
 bản xuất đó ở `/` cùng gốc với `/api/*`: **một ảnh Docker, một container, một
 cổng** cho cả API lẫn giao diện. **Tầng AI** (`cris/ai/`) cũng chỉ gọi vào tầng
 nghiệp vụ và chỉ ghi vào bảng `ai_*`. Lược đồ CSDL nằm ở `cris/migrations/0001`–
-`0007` (PostgreSQL 16, không ORM).
+`0008` (PostgreSQL 16, không ORM).
 
 | Thành phần | Công nghệ | Vai trò |
 |---|---|---|
 | Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3 | Không ORM — truy vấn SQL trực tiếp |
-| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0007` |
+| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0008` |
 | Đóng gói | sdist + wheel đính kèm mỗi Release (không gồm `frontend/`); ảnh `ghcr.io/maiychrus25/ictu-cris` là bản chạy đủ | Workflow `release.yml` kiểm phiên bản khớp tag; `docker.yml` đẩy ảnh theo semver |
 | Triển khai | `deploy/setup.sh` + `deploy/docker-compose.yml` | Một lệnh: DB, lược đồ, người dùng mặc định, giao diện; `--ai` tải mô hình |
 | API | FastAPI + `uvicorn` | Router `/api/*`, tài liệu OpenAPI tương tác ở `/docs` |
@@ -211,7 +211,7 @@ mạng công khai**.
 | 🎯 | [docs/BRD.md](docs/BRD.md) | Yêu cầu nghiệp vụ: 6 vấn đề đo được, YN-01..10, ràng buộc cuộc thi |
 | 📐 | [docs/SRS.md](docs/SRS.md) | Đặc tả phần mềm: FR theo giai đoạn, tích hợp AI, ma trận truy vết YN → FR → UC → US |
 | 🤖 | [docs/ai.md](docs/ai.md) | AI làm gì và không làm gì, ba nhà cung cấp, mô hình, thuật toán, giới hạn |
-| 🏷️ | [docs/release-notes/v0.1.0.md](docs/release-notes/v0.1.0.md) | Ghi chú phát hành bản dự thi |
+| 🏷️ | [docs/release-notes/v0.2.0.md](docs/release-notes/v0.2.0.md) | Ghi chú phát hành bản hiện tại (v0.1.0: [đây](docs/release-notes/v0.1.0.md)) |
 | 📋 | [docs/ba/00-README.md](docs/ba/00-README.md) | Bộ tài liệu phân tích nghiệp vụ (BA) — 18 tệp |
 | 🗄️ | [docs/ba/17-mo-hinh-du-lieu.md](docs/ba/17-mo-hinh-du-lieu.md) | Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 |
 | 🗺️ | [docs/superpowers/plans/](docs/superpowers/plans/) | Kế hoạch triển khai từng lát cắt: S + N, hồ sơ nguồn mở, giao diện hàng đợi, K, AI |
