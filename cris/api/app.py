@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from cris.api.routes import (
+    ai_public,
     audit,
     auth,
     compare,
@@ -44,7 +45,7 @@ def create_app(static_dir: str | os.PathLike | None = None) -> FastAPI:
     for r in (search.router, queue.router, compare.router, quality.router,
               stats.router, export.router, audit.router, periods.router, screen.router,
               persons.router, sync.router, auth.router, declarations.router, me.router,
-              mentors.router):
+              mentors.router, ai_public.router):
         app.include_router(r)
 
     @app.get("/api/health", tags=["he-thong"])

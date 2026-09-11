@@ -28,11 +28,14 @@ class WorkSummary(BaseModel):
     doi: str | None = None
     state: str
     needs_review: bool = False
+    score: float | None = None    # cosine 0..1, chỉ có ở mode=semantic
 
 
 class WorkList(BaseModel):
     items: list[WorkSummary]
     page: Page
+    mode: Literal["keyword", "semantic"] = "keyword"
+    note: str | None = None       # vd rơi về từ khoá vì AI chưa bật
 
 
 class FieldRow(BaseModel):
@@ -258,6 +261,74 @@ class CompareOut(BaseModel):
     input: dict[str, Any]
     results: list[CompareResultItem]
     created_at: datetime | None = None
+
+
+# ---------- tìm chuyên gia (J1) ----------
+class ExpertsIn(BaseModel):
+    title: str = Field(min_length=3)
+    description: str = ""
+    aspects: dict[str, str] = Field(default_factory=dict)
+    k: int = Field(default=10, ge=1, le=50)
+    exclude_person_ids: list[int] = Field(default_factory=list)
+    min_degree: Literal["TS", "ThS"] | None = None
+    unit: int | None = None
+    recent_years: int = Field(default=3, ge=0, le=50)
+
+
+class ExpertEvidence(BaseModel):
+    work_id: int
+    title: str | None
+    doc_type: str
+    year: int | None = None
+    score: float
+
+
+class ExpertResult(BaseModel):
+    person_id: int
+    display_name: str
+    degree: str | None = None
+    unit_code: str | None = None
+    score: float
+    works_matched: int
+    evidence: list[ExpertEvidence]
+
+
+class ExpertsOut(BaseModel):
+    query_id: int | None = None
+    provider: str
+    fallback: bool
+    note: str
+    results: list[ExpertResult]
+
+
+# ---------- cổng công khai kiểm tra đề tài ----------
+class CheckTopicIn(BaseModel):
+    title: str = Field(min_length=3)
+    description: str = ""
+
+
+class CheckTopicSimilar(BaseModel):
+    work_id: int
+    title: str | None
+    doc_type: str
+    cohort: str | None = None
+    year: int | None = None
+    score: float
+    level: str
+
+
+class CheckTopicExpert(BaseModel):
+    person_id: int
+    display_name: str
+    degree: str | None = None
+    unit_code: str | None = None
+    score: float
+
+
+class CheckTopicOut(BaseModel):
+    similar: list[CheckTopicSimilar]
+    experts: list[CheckTopicExpert]
+    note: str
 
 
 # ---------- chất lượng, về hệ thống ----------

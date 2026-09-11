@@ -18,6 +18,9 @@ AI trong ICTU-CRIS **gợi ý**; **người quyết** (BR-18). Ba chỗ có AI, 
 | **Trục chủ đề** `/tra-cuu?topic=` | 10.951 từ khoá không kiểm soát | Gom từ khoá thành cụm, nhãn cụm là từ khoá phổ biến nhất | Dùng làm bộ lọc; không thay từ khoá gốc |
 | **Rà soát trùng đề tài theo khoá** `/doi-chieu/ra-soat` | `dang_ky_do_an` không có ở nguồn nên không rà được lúc đăng ký; đề tài đồ án lặp lại qua các năm là nỗi đau của giảng viên hướng dẫn | Với đồ án của một khoá, tìm láng giềng ngữ nghĩa ở các khoá khác, chia mức `cao`/`vua`/`thap` theo cosine toàn văn bản | Chuyên viên/giảng viên xem bảng, tự quyết định có phải trùng hay không — không có hành động gộp/xoá nào tự động |
 | **Gợi ý người hướng dẫn** `/doi-soat/huong-dan` | 4.621/5.375 đồ án (86%, xem README mục "Ba số liệu") ghi người hướng dẫn là `ICTU_TEACHER` — tên giữ chỗ, không phải giảng viên thật | Với đồ án giữ chỗ, tìm đồ án cùng đề tài đã có người hướng dẫn thật liên kết, xếp hạng ứng viên theo số phiếu + tổng cosine | Chuyên viên đọc bằng chứng (đồ án dẫn chứng) rồi bấm "đưa vào hàng đợi xác nhận" — chỉ tạo `author_link` **đang chờ**, quyết định vẫn ở hàng đợi tác giả |
+| **Tìm kiếm ngữ nghĩa** `/tra-cuu?mode=semantic` | Tra cứu từ khoá vô dụng với 703 đồ án cùng mở đầu "Xây dựng website" (cùng vấn đề đối chiếu đề tài) | Tìm công trình gần nghĩa với câu đã gõ (không cần trùng từ), giữ mọi bộ lọc khác (loại, năm, đơn vị, chủ đề) | Người đọc kết quả kèm điểm cosine; rơi về tìm từ khoá khi AI chưa bật |
+| **Tìm chuyên gia** (tab của Đối chiếu đề tài) | Đơn vị/phòng ban cần tìm giảng viên phù hợp phản biện, hội đồng, hợp tác — không có công cụ tra theo chuyên môn thật (chỉ có tra theo tên) | Gợi ý giảng viên gần chuyên môn với một đề tài, dựa trên công trình đã liên kết, kèm bằng chứng 3 công trình mỗi người | Người đọc bằng chứng, tự liên hệ — không có hành động tự động nào |
+| **Cổng kiểm tra đề tài** `/kiem-tra-de-tai/` (công khai) | Sinh viên đăng ký đề tài không có cách nào tự kiểm tra trùng lặp trước khi nộp | Cho sinh viên tự nhập đề tài dự kiến, xem đề tài tương tự các khoá trước + giảng viên gần chuyên môn | Sinh viên tự cân nhắc trước khi đăng ký chính thức; không lưu lại lượt tra cứu |
 
 AI **không** làm: kết luận đạo văn, khẳng định tính mới, tự gộp bản ghi, tự nối tác giả,
 tự đổi bất kỳ trường dữ liệu nghiệp vụ nào. Mã trong `cris/ai/` chỉ ghi vào bảng
@@ -231,7 +234,109 @@ biến ở một khoá — đúng cảnh báo trong docstring `suggest_mentors` 
 `mentions_placeholder` tăng lên 4.923 (gồm cả vai `student` giữ chỗ có từ trước và 4.621 lượt
 tên vai `mentor` mới).
 
-## 7. Giới hạn — nói trước để không ai hiểu nhầm
+## 7. Tìm kiếm ngữ nghĩa
+
+`GET /api/works?mode=semantic&q=...` (`cris/ai/search.py`, hàm `semantic_works`) — cùng
+tra cứu công trình như cũ (`/api/works`), thêm một cách tìm không đòi trùng từ.
+
+**Thuật toán**: `embed(q)`, top-200 cosine trên toàn ma trận `load_matrix` (lọc theo
+`doc_type` **trước** khi lấy top-200 nếu có, để không mất chỗ cho loại không cần), rồi
+giao với mọi bộ lọc khác của `/api/works` (`doc_type`, `year`, `unit`, `topic` — không
+lọc lại `q` vì đã dùng để tìm theo nghĩa), sắp theo điểm cosine giảm dần, phân trang 50
+như tra cứu từ khoá. Mỗi công trình trả kèm `score` (0..1).
+
+`mode=semantic` khi AI chưa bật (`CRIS_AI_PROVIDER=none`, `AIDisabled`) **rơi về tìm từ
+khoá như cũ**, `mode` trả về đổi lại thành `"keyword"`, kèm `note`:
+*"AI chưa bật — tìm theo từ khoá."* — không bao giờ trả lỗi. Khi tìm được, `note`:
+*"Tìm theo nghĩa (AI): kết quả có thể không chứa từ đã gõ."* — nhắc người dùng đây không
+phải khớp chuỗi.
+
+**Giới hạn**: giống mọi vector khác trong dự án — chỉ tính trên tiêu đề + tóm tắt + từ
+khoá (mục 10 bên dưới), không phải toàn văn; top-200 trước khi lọc nghĩa là một cắt cứng,
+đề tài hiếm gặp nằm ngoài top-200 dù đúng nghĩa sẽ không hiện dù lọc còn ít công trình.
+
+## 8. Tìm chuyên gia (J1)
+
+`POST /api/ai/experts`, `GET /api/ai/experts/{id}` (`cris/ai/expert.py`, hàm
+`find_experts`; CLI `python -m cris ai experts "<đề tài>" [--k 10]`) — gợi ý giảng viên
+gần chuyên môn nhất với một đề tài đề xuất (tiêu đề + mô tả), dựa trên các công trình đã
+liên kết (sống) trong kho.
+
+**Thuật toán**: lấy top-200 công trình gần nghĩa nhất với đề tài (cosine, như tìm kiếm
+ngữ nghĩa ở mục 7 nhưng không lọc `doc_type`), gộp theo `person_id` qua
+`v_person_publications` (liên kết sống — mọi trạng thái trừ `DaBacBo`). Với mỗi người,
+sắp các công trình khớp theo điểm giảm dần rồi cộng:
+
+```
+score = Σ s_i · 0,8^hạng_i · (1,1 nếu năm công bố cách năm hiện tại ≤ recent_years, ngược lại 1)
+```
+
+`0,8^hạng` (hạng tính riêng trong các công trình khớp của người đó, bắt đầu từ 0) làm
+công trình khớp mạnh nhất đóng góp nhiều nhất, các công trình sau đóng góp giảm dần theo
+cấp số nhân — một người có nhiều công trình gần đề tài được ưu tiên hơn một người chỉ có
+đúng một công trình rất khớp. Hệ số ×1,1 ưu tiên nhẹ công trình gần đây (mặc định
+`recent_years=3`, tính theo năm hiện tại của máy chủ).
+
+**Bộ lọc**: `min_degree` (`"TS"` nhận `TS`/`PGS`/`GS`; `"ThS"` nhận cả nhóm trên cộng
+`ThS`) so trên `person.degree_raw`, tách theo dấu chấm/khoảng trắng rồi so từng phần
+không phân biệt hoa/thường (`"PGS.TS"` tách thành hai phần `PGS`, `TS` — không gộp thành
+chuỗi `"PGSTS"` rồi so chuỗi con, dễ sai vì `"THS"` chứa `"TS"`); `unit` lọc theo
+`person.unit_id`; `exclude_person_ids` loại hẳn khỏi kết quả. Mỗi người trả `works_matched`
+(tổng số công trình khớp) và `evidence` (3 công trình điểm cao nhất).
+
+Lưu `ai_query(kind='experts', input, results, provider, created_by)` khi `save=True`
+(mặc định; route công khai `check-topic` ở mục 9 gọi `save=False`) — migration
+`0014_ai_query_kind.sql` thêm cột `kind` (mặc định `'compare'`, giữ nguyên dữ liệu cũ)
+để cùng bảng `ai_query` chứa cả hai loại lượt tra cứu. `GET /api/ai/experts/{id}` đọc lại
+nguyên trạng.
+
+**AI chưa bật**: `fallback=True`, `results=[]`, `note` giải thích — khác đối chiếu đề tài,
+**không có** đường lui khớp từ khoá (không có cách hợp lý để suy "gần chuyên môn" chỉ từ
+trùng từ).
+
+**Đo trên dữ liệu thật (12/09/2026, DB thật, mô hình `local`, `scripts/eval_experts.py`)**:
+30 đồ án ngẫu nhiên (seed 0, trong số 704 đồ án có GVHD thật đã liên kết) — che GVHD (không
+truyền cho thuật toán), hỏi `find_experts(title, abstract)`, xem GVHD thật có nằm top-1/
+top-5 hay không:
+
+| Số đo | Kết quả |
+|---|---|
+| Top-1 (GVHD thật đứng đầu gợi ý) | 7/30 (23,3%) |
+| Top-5 (GVHD thật nằm trong 5 gợi ý đầu) | 14/30 (46,7%) |
+| Thời gian trung bình mỗi lượt `find_experts` | 3,94 giây (`k=10`, `top_works=200`, mô hình `local`) |
+
+**Đọc số đo cẩn thận**: đây **không** phải độ chính xác của một "AI đoán đúng người hướng
+dẫn" — thuật toán chỉ suy luận từ tương đồng đề tài với các công trình đã liên kết, đúng
+mô tả ở mục 6 cho gợi ý người hướng dẫn (một đề tài phổ biến có thể do nhiều giảng viên
+khác nhau hướng dẫn ở các khoá khác nhau — top-5 46,7% nghĩa là hơn nửa số ca, GVHD thật
+**không** nằm trong 5 gợi ý đầu). Dùng làm điểm khởi đầu để thu hẹp danh sách liên hệ, không
+thay cho tìm hiểu thực tế; đọc `evidence` (bằng chứng) trước khi liên hệ ai.
+
+**Giới hạn**: chỉ tính trên công trình **đã liên kết** trong kho — giảng viên có công
+trình gần đề tài nhưng chưa được liên kết (còn ở hàng đợi tác giả) không được tính; công
+trình cùng đề tài nhưng khác giảng viên hướng dẫn (đề tài phổ biến) làm nhiễu top-k; không
+phải đánh giá năng lực, không xếp hạng "giỏi hơn/kém hơn" — chỉ gần nghĩa hơn.
+
+## 9. Cổng kiểm tra đề tài
+
+`POST /api/public/check-topic` (`cris/api/routes/ai_public.py`) — trang công khai, **không
+cần đăng nhập**, cho sinh viên tự nhập đề tài dự kiến trước khi đăng ký chính thức.
+
+Gọi hai hàm chỉ đọc, không lưu: `similar_topics` (`cris/ai/search.py`, tái dùng
+`_semantic_results` của `compare.py` qua import có chú thích — không sửa `compare.py` —
+top 8, kèm `cohort` và `level` `cao`/`vua`/`thap` theo `SCREEN_THRESHOLDS` của
+`screen.py`, cùng thang đo rà soát trùng đề tài theo khoá ở mục 5) và `find_experts(k=5,
+save=False)` (mục 8). Trả `{similar, experts, note}` — `experts` chỉ gồm `person_id,
+display_name, degree, unit_code, score`, **không** email/điện thoại (khác `ExpertResult`
+đầy đủ của `/api/ai/experts`, xem `cris/api/schemas.py`).
+
+**Không lưu** `ai_query` — không có actor để gắn lượt tra cứu, và không nên giữ lịch sử
+tra cứu của sinh viên nặc danh. **Rate-limit 20 lượt/5 phút/IP** (bộ nhớ tiến trình, cùng
+cách `cris/api/routes/auth.py` giới hạn đăng nhập sai — đủ cho một worker `uvicorn`; IP
+lấy từ `X-Forwarded-For` đầu chuỗi nếu chạy sau proxy ngược, ngược lại IP kết nối trực
+tiếp), vượt quá trả `429` kèm `detail` tiếng Việt.
+
+## 10. Giới hạn — nói trước để không ai hiểu nhầm
 
 1. **Chỉ so trên tóm tắt.** Kho không có toàn văn: 39/40 PDF là tóm tắt một trang do máy
    sinh. Mọi kết quả đối chiếu đều ghi dòng *"So trên tiêu đề, tóm tắt và từ khoá — không
@@ -246,26 +351,29 @@ tên vai `mentor` mới).
 6. **Gợi ý tác giả chỉ có khi người đó đã có công trình xác nhận** — đúng là điểm yếu ở
    giai đoạn đầu, khi liên kết còn thưa; nó tốt dần theo số quyết định của người dùng.
 
-## 8. Kiểm thử
+## 11. Kiểm thử
 
 - Test đơn vị dùng provider `fake` (xác định, không tải gì): đối chiếu, khía cạnh, đường
   lui, gom cụm, gợi ý, rà soát trùng đề tài theo khoá, rào chắn "AI không đổi dữ liệu
   nghiệp vụ" (`tests/test_ai_screen.py`); gợi ý người hướng dẫn — dựng lượt tên vai `mentor`
   giữ chỗ/đã liên kết trực tiếp bằng SQL, không cần `cris sync`/`normalize` thật
-  (`tests/test_ai_mentor.py`).
+  (`tests/test_ai_mentor.py`); tìm kiếm ngữ nghĩa, tìm chuyên gia (lọc học vị/đơn vị/loại
+  trừ, bằng chứng ≤ 3, lưu `ai_query(kind='experts')` + đọc lại), cổng công khai kiểm tra
+  đề tài (không cần cookie, không lưu `ai_query`, rate-limit 20/5 phút, không lộ email)
+  (`tests/test_ai_search_expert.py`).
 - Test mô hình thật `tests/test_ai_local_slow.py`, đánh dấu `slow`: 384 chiều, cùng chủ
   đề gần hơn khác chủ đề, xuyên ngôn ngữ Việt–Anh, 64 đoạn dưới 30 giây. Tự bỏ qua khi
   chưa tải mô hình; CI chạy `-m "not slow"`.
 - Chạy: `pytest -q` (nhanh) · `pytest -m slow` (cần mô hình).
 
-## 9. Bảng dữ liệu AI
+## 12. Bảng dữ liệu AI
 
 | Bảng | Nội dung |
 |---|---|
 | `ai_embedding` | `work_id`, `model`, `dim`, `vector`, `text_hash`, `built_at` — một dòng cho mỗi (công trình, mô hình) |
 | `ai_topic`, `ai_topic_keyword` | cụm chủ đề và từ khoá thuộc cụm, kèm trọng số tần suất |
 | `ai_suggestion` | gợi ý cho hàng đợi: `kind` (`author_link` / `duplicate` / `topic_overlap` / `mentor`), `target_id`, `payload` |
-| `ai_query` | lịch sử đối chiếu đề tài: đầu vào, kết quả, provider, người chạy — để xem lại và gửi giảng viên |
+| `ai_query` | lịch sử đối chiếu đề tài (`kind='compare'`, mặc định) và tìm chuyên gia (`kind='experts'`, migration `0014_ai_query_kind.sql`): đầu vào, kết quả, provider, người chạy — để xem lại và gửi giảng viên. Cổng công khai `check-topic` (mục 9) không ghi bảng này |
 
 Xoá toàn bộ dấu vết AI mà không ảnh hưởng nghiệp vụ: `TRUNCATE ai_query, ai_suggestion,
 ai_topic_keyword, ai_topic, ai_embedding`. Không bảng nghiệp vụ nào tham chiếu tới chúng.

@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tra cứu công trình, chi tiết có xuất xứ từng trường, hồ sơ giảng viên, trục chủ đề.
 SQL chuyển nguyên từ UI HTML cũ (đã gỡ, xem CHANGELOG)."""
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from cris import edit as edit_mod
 from cris import rules as RU
+from cris.ai import search as ai_search
+from cris.ai.provider import AIDisabled, get_provider
 from cris.api.deps import Conn, require_role
 from cris.api.schemas import (
     DOC_TYPE_LABELS,
@@ -31,6 +33,7 @@ router = APIRouter(prefix="/api", tags=["tra-cuu"])
 RdOfficer = Annotated[int, Depends(require_role("rd_officer"))]
 
 PER_PAGE = 50
+SEMANTIC_TOP_K = 200   # top-k lấy từ semantic_works trước khi giao với các bộ lọc khác
 FIELD_LABELS = [
     ("title", "Tiêu đề"), ("doi", "DOI"), ("journal", "Tạp chí"), ("volume", "Tập/số"),
     ("year_issue", "Năm"), ("abstract", "Tóm tắt"), ("keywords_raw", "Từ khoá"),
@@ -88,9 +91,57 @@ def _works_query(q: str, doc_type: str, year: int | None, unit: str, topic: int 
     return from_sql, where_sql, params
 
 
+def _semantic_work_list(conn, q: str, doc_type: str, year, unit: str, topic, page: int):
+    """`mode=semantic`: top-k id từ `semantic_works` (embed `q`), giao với
+    `_works_query` (giữ mọi bộ lọc trừ `q`, đã dùng để tìm theo nghĩa), sắp
+    theo score giảm dần, phân trang. `None` nếu AI chưa bật — người gọi rơi
+    về tra cứu từ khoá."""
+    try:
+        ranked = ai_search.semantic_works(conn, get_provider(), q, k=SEMANTIC_TOP_K,
+                                          doc_types=[doc_type] if doc_type else None)
+    except AIDisabled:
+        return None
+    if not ranked:
+        return WorkList(items=[], page=Page(page=page, per_page=PER_PAGE, total=0),
+                        mode="semantic", note=ai_search.NOTE)
+    score_of = {wid: score for wid, score in ranked}
+    from_sql, where_sql, params = _works_query("", doc_type, year, unit, topic)
+    ranked_ids = [wid for wid, _ in ranked]
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT DISTINCT w.id {from_sql} WHERE {where_sql} AND w.id = ANY(%s)", params + [ranked_ids])
+        keep = {r["id"] for r in cur.fetchall()}
+    ordered = [wid for wid in ranked_ids if wid in keep]
+    total = len(ordered)
+    start = (page - 1) * PER_PAGE
+    page_ids = ordered[start:start + PER_PAGE]
+    items = []
+    if page_ids:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, title, doc_type, year_issue, doi, state, needs_review FROM work "
+                        "WHERE id = ANY(%s)", (page_ids,))
+            rows = {r["id"]: r for r in cur.fetchall()}
+        for wid in page_ids:
+            r = rows.get(wid)
+            if r is None:
+                continue
+            items.append(WorkSummary(id=r["id"], title=r["title"], doc_type=r["doc_type"],
+                                     doc_type_label=DOC_TYPE_LABELS.get(r["doc_type"], r["doc_type"]),
+                                     year=r["year_issue"], doi=r["doi"], state=r["state"],
+                                     needs_review=bool(r["needs_review"]), score=score_of.get(wid)))
+    return WorkList(items=items, page=Page(page=page, per_page=PER_PAGE, total=total),
+                    mode="semantic", note=ai_search.NOTE)
+
+
 @router.get("/works", response_model=WorkList)
 def list_works(conn: Conn, q: str = "", doc_type: str = "", year: int | None = None,
-               unit: str = "", topic: int | None = None, page: int = Query(1, ge=1)):
+               unit: str = "", topic: int | None = None, mode: Literal["keyword", "semantic"] = "keyword",
+               page: int = Query(1, ge=1)):
+    note = None
+    if mode == "semantic" and q.strip():
+        out = _semantic_work_list(conn, q, doc_type, year, unit, topic, page)
+        if out is not None:
+            return out
+        note = ai_search.DISABLED_NOTE   # AI tắt: rơi về từ khoá bên dưới, kèm giải thích
     from_sql, where_sql, params = _works_query(q, doc_type, year, unit, topic)
     with conn.cursor() as cur:
         cur.execute(f"SELECT count(DISTINCT w.id) AS n {from_sql} WHERE {where_sql}", params)
@@ -103,7 +154,7 @@ def list_works(conn: Conn, q: str = "", doc_type: str = "", year: int | None = N
                          doc_type_label=DOC_TYPE_LABELS.get(r["doc_type"], r["doc_type"]),
                          year=r["year_issue"], doi=r["doi"], state=r["state"], needs_review=bool(r["needs_review"]))
              for r in rows]
-    return WorkList(items=items, page=Page(page=page, per_page=PER_PAGE, total=total))
+    return WorkList(items=items, page=Page(page=page, per_page=PER_PAGE, total=total), mode="keyword", note=note)
 
 
 @router.get("/works/{wid}", response_model=WorkDetail)

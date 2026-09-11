@@ -35,6 +35,10 @@ def main(argv=None):
     mt.add_argument("--k", type=int, default=5, help="số đồ án láng giềng tìm mỗi đích (mặc định 5)")
     mt.add_argument("--min-votes", type=int, default=2, help="số láng giềng tối thiểu cùng một người (mặc định 2)")
     mt.add_argument("--min-score", type=float, default=0.70, help="tổng cosine tối thiểu (mặc định 0.70)")
+    ex = ais.add_parser("experts", help="tìm giảng viên gần chuyên môn với một đề tài (J1)")
+    ex.add_argument("title")
+    ex.add_argument("--description", default="")
+    ex.add_argument("--k", type=int, default=10)
     sv = sub.add_parser("serve"); sv.add_argument("--host", default="127.0.0.1"); sv.add_argument("--port", type=int, default=8000)
     u = sub.add_parser("user", help="đăng nhập cục bộ (NFR-01)")
     us = u.add_subparsers(dest="user_cmd", required=True)
@@ -112,6 +116,16 @@ def main(argv=None):
                 from cris.ai import mentor as ai_mentor
                 r = ai_mentor.suggest_mentors(conn, prov, k=a.k, min_votes=a.min_votes, min_score=a.min_score)
                 print(f"scanned={r['scanned']} suggested={r['suggested']}")
+            elif a.ai_cmd == "experts":
+                from cris.ai import expert as ai_expert
+                r = ai_expert.find_experts(conn, prov, title=a.title, description=a.description, k=a.k, save=False)
+                if r["fallback"]:
+                    print(r["note"], file=sys.stderr)
+                else:
+                    print(f"{'điểm':>8}  {'bài khớp':>8}  giảng viên")
+                    for row in r["results"]:
+                        print(f"{row['score']:8.3f}  {row['works_matched']:8d}  "
+                              f"{row['display_name']} ({row['degree'] or '—'}, {row['unit_code'] or '—'})")
     elif a.cmd == "quality":
         r = quality.report(conn)
         print(json.dumps(r, ensure_ascii=False, indent=None if a.json else 2))

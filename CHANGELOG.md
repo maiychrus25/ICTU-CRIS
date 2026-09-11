@@ -5,6 +5,21 @@
 
 ## [Unreleased]
 
+### Added
+
+- Tìm kiếm ngữ nghĩa, tìm chuyên gia, cổng công khai kiểm tra đề tài (lát cắt J1):
+  `GET /api/works?mode=semantic` tìm theo nghĩa trên tiêu đề đã gõ (`cris/ai/search.py`,
+  `semantic_works`), rơi về từ khoá kèm giải thích khi AI chưa bật; `POST /api/ai/experts`
+  / `GET /api/ai/experts/{id}` gợi ý giảng viên gần chuyên môn với một đề tài đề xuất
+  (`cris/ai/expert.py`, `find_experts` — điểm `Σ s_i·0,8^hạng` trên top-200 công trình gần
+  nghĩa nhất, gộp theo người qua `v_person_publications`, hệ số ×1,1 cho công trình gần
+  đây, lọc học vị/đơn vị/loại trừ), lưu `ai_query(kind='experts')` (migration
+  `0014_ai_query_kind.sql`); `POST /api/public/check-topic` cổng công khai không cần đăng
+  nhập cho sinh viên trước khi đăng ký đề tài (đề tài tương tự các khoá trước + giảng viên
+  gần chuyên môn), rate-limit 20 lượt/5 phút/IP, không lưu lịch sử tra cứu, không lộ email/
+  điện thoại giảng viên. CLI `python -m cris ai experts "<đề tài>" [--k 10]`. Đo trên DB
+  thật bằng `scripts/eval_experts.py` — số liệu ở `docs/ai.md`.
+
 ### Fixed
 
 - `jobTitle` ở kho nguồn là chức vụ, không phải đơn vị: hiệu trưởng/hiệu phó nay thuộc
