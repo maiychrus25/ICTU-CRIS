@@ -101,10 +101,34 @@ class PersonProfile(BaseModel):
     last_sync: LastSync | None
 
 
+class PersonSearchRow(BaseModel):
+    id: int
+    display_name: str
+    degree: str | None = None
+    unit_code: str | None = None
+    kind: str
+    works: int
+
+
 class Topic(BaseModel):
     id: int
     label: str
     size: int
+    keywords: list[str] = Field(default_factory=list)   # 8 từ khoá nặng nhất
+    built_at: datetime | None = None
+
+
+class TopicKeyword(BaseModel):
+    keyword: str
+    weight: float
+
+
+class TopicDetail(BaseModel):
+    id: int
+    label: str
+    size: int
+    keywords: list[TopicKeyword]
+    works: list[WorkSummary]
 
 
 # ---------- hàng đợi tác giả ----------
@@ -384,3 +408,39 @@ class ScreenCohortSummary(BaseModel):
     cohort: str
     screened: int
     flagged: int
+
+
+# ---------- lịch sử đồng bộ ----------
+class SyncRunSummary(BaseModel):
+    id: int
+    source: str
+    scope: str
+    status: str
+    started_at: datetime
+    finished_at: datetime | None
+    duration_s: float | None
+    added: int
+    changed: int
+    vanished: int
+    errors: list[Any]
+    warnings: list[Any]
+
+
+class SyncRunList(BaseModel):
+    items: list[SyncRunSummary]
+    page: Page
+
+
+class SourceRecordRow(BaseModel):
+    id: int
+    source_key: str
+    doc_type: str
+    version: int
+    fetched_at: datetime | None
+
+
+class SyncRunDetail(SyncRunSummary):
+    expected_count: dict[str, Any] | None = None
+    fetched_count: dict[str, Any] | None = None
+    triggered_by: int | None = None
+    records: list[SourceRecordRow]

@@ -14,6 +14,8 @@ from cris.api.schemas import (
     PersonProfile,
     PersonPublication,
     Topic,
+    TopicDetail,
+    TopicKeyword,
     WorkDetail,
     WorkList,
     WorkSummary,
@@ -176,5 +178,40 @@ def person_profile(conn: Conn, pid: int):
 @router.get("/topics", response_model=list[Topic])
 def topics(conn: Conn):
     with conn.cursor() as cur:
-        cur.execute("SELECT id, label, size FROM ai_topic ORDER BY size DESC, label")
-        return [Topic(**r) for r in cur.fetchall()]
+        cur.execute("SELECT id, label, size, built_at FROM ai_topic ORDER BY size DESC, label")
+        rows = cur.fetchall()
+        cur.execute("""SELECT topic_id, keyword FROM (
+                          SELECT topic_id, keyword,
+                                 row_number() OVER (PARTITION BY topic_id ORDER BY weight DESC, keyword) AS rn
+                          FROM ai_topic_keyword) t
+                       WHERE rn <= 8 ORDER BY topic_id, rn""")
+        kw_rows = cur.fetchall()
+    kw_by_topic: dict[int, list[str]] = {}
+    for r in kw_rows:
+        kw_by_topic.setdefault(r["topic_id"], []).append(r["keyword"])
+    return [Topic(id=r["id"], label=r["label"], size=r["size"], built_at=r["built_at"],
+                  keywords=kw_by_topic.get(r["id"], [])) for r in rows]
+
+
+@router.get("/topics/{tid}", response_model=TopicDetail)
+def topic_detail(conn: Conn, tid: int):
+    with conn.cursor() as cur:
+        cur.execute("SELECT id, label, size FROM ai_topic WHERE id = %s", (tid,))
+        t = cur.fetchone()
+        if t is None:
+            raise HTTPException(404, f"không tìm thấy chủ đề #{tid}")
+        cur.execute("SELECT keyword, weight FROM ai_topic_keyword WHERE topic_id = %s ORDER BY weight DESC, keyword",
+                    (tid,))
+        kws = cur.fetchall()
+        from_sql, where_sql, params = _works_query("", "", None, "", tid)
+        cur.execute(f"SELECT DISTINCT w.id, w.title, w.doc_type, w.year_issue, w.doi, w.state, w.needs_review "
+                    f"{from_sql} WHERE {where_sql} ORDER BY w.year_issue DESC NULLS LAST, w.id DESC LIMIT 50",
+                    params)
+        works = cur.fetchall()
+    items = [WorkSummary(id=r["id"], title=r["title"], doc_type=r["doc_type"],
+                         doc_type_label=DOC_TYPE_LABELS.get(r["doc_type"], r["doc_type"]),
+                         year=r["year_issue"], doi=r["doi"], state=r["state"], needs_review=bool(r["needs_review"]))
+             for r in works]
+    return TopicDetail(id=t["id"], label=t["label"], size=t["size"],
+                       keywords=[TopicKeyword(keyword=r["keyword"], weight=r["weight"]) for r in kws],
+                       works=items)

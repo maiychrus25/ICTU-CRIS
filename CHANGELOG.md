@@ -5,6 +5,20 @@
 
 ## [Unreleased]
 
+### Added
+
+- `GET /api/persons?q=&kind=&limit=` (lát cắt G, G1): tìm giảng viên/sinh
+  viên theo tên, khớp qua `person.name_keys` (có/không dấu, đủ họ tên) hoặc
+  `display_name ILIKE` (một phần); `works` đếm trên `v_person_publications`
+  ở trạng thái liên kết sống (`cris/api/routes/persons.py`).
+- `GET /api/topics` thêm `keywords` (8 từ khoá nặng nhất) và `built_at`;
+  `GET /api/topics/{id}` (mới): từ khoá đầy đủ kèm trọng số và tối đa 50
+  công trình khớp cụm, cùng cách khớp với bộ lọc `topic` ở `/api/works`
+  (`cris/api/routes/search.py`).
+- `GET /api/sync/runs?page=` và `GET /api/sync/runs/{id}`: lịch sử các lượt
+  đồng bộ (mới nhất trước) với số thêm/đổi/mất, thời lượng, cảnh báo, và 20
+  `source_record` mới/đổi gần nhất của lượt (`cris/api/routes/sync.py`).
+
 ## [0.2.0] - 2026-09-11
 
 ### Added

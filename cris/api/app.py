@@ -14,11 +14,13 @@ from cris.api.routes import (
     compare,
     export,
     periods,
+    persons,
     quality,
     queue,
     screen,
     search,
     stats,
+    sync,
 )
 
 FRONTEND_OUT = pathlib.Path(__file__).resolve().parents[2] / "frontend" / "out"
@@ -27,7 +29,7 @@ FRONTEND_OUT = pathlib.Path(__file__).resolve().parents[2] / "frontend" / "out"
 def create_app(static_dir: str | os.PathLike | None = None) -> FastAPI:
     app = FastAPI(
         title="ICTU-CRIS API",
-        version="0.2.0",
+        version="0.3.0",
         description="Một nguồn sự thật cho dữ liệu công bố khoa học — mỗi con số truy ngược được về bản ghi gốc. "
                     "AI gợi ý, người quyết; không có AI vẫn chạy đủ chức năng.",
         license_info={"name": "Apache-2.0", "url": "https://www.apache.org/licenses/LICENSE-2.0"},
@@ -36,7 +38,8 @@ def create_app(static_dir: str | os.PathLike | None = None) -> FastAPI:
     origins = [o for o in (os.environ.get("CRIS_CORS_ORIGINS") or "http://localhost:3000,http://127.0.0.1:3000").split(",") if o]
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
     for r in (search.router, queue.router, compare.router, quality.router,
-              stats.router, export.router, audit.router, periods.router, screen.router):
+              stats.router, export.router, audit.router, periods.router, screen.router,
+              persons.router, sync.router):
         app.include_router(r)
 
     @app.get("/api/health", tags=["he-thong"])

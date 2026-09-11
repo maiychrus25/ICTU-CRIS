@@ -37,12 +37,12 @@ def test_health_and_openapi(client):
     assert client.get("/api/health").json() == {"status": "ok"}
     spec = client.get("/openapi.json").json()
     paths = set(spec["paths"])
-    for p in ("/api/works", "/api/works/{wid}", "/api/persons/{pid}", "/api/queue/authors",
+    for p in ("/api/works", "/api/works/{wid}", "/api/persons", "/api/persons/{pid}", "/api/queue/authors",
               "/api/queue/authors/decide", "/api/queue/duplicates", "/api/queue/duplicates/{gid}",
               "/api/queue/duplicates/{gid}/decide", "/api/compare", "/api/compare/{qid}", "/api/quality", "/api/about", "/api/topics",
-              "/api/stats", "/api/works.csv", "/api/persons/{pid}/publications.csv", "/api/audit",
+              "/api/topics/{tid}", "/api/stats", "/api/works.csv", "/api/persons/{pid}/publications.csv", "/api/audit",
               "/api/periods", "/api/periods/{pid}/progress", "/api/periods/{pid}/close", "/api/periods/{pid}/cancel",
-              "/api/ai/screen", "/api/ai/screen/cohorts"):
+              "/api/ai/screen", "/api/ai/screen/cohorts", "/api/sync/runs", "/api/sync/runs/{rid}"):
         assert p in paths, p
 
 
