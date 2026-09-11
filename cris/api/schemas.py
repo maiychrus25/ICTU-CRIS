@@ -271,6 +271,26 @@ class AboutOut(BaseModel):
     works_by_type: dict[str, int]
     ai: dict[str, Any]
     limits: list[str]
+    auth_required: bool = False
+
+
+# ---------- đăng nhập ----------
+class LoginIn(BaseModel):
+    email: str = Field(min_length=1)
+    password: str = Field(min_length=1)
+
+
+class UserOut(BaseModel):
+    id: int
+    email: str
+    display_name: str
+    roles: list[str] = Field(default_factory=list)
+    unit_id: int | None = None
+
+
+class MeOut(BaseModel):
+    user: UserOut | None
+    auth_required: bool
 
 
 # ---------- tổng quan / thống kê ----------

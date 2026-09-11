@@ -18,8 +18,20 @@ và xử lý theo mức độ.
 - Hệ thống xử lý **dữ liệu cá nhân giảng viên** (email, điện thoại, ngày sinh) lấy từ
   kho công khai `repository.ictu.edu.vn`. Dữ liệu thô không nằm trong repo; giao diện
   ẩn điện thoại và ngày sinh với vai trò sinh viên.
-- Bản 0.1 **chưa có đăng nhập thật** (chạy với một người dùng mặc định) — không triển
-  khai lên mạng công khai. Đây là giới hạn đã công bố, không phải lỗ hổng cần báo.
+- Đăng nhập cục bộ (NFR-01, `cris/auth.py`): mật khẩu băm PBKDF2-HMAC-SHA256
+  (260.000 vòng, salt riêng mỗi người), không lưu mật khẩu thô, chỉ thư viện
+  chuẩn (`hashlib`, `secrets`, `hmac`). Phiên đăng nhập là cookie `cris_session`
+  (`HttpOnly`, `SameSite=Lax`, hết hạn 12 giờ, gia hạn khi dùng) — đặt
+  `CRIS_COOKIE_SECURE=1` khi chạy sau HTTPS thật để bật thêm cờ `Secure`; chạy
+  HTTP nội bộ thì để tắt, ngược lại trình duyệt sẽ không gửi cookie. Đăng nhập
+  sai bị giới hạn 5 lần/5 phút theo email (bộ nhớ tiến trình, không chia sẻ
+  giữa nhiều worker `uvicorn`) để hạn chế dò mật khẩu.
+- **Chế độ mở**: chừng nào chưa ai được đặt mật khẩu (`python -m cris user
+  set-password`), hệ thống chạy với một người dùng mặc định (hoặc header
+  `X-CRIS-User`), không bắt buộc đăng nhập — giới hạn đã công bố cho demo/nội
+  bộ, không phải lỗ hổng cần báo, nhưng **không triển khai lên mạng công khai**
+  ở chế độ này. Phân quyền theo đơn vị (NFR-02) và SSO trường thật vẫn ngoài
+  phạm vi bản hiện tại.
 - Tầng AI cục bộ không gửi dữ liệu ra ngoài; nếu bật nhà cung cấp ngoài (chưa hiện
   thực), chỉ tiêu đề/tóm tắt/từ khoá được gửi.
 

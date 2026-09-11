@@ -57,7 +57,7 @@ Tầng nghiệp vụ (`cris/*.py`) không biết gì về API hay giao diện. T
 
 ### 2.2 Người dùng
 
-Theo BA [05-permissions.md](ba/05-permissions.md): `rd_officer` (Phòng KH-CN), `faculty_officer` (Văn phòng khoa), `faculty_head`, `lecturer`, `student`, `admin`. Bản dự thi chạy với một người dùng mặc định có vai trò `rd_officer`; header `X-CRIS-User` cho phép thử vai khác. Đăng nhập thật là NFR-01, ngoài phạm vi.
+Theo BA [05-permissions.md](ba/05-permissions.md): `rd_officer` (Phòng KH-CN), `faculty_officer` (Văn phòng khoa), `faculty_head`, `lecturer`, `student`, `admin`. Đăng nhập cục bộ (NFR-01, lát cắt G2, `cris/auth.py`): mật khẩu băm PBKDF2, cookie phiên `cris_session`. **Chế độ mở** khi chưa `app_user` nào đặt mật khẩu — giữ hành vi cũ: nhận id qua header `X-CRIS-User` (cho phép thử vai khác), nếu không thì người dùng `rd_officer` đầu tiên; dùng cho bộ test và bản demo chưa cấu hình đăng nhập. SSO thật với hệ thống trường là việc ngoài phạm vi, để lát cắt sau.
 
 ### 2.3 Ràng buộc chung
 
@@ -205,6 +205,12 @@ Không dùng `pgvector` trong bản dự thi để không thêm extension phải
 | NFR-42 | Không gửi dữ liệu cá nhân ra dịch vụ ngoài | Chỉ gửi tiêu đề, tóm tắt, từ khoá; test kiểm payload |
 | NFR-43 | Gợi ý AI không tự đổi dữ liệu | 0 dòng ghi vào `work`, `author_link`, `duplicate_group` từ mã trong `cris/ai/`; test kiểm |
 | NFR-44 | Giấy phép mô hình và thư viện AI | Apache-2.0 / MIT / tương thích; ghi trong `DEPENDENCIES.md` trước khi commit |
+
+Cập nhật NFR-01 cho lát cắt G2 (đăng nhập cục bộ, `cris/auth.py`, xem `docs/ba/14-nfr.md`):
+
+| Mã | Yêu cầu | Mức đạt |
+|---|---|---|
+| NFR-01 | Xác thực theo tài khoản trường; không lưu mật khẩu riêng | Trường chưa có SSO sẵn dùng: mật khẩu cục bộ băm PBKDF2-HMAC-SHA256 (260.000 vòng, salt 16 byte riêng mỗi người, không thêm dependency), cookie phiên `cris_session` (HttpOnly, SameSite=Lax, hết hạn 12h). **Chế độ mở** khi chưa ai đặt mật khẩu (không bắt buộc đăng nhập, hành vi cũ). Tích hợp SSO trường thật để sau |
 
 ## 7. Ràng buộc thiết kế
 

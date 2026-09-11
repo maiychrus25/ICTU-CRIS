@@ -1,10 +1,12 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
-"""Phụ thuộc dùng chung: kết nối DB mỗi request, người thao tác, lô giao dịch."""
+"""Phụ thuộc dùng chung: kết nối DB mỗi request, người thao tác, lô giao dịch,
+đăng nhập (NFR-01) và kiểm vai trò."""
 from typing import Annotated
 
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, Header, HTTPException, Request
 
+from cris import auth as auth_mod
 from cris import db
 
 
@@ -21,9 +23,27 @@ def get_conn():
 Conn = Annotated[object, Depends(get_conn)]
 
 
-def get_actor_id(conn: Conn, x_cris_user: Annotated[str | None, Header(alias="X-CRIS-User")] = None) -> int:
-    """Người thao tác. Chưa có đăng nhập (NFR-01 ngoài phạm vi): nhận id qua header
-    `X-CRIS-User`, nếu không thì người dùng `rd_officer` đầu tiên; không có ai → 503."""
+def _cookie_user(conn, request: Request):
+    """Người dùng gắn với cookie phiên `cris_session`, hoặc None nếu không có/hết hạn."""
+    token = request.cookies.get(auth_mod.COOKIE_NAME)
+    return auth_mod.session_user(conn, token) if token else None
+
+
+def get_actor_id(conn: Conn, request: Request,
+                  x_cris_user: Annotated[str | None, Header(alias="X-CRIS-User")] = None) -> int:
+    """Người thao tác.
+
+    `auth_required` (đã có người đặt mật khẩu, NFR-01): bắt buộc cookie phiên
+    `cris_session` hợp lệ, bỏ qua header `X-CRIS-User` → 401 nếu chưa đăng nhập.
+
+    Chế độ mở (chưa ai đặt mật khẩu): giữ hành vi cũ — nhận id qua header
+    `X-CRIS-User`, nếu không thì người dùng `rd_officer` đầu tiên; không có ai → 503.
+    """
+    if auth_mod.auth_required(conn):
+        user = _cookie_user(conn, request)
+        if user is None:
+            raise HTTPException(401, "Cần đăng nhập.")
+        return user["id"]
     with conn.cursor() as cur:
         if x_cris_user and x_cris_user.isdigit():
             cur.execute("SELECT id FROM app_user WHERE id=%s", (int(x_cris_user),))
@@ -43,6 +63,37 @@ def get_actor_id(conn: Conn, x_cris_user: Annotated[str | None, Header(alias="X-
 
 
 Actor = Annotated[int, Depends(get_actor_id)]
+
+
+def require_role(*roles: str):
+    """Factory dependency: như `Actor`, và khi `roles` khác rỗng còn bắt buộc
+    actor có ít nhất một trong các vai trò đó (403 nếu không) — áp dụng cả ở chế
+    độ mở (actor mặc định luôn là `rd_officer` do cách `get_actor_id` chọn; header
+    `X-CRIS-User` có thể trỏ tới người khác để thử quyền). `roles` rỗng = chỉ cần
+    xác định được actor, không đòi vai trò cụ thể (dùng cho `/api/compare`: mọi
+    vai trò đã đăng nhập)."""
+    def _dep(conn: Conn, actor: Actor) -> int:
+        if not roles:
+            return actor
+        with conn.cursor() as cur:
+            cur.execute("SELECT roles FROM app_user WHERE id=%s", (actor,))
+            row = cur.fetchone()
+        actor_roles = (row["roles"] if row else None) or []
+        if not any(r in actor_roles for r in roles):
+            raise HTTPException(403, f"Cần vai trò: {', '.join(roles)}.")
+        return actor
+    return _dep
+
+
+def require_login(conn: Conn, request: Request):
+    """Bắt buộc phiên đăng nhập hợp lệ khi `auth_required`; chế độ mở thì không
+    kiểm gì (giữ hành vi cũ — dùng cho GET không cần actor, vd `/api/audit`)."""
+    if not auth_mod.auth_required(conn):
+        return None
+    user = _cookie_user(conn, request)
+    if user is None:
+        raise HTTPException(401, "Cần đăng nhập.")
+    return user
 
 
 class DeferredCommitConn:

@@ -1,14 +1,18 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
 """Kỳ báo cáo (lát cắt K, phần đọc + mở/đóng): lớp mỏng gọi `cris.period`.
-`ValueError` từ tầng nghiệp vụ (mã kỳ trùng, sai trạng thái, không tìm thấy kỳ...) → 409."""
-from fastapi import APIRouter, HTTPException
+`ValueError` từ tầng nghiệp vụ (mã kỳ trùng, sai trạng thái, không tìm thấy kỳ...) → 409.
+Mọi POST cần vai trò `rd_officer` (NFR-01/G2)."""
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from cris import period as period_mod
-from cris.api.deps import Actor, Conn
+from cris.api.deps import Conn, require_role
 from cris.api.schemas import PeriodOpenIn, PeriodOut, PeriodProgress, PeriodUnitProgress
 
 router = APIRouter(prefix="/api/periods", tags=["ky-bao-cao"])
+RdOfficer = Annotated[int, Depends(require_role("rd_officer"))]
 
 
 def _out(p):
@@ -42,7 +46,7 @@ def period_progress(conn: Conn, pid: int):
 
 
 @router.post("", response_model=PeriodOut, status_code=201)
-def open_period(conn: Conn, actor: Actor, body: PeriodOpenIn):
+def open_period(conn: Conn, actor: RdOfficer, body: PeriodOpenIn):
     try:
         pid = period_mod.open_period(conn, code=body.code, name=body.name, scope=body.scope,
                                      criteria=body.criteria, due_at=body.due_at, actor_id=actor)
@@ -52,7 +56,7 @@ def open_period(conn: Conn, actor: Actor, body: PeriodOpenIn):
 
 
 @router.post("/{pid}/close", response_model=PeriodOut)
-def close_submissions(conn: Conn, actor: Actor, pid: int):
+def close_submissions(conn: Conn, actor: RdOfficer, pid: int):
     try:
         period_mod.close_submissions(conn, pid, actor)
     except ValueError as exc:
@@ -61,7 +65,7 @@ def close_submissions(conn: Conn, actor: Actor, pid: int):
 
 
 @router.post("/{pid}/cancel", response_model=PeriodOut)
-def cancel_period(conn: Conn, actor: Actor, pid: int):
+def cancel_period(conn: Conn, actor: RdOfficer, pid: int):
     try:
         period_mod.cancel_period(conn, pid, actor)
     except ValueError as exc:

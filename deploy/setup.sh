@@ -38,6 +38,17 @@ docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR
   "INSERT INTO app_user(email, display_name, roles) VALUES ('${CRIS_ADMIN_EMAIL}', '${CRIS_ADMIN_NAME}', ARRAY['rd_officer']) ON CONFLICT (email) DO NOTHING;"
 echo "👤 người dùng mặc định: ${CRIS_ADMIN_EMAIL} (rd_officer)"
 
+# Đăng nhập cục bộ (NFR-01, tuỳ chọn): đặt CRIS_ADMIN_PASSWORD trong deploy/.env
+# TRƯỚC khi chạy script để bật bắt buộc đăng nhập ngay từ lúc cài. Để trống thì
+# hệ thống chạy "chế độ mở" (không bắt buộc đăng nhập) như bản trước.
+if [ -n "${CRIS_ADMIN_PASSWORD:-}" ]; then
+  docker compose run --rm -e CRIS_PASSWORD="${CRIS_ADMIN_PASSWORD}" app user set-password "${CRIS_ADMIN_EMAIL}"
+  echo "🔒 đã đặt mật khẩu cho ${CRIS_ADMIN_EMAIL} — đăng nhập bắt buộc từ giờ"
+else
+  echo "🔓 CRIS_ADMIN_PASSWORD trống — chế độ mở (chưa bắt buộc đăng nhập); đặt sau bằng:"
+  echo "    docker compose run --rm app user set-password ${CRIS_ADMIN_EMAIL}"
+fi
+
 # 4. AI (tuỳ chọn): tải mô hình vào volume cris_models
 if $AI; then docker compose run --rm app ai download; fi
 
@@ -52,4 +63,8 @@ echo "    && docker compose run --rm app normalize && docker compose run --rm ap
 echo "    && docker compose run --rm app dedup && docker compose run --rm app quality"
 $AI && echo "  rồi: docker compose run --rm app ai embed && docker compose run --rm app ai topics && docker compose run --rm app ai suggest" || true
 echo
-echo "⚠ Bản 0.1 chưa có đăng nhập thật — chỉ chạy trong mạng nội bộ, không mở ra Internet."
+if [ -n "${CRIS_ADMIN_PASSWORD:-}" ]; then
+  echo "🔐 Đăng nhập đã bắt buộc — ${CRIS_ADMIN_EMAIL} / mật khẩu đã đặt ở CRIS_ADMIN_PASSWORD."
+else
+  echo "⚠ Chế độ mở (chưa bắt buộc đăng nhập) — chỉ chạy trong mạng nội bộ, không mở ra Internet."
+fi

@@ -177,10 +177,37 @@ INSERT INTO app_user(email, display_name, roles)
 VALUES ('ten@ictu.edu.vn', 'Tên hiển thị', ARRAY['rd_officer']);
 ```
 
-**Chưa có đăng nhập thật.** Bản này chạy với một người dùng mặc định (hoặc header
-`X-CRIS-User: <id>`); xác thực và phân quyền theo đơn vị là NFR-01 và NFR-02,
-chưa triển khai. API FastAPI chạy qua `uvicorn` — **không triển khai lên mạng
-công khai** nếu chưa có xác thực thật.
+**Phân quyền theo đơn vị (NFR-02) chưa triển khai.** API FastAPI chạy qua
+`uvicorn` — cân nhắc kỹ trước khi mở ra mạng công khai; xem mục 6.5 để bật
+đăng nhập (NFR-01) và mục 9 "Ràng buộc thiết kế" trong `docs/SRS.md`.
+
+### 6.5 Đăng nhập (login, NFR-01)
+
+Mặc định hệ thống chạy **"chế độ mở"**: chưa `app_user` nào có mật khẩu → API
+không bắt buộc đăng nhập, nhận diện người thao tác qua header `X-CRIS-User:
+<id>` hoặc người dùng `rd_officer` đầu tiên (hành vi cũ, hợp cho demo và bộ
+test). Ngay khi một người dùng được đặt mật khẩu, **toàn hệ thống** chuyển
+sang bắt buộc đăng nhập.
+
+```bash
+# venv (cách 2) hoặc Docker (cách 1, thay bằng `docker compose run --rm app ...`)
+python -m cris user set-password ten@ictu.edu.vn   # hỏi mật khẩu (getpass), hoặc:
+CRIS_PASSWORD='...' python -m cris user set-password ten@ictu.edu.vn
+python -m cris user list                            # id, email, vai trò, has_password
+```
+
+- Mật khẩu băm bằng `hashlib.pbkdf2_hmac` (PBKDF2-HMAC-SHA256, 260.000 vòng,
+  salt 16 byte riêng mỗi người) — chỉ thư viện chuẩn, không thêm dependency
+  (`cris/auth.py`).
+- Cookie phiên `cris_session`: `HttpOnly`, `SameSite=Lax`, hết hạn 12 giờ (gia
+  hạn khi dùng, tối đa một lần mỗi 5 phút). Đặt `CRIS_COOKIE_SECURE=1` khi
+  chạy sau HTTPS thật để bật thêm cờ `Secure`.
+- Đăng nhập sai bị giới hạn 5 lần/5 phút theo email (bộ nhớ tiến trình) → 429.
+- `deploy/setup.sh`: đặt `CRIS_ADMIN_PASSWORD` trong `deploy/.env` **trước**
+  khi chạy script để bật đăng nhập bắt buộc ngay lúc cài; để trống thì cài đặt
+  xong vẫn ở chế độ mở.
+- `GET /api/about` trả thêm `auth_required: bool` để giao diện biết đăng nhập
+  có bắt buộc không.
 
 ## 7. Bật AI (Enabling the AI features)
 

@@ -6,6 +6,7 @@ import os
 
 from fastapi import APIRouter
 
+from cris import auth as auth_mod
 from cris import quality
 from cris.api.deps import Conn
 from cris.api.schemas import AboutOut, LastSync, QualityMetric, QualityOut
@@ -75,4 +76,5 @@ def about(conn: Conn):
         last = cur.fetchone()
     ai = _provider_info() | {"embeddings": emb, "topics": topics, "suggestions": sugg}
     return AboutOut(source_url=SOURCE_URL, repo_url=REPO_URL, last_sync=LastSync(**last) if last else None,
-                    works=sum(by_type.values()), works_by_type=by_type, ai=ai, limits=LIMITS)
+                    works=sum(by_type.values()), works_by_type=by_type, ai=ai, limits=LIMITS,
+                    auth_required=auth_mod.auth_required(conn))

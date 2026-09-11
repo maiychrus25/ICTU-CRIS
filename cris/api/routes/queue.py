@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 """Hai hàng đợi người quyết: liên kết tác giả và nghi trùng.
 SQL chuyển nguyên từ UI HTML cũ (đã gỡ, xem CHANGELOG); quyết định đi qua
-`link.decide_link` / `dedup.decide_group` (BR-18), lô nhiều id trong một giao dịch."""
-from fastapi import APIRouter, HTTPException, Query
+`link.decide_link` / `dedup.decide_group` (BR-18), lô nhiều id trong một giao dịch.
+Cả hai POST quyết định cần vai trò `rd_officer` (NFR-01/G2)."""
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from cris import dedup, link
-from cris.api.deps import Actor, Conn, DeferredCommitConn
+from cris.api.deps import Conn, DeferredCommitConn, require_role
 from cris.api.schemas import (
     AuthorQueueList,
     AuthorQueueRow,
@@ -21,6 +24,7 @@ from cris.api.schemas import (
 )
 
 router = APIRouter(prefix="/api/queue", tags=["hang-doi"])
+RdOfficer = Annotated[int, Depends(require_role("rd_officer"))]
 
 PER_PAGE = 50
 AUTHOR_STATES = ("ChoXacNhan", "DaNoiTuDong", "DaXacNhan", "DaBacBo")
@@ -70,7 +74,7 @@ def list_author_queue(conn: Conn, state: str = "ChoXacNhan", q: str = "", page: 
 
 
 @router.post("/authors/decide", response_model=DecideResult)
-def decide_authors(conn: Conn, actor: Actor, body: DecideAuthorsIn):
+def decide_authors(conn: Conn, actor: RdOfficer, body: DecideAuthorsIn):
     if body.decision == "reject" and not (body.reason or "").strip():
         raise HTTPException(400, "Bác bỏ bắt buộc phải nêu lý do.")
     if body.decision == "reassign" and body.person_id is None:
@@ -145,7 +149,7 @@ def duplicate_group_detail(conn: Conn, gid: int):
 
 
 @router.post("/duplicates/{gid}/decide", response_model=DecideResult)
-def decide_duplicate_group(conn: Conn, actor: Actor, gid: int, body: DecideDupIn):
+def decide_duplicate_group(conn: Conn, actor: RdOfficer, gid: int, body: DecideDupIn):
     _load_group(conn, gid)
     if body.decision == "keep" and not (body.reason or "").strip():
         raise HTTPException(400, "Cần nhập lý do khi chọn Giữ riêng.")

@@ -1,9 +1,11 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
 import argparse
+import getpass
 import json
+import os
 import sys
-from cris import db, dedup, link, normalize, people, quality, rules, sync
+from cris import auth, db, dedup, link, normalize, people, quality, rules, sync
 from cris.source import repository as R
 
 def main(argv=None):
@@ -24,6 +26,11 @@ def main(argv=None):
     sc.add_argument("--high", type=float, default=None, help="ngưỡng mức 'cao' (mặc định SCREEN_THRESHOLDS[0]=0.90)")
     sc.add_argument("--mid", type=float, default=None, help="ngưỡng mức 'vua' (mặc định SCREEN_THRESHOLDS[1]=0.80)")
     sv = sub.add_parser("serve"); sv.add_argument("--host", default="127.0.0.1"); sv.add_argument("--port", type=int, default=8000)
+    u = sub.add_parser("user", help="đăng nhập cục bộ (NFR-01)")
+    us = u.add_subparsers(dest="user_cmd", required=True)
+    sp = us.add_parser("set-password", help="đọc mật khẩu từ biến CRIS_PASSWORD hoặc hỏi (getpass)")
+    sp.add_argument("email")
+    us.add_parser("list")
     a = ap.parse_args(argv)
     if a.cmd == "serve":
         import uvicorn
@@ -76,6 +83,16 @@ def main(argv=None):
     elif a.cmd == "quality":
         r = quality.report(conn)
         print(json.dumps(r, ensure_ascii=False, indent=None if a.json else 2))
+    elif a.cmd == "user":
+        if a.user_cmd == "set-password":
+            pw = os.environ.get("CRIS_PASSWORD") or getpass.getpass(f"Mật khẩu cho {a.email}: ")
+            uid = auth.set_password(conn, a.email, pw)
+            print(f"đã đặt mật khẩu cho #{uid} ({a.email})")
+        elif a.user_cmd == "list":
+            for row in auth.list_users(conn):
+                print(json.dumps({k: row[k] for k in
+                                  ("id", "email", "display_name", "roles", "unit_id", "active", "has_password")},
+                                 ensure_ascii=False))
     conn.close()
 
 if __name__ == "__main__":

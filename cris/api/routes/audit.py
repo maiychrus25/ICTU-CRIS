@@ -1,13 +1,17 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
 """Nhật ký thao tác (SC-08, minh bạch): đọc `audit_log` JOIN `app_user`, không ghi gì
-— mọi ghi nhận đi qua `cris.audit.log` từ tầng nghiệp vụ."""
-from fastapi import APIRouter, Query
+— mọi ghi nhận đi qua `cris.audit.log` từ tầng nghiệp vụ. Cần đăng nhập khi
+`auth_required` (NFR-01/G2); chế độ mở giữ công khai như trước."""
+from typing import Annotated
 
-from cris.api.deps import Conn
+from fastapi import APIRouter, Depends, Query
+
+from cris.api.deps import Conn, require_login
 from cris.api.schemas import AuditList, AuditRow, Page
 
 router = APIRouter(prefix="/api", tags=["nhat-ky"])
+RequireLogin = Annotated[dict | None, Depends(require_login)]
 
 PER_PAGE = 50
 
@@ -27,8 +31,8 @@ ACTION_LABELS = {
 
 
 @router.get("/audit", response_model=AuditList)
-def list_audit(conn: Conn, entity: str = "", entity_id: int | None = None, actor: int | None = None,
-               page: int = Query(1, ge=1)):
+def list_audit(conn: Conn, _login: RequireLogin, entity: str = "", entity_id: int | None = None,
+               actor: int | None = None, page: int = Query(1, ge=1)):
     where, params = [], []
     if entity:
         where.append("a.entity = %s"); params.append(entity)

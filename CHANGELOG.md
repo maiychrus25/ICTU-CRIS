@@ -18,6 +18,26 @@
 - `GET /api/sync/runs?page=` và `GET /api/sync/runs/{id}`: lịch sử các lượt
   đồng bộ (mới nhất trước) với số thêm/đổi/mất, thời lượng, cảnh báo, và 20
   `source_record` mới/đổi gần nhất của lượt (`cris/api/routes/sync.py`).
+- Đăng nhập cục bộ (lát cắt G, G2, NFR-01): `cris/auth.py` băm mật khẩu bằng
+  `hashlib.pbkdf2_hmac` (PBKDF2-HMAC-SHA256, 260.000 vòng, salt riêng mỗi
+  người) và quản lý phiên trong bảng `session` mới (`cris/migrations/
+  0009_auth.sql`) — chỉ thư viện chuẩn, không thêm dependency. CLI `python -m
+  cris user set-password <email>` (đọc `CRIS_PASSWORD` hoặc hỏi qua `getpass`)
+  và `python -m cris user list`.
+- `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`
+  (`cris/api/routes/auth.py`): cookie phiên `cris_session` (`HttpOnly`,
+  `SameSite=Lax`, `Secure` khi `CRIS_COOKIE_SECURE=1`, hết hạn 12 giờ, gia hạn
+  khi dùng tối đa 1 lần/5 phút); giới hạn 5 lần đăng nhập sai/5 phút theo
+  email (bộ nhớ tiến trình) → 429. `GET /api/about` thêm `auth_required: bool`.
+- **Chế độ mở** (chưa `app_user` nào có mật khẩu): hành vi cũ giữ nguyên —
+  không bắt buộc đăng nhập, nhận actor qua header `X-CRIS-User` hoặc
+  `rd_officer` đầu tiên. Ngay khi có người đặt mật khẩu, `deps.Actor` bắt buộc
+  cookie phiên hợp lệ; `deps.require_role("rd_officer")` áp cho mọi POST ở
+  `cris/api/routes/queue.py` và `periods.py`; `POST /api/compare` cần đăng
+  nhập (mọi vai trò) khi bật; `GET /api/audit` cần đăng nhập khi bật, các GET
+  khác giữ công khai.
+- `deploy/setup.sh`, `deploy/.env.example`: biến `CRIS_ADMIN_PASSWORD` tuỳ
+  chọn (đặt mật khẩu cho người dùng mặc định lúc cài) và `CRIS_COOKIE_SECURE`.
 
 ## [0.2.0] - 2026-09-11
 
