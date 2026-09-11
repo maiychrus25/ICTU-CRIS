@@ -45,6 +45,7 @@ export const confidenceLabels: Record<string, string> = {
   ten_day_du_nhieu_ung_vien: "Tên đầy đủ, nhiều ứng viên",
   ten_mot_phan: "Khớp một phần tên",
   orcid: "Khớp ORCID",
+  ai_mentor: "AI đề xuất (hướng dẫn)",
   cao: "Cao", vua: "Vừa", thap: "Thấp",
 };
 

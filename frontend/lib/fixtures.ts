@@ -3,7 +3,7 @@
 
 import type {
   AboutOut, AuditList, AuthorQueueList, CompareOut, DeclarationDetail, DeclarationRow, DupGroupDetail, DupGroupList, HealthOut, MeOut,
-  MyWorkList, PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail,
+  MentorList, MyWorkList, PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail,
   SyncRunList, Topic, TopicDetail, WorkDetail, WorkList, WorkSummary, ScreenCohortSummary, ScreenList,
 } from "@/lib/types";
 
@@ -116,6 +116,32 @@ export const authorQueueFixture: AuthorQueueList = {
     degree_conflict: index === 3, group_work_count: 2 + index, ai_rank: index + 1,
     ai_score: 0.92 - index * 0.08, ai_reason: String(reason),
   })),
+};
+
+export const mentorFixture: MentorList = {
+  page: { page: 1, per_page: 50, total: 2 },
+  items: [
+    {
+      work_id: 1, title: workItems[0].title, cohort: "K21", mention_id: 1201, pending_link: null,
+      candidates: [
+        { person_id: 1, display_name: "TS. Nguyễn Văn A", degree: "Tiến sĩ", votes: 4, score: 3.72, evidence: [
+          { work_id: 3, title: workItems[2].title, score: 0.94 },
+          { work_id: 7, title: workItems[6].title, score: 0.91 },
+        ] },
+        { person_id: 3, display_name: "ThS. Trần Thị Bình", degree: "Thạc sĩ", votes: 2, score: 1.71, evidence: [
+          { work_id: 10, title: workItems[9].title, score: 0.87 },
+          { work_id: 12, title: workItems[11].title, score: 0.84 },
+        ] },
+      ],
+    },
+    {
+      work_id: 7, title: workItems[6].title, cohort: "K21", mention_id: 1207, pending_link: null,
+      candidates: [{ person_id: 2, display_name: "TS. Nguyễn Văn An", degree: "Tiến sĩ", votes: 3, score: 2.65, evidence: [
+        { work_id: 1, title: workItems[0].title, score: 0.9 },
+        { work_id: 10, title: workItems[9].title, score: 0.88 },
+      ] }],
+    },
+  ],
 };
 
 export const duplicateGroupsFixture: DupGroupList = {
@@ -280,7 +306,7 @@ export const declarationDetailsFixture: Record<number, DeclarationDetail> = Obje
       { id: 701, from_state: null, to_state: "Nhap", actor_id: 1, reason: null, at: row.created_at },
       { id: 702, from_state: "Nhap", to_state: "ChoBoSung", actor_id: 1, reason: "Cần bổ sung đường dẫn công bố.", at: row.updated_at },
     ] : [{ id: 700 + row.id, from_state: null, to_state: row.state, actor_id: 1, reason: null, at: row.created_at }],
-    evidence: row.evidence_count ? [{ id: 800 + row.id, kind: "link", url: "https://doi.org/10.15625/ictu.2025.102", file_name: null, note: "Đường dẫn DOI của công trình.", added_by: 1, added_at: row.created_at }] : [],
+    evidence: row.evidence_count ? [{ id: 800 + row.id, kind: "link", url: "https://doi.org/10.15625/ictu.2025.102", file_name: null, note: "Đường dẫn DOI của công trình.", added_by: 1, added_at: row.created_at, size_bytes: null, sha256: null, content_type: null }] : [],
   } satisfies DeclarationDetail]),
 ) as Record<number, DeclarationDetail>;
 

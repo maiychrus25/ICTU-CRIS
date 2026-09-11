@@ -45,6 +45,7 @@ const routeTitles = [
   ["/ky-bao-cao/chi-tiet", "Chi tiết kỳ báo cáo"],
   ["/doi-chieu/ra-soat", "Rà soát theo khoá"],
   ["/doi-soat/trung-lap/chi-tiet", "Chi tiết nhóm nghi trùng"],
+  ["/doi-soat/huong-dan", "Gợi ý người hướng dẫn"],
   ["/doi-soat/trung-lap", "Hàng đợi nghi trùng"],
   ["/doi-soat/tac-gia", "Hàng đợi tác giả"],
   ["/chat-luong-du-lieu", "Chất lượng dữ liệu"],

@@ -155,6 +155,7 @@ test("các trang H0 đáp ứng responsive và khả năng truy cập", async ({
     "/tra-cuu/",
     `/cong-trinh/?id=${workId}`,
     "/doi-soat/tac-gia/",
+    "/doi-soat/huong-dan/",
     "/doi-soat/trung-lap/",
     "/doi-chieu/",
     "/doi-chieu/ra-soat/",
@@ -183,7 +184,7 @@ test("bảng, biểu đồ, thẻ số, form và dialog vừa viewport", async (
 
   await page.goto("/doi-soat/tac-gia/");
   await expect(page.locator("tbody tr").first()).toBeVisible();
-  const tabs = page.locator('[data-slot="tabs-list"]');
+  const tabs = page.locator('[data-slot="tabs-list"]').filter({ has: page.getByRole("tab", { name: /^Chờ xác nhận/ }) });
   expect(await tabs.locator('[data-slot="tabs-trigger"]').first().evaluate((tab, listLeft) => tab.getBoundingClientRect().left >= Number(listLeft) - 1, await tabs.evaluate((list) => list.getBoundingClientRect().left)), "Tab đầu không được tràn khỏi mép trái").toBe(true);
   if (testInfo.project.name === "mobile") await page.screenshot({ path: path.join(imageDir, "mobile-hang-doi.png"), animations: "disabled" });
   await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();

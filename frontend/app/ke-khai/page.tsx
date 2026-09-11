@@ -4,12 +4,13 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, ExternalLink, FileCheck2, History } from "lucide-react";
+import { ArrowRight, Download, ExternalLink, FileCheck2, FileText, History, Image as ImageIcon, Link2, Plus, StickyNote } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
 
+import { EvidenceDialog } from "@/components/evidence-dialog";
 import { PageHeader } from "@/components/page-header";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { StatusBadge } from "@/components/status-badge";
@@ -18,15 +19,22 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { ApiError } from "@/lib/api";
+import { ApiError, evidenceFileUrl } from "@/lib/api";
 import { getDeclarationActions, type DeclarationAction } from "@/lib/declarations";
 import { stateLabels } from "@/lib/labels";
-import { useDeclaration, useMe, usePeriods, useSetDeclarationState } from "@/lib/queries";
+import { useDeclaration, useMe, useOfficerAccess, usePeriods, useSetDeclarationState } from "@/lib/queries";
+import type { EvidenceOut } from "@/lib/types";
+import { formatFileSize } from "@/lib/utils";
 
 const evidenceLabels: Record<string, string> = { link: "Đường dẫn", file: "Tệp", note: "Ghi chú" };
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+}
+
+function EvidenceIcon({ evidence }: { evidence: EvidenceOut }) {
+  const Icon = evidence.kind === "link" ? Link2 : evidence.kind === "note" ? StickyNote : evidence.content_type?.startsWith("image/") ? ImageIcon : FileText;
+  return <Icon aria-hidden className="size-4 shrink-0 text-muted-foreground" />;
 }
 
 function DeclarationDetailContent() {
@@ -37,7 +45,9 @@ function DeclarationDetailContent() {
   const periods = usePeriods();
   const me = useMe();
   const setState = useSetDeclarationState();
+  const canAddEvidence = useOfficerAccess();
   const [stateAction, setStateAction] = useState<DeclarationAction | null>(null);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
 
   if (id === null) return <><PageHeader title="Chi tiết hồ sơ kê khai" /><EmptyView title="Chưa chọn hồ sơ" description="Mở một hồ sơ từ chi tiết kỳ báo cáo để xem thông tin." action={<Link href="/ky-bao-cao/" className="font-medium text-primary hover:underline">Đi đến danh sách kỳ</Link>} /></>;
   if (query.isLoading) return <><PageHeader title="Chi tiết hồ sơ kê khai" /><LoadingView label="Đang tải hồ sơ kê khai…" /></>;
@@ -87,9 +97,10 @@ function DeclarationDetailContent() {
       </section>
 
       <section aria-labelledby="declaration-evidence-title" className="mt-7">
-        <div className="mb-4 flex items-center gap-2"><FileCheck2 className="size-5 text-primary" /><h2 id="declaration-evidence-title" className="text-base font-semibold">Danh sách minh chứng</h2></div>
-        {detail.evidence.length ? <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Loại</TableHead><TableHead>Minh chứng</TableHead><TableHead>Ghi chú</TableHead><TableHead>Người thêm</TableHead><TableHead>Thời điểm</TableHead></TableRow></TableHeader><TableBody>{detail.evidence.map((evidence) => <TableRow key={evidence.id}><TableCell>{evidenceLabels[evidence.kind] ?? evidence.kind}</TableCell><TableCell>{evidence.url ? <a href={evidence.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary hover:underline">{evidence.file_name || evidence.url}<ExternalLink className="size-3.5" /></a> : evidence.file_name || "—"}</TableCell><TableCell className="max-w-sm whitespace-normal">{evidence.note || "—"}</TableCell><TableCell>{actorName(evidence.added_by)}</TableCell><TableCell className="whitespace-nowrap text-muted-foreground tabular-nums">{formatDate(evidence.added_at)}</TableCell></TableRow>)}</TableBody></Table></div> : <div className="rounded-lg border border-dashed p-6 text-center"><p className="font-medium">Chưa có minh chứng</p><p className="mt-1 text-sm text-muted-foreground">Thêm minh chứng từ tab Hồ sơ kê khai của kỳ báo cáo.</p><Link href={`/ky-bao-cao/chi-tiet/?id=${detail.period_id}`} className="mt-3 inline-block font-medium text-primary hover:underline">Mở kỳ báo cáo</Link></div>}
+        <div className="mb-4 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><FileCheck2 className="size-5 text-primary" /><h2 id="declaration-evidence-title" className="text-base font-semibold">Danh sách minh chứng</h2></div><Button type="button" size="sm" onClick={() => setEvidenceOpen(true)} disabled={!canAddEvidence}><Plus />Thêm minh chứng</Button></div>
+        {detail.evidence.length ? <div className="overflow-x-auto rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Loại</TableHead><TableHead>Minh chứng</TableHead><TableHead>Kích thước</TableHead><TableHead>SHA-256</TableHead><TableHead>Ghi chú</TableHead><TableHead>Người thêm</TableHead><TableHead>Thời điểm</TableHead><TableHead><span className="sr-only">Tải tệp</span></TableHead></TableRow></TableHeader><TableBody>{detail.evidence.map((evidence) => <TableRow key={evidence.id}><TableCell><span className="inline-flex items-center gap-2"><EvidenceIcon evidence={evidence} />{evidenceLabels[evidence.kind] ?? evidence.kind}</span></TableCell><TableCell>{evidence.url ? <a href={evidence.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary hover:underline">{evidence.file_name || evidence.url}<ExternalLink className="size-3.5" /></a> : evidence.file_name || (evidence.kind === "note" ? "Ghi chú" : "—")}</TableCell><TableCell className="whitespace-nowrap tabular-nums">{formatFileSize(evidence.size_bytes)}</TableCell><TableCell>{evidence.sha256 ? <code title={evidence.sha256} className="rounded bg-muted px-1.5 py-1 font-mono text-xs">{evidence.sha256.slice(0, 12)}</code> : "—"}</TableCell><TableCell className="max-w-sm whitespace-normal">{evidence.note || "—"}</TableCell><TableCell>{actorName(evidence.added_by)}</TableCell><TableCell className="whitespace-nowrap text-muted-foreground tabular-nums">{formatDate(evidence.added_at)}</TableCell><TableCell>{evidence.kind === "file" && <Button render={<a href={evidenceFileUrl(evidence.id)} target="_blank" rel="noreferrer" />} variant="outline" size="xs"><Download />Tải về</Button>}</TableCell></TableRow>)}</TableBody></Table></div> : <div className="rounded-lg border border-dashed p-6 text-center"><p className="font-medium">Chưa có minh chứng</p><p className="mt-1 text-sm text-muted-foreground">Chọn “Thêm minh chứng” để gắn đường dẫn, ghi chú hoặc tải tệp lên.</p></div>}
       </section>
+      <EvidenceDialog declarationId={detail.id} open={evidenceOpen} onOpenChange={setEvidenceOpen} onSaved={async () => { await Promise.all([queryClient.invalidateQueries({ queryKey: ["declaration", detail.id] }), queryClient.invalidateQueries({ queryKey: ["declarations", detail.period_id] })]); }} />
       <Dialog open={stateAction !== null} onOpenChange={(open) => { if (!open) setStateAction(null); }}><DialogContent><form onSubmit={(event) => { event.preventDefault(); if (stateAction) void transition(stateAction, String(new FormData(event.currentTarget).get("reason"))); }}><DialogHeader><DialogTitle>{stateAction?.label} hồ sơ?</DialogTitle><DialogDescription>Nêu rõ lý do để quyết định có thể được kiểm tra lại trong dòng thời gian và nhật ký.</DialogDescription></DialogHeader><div className="py-4"><label htmlFor="detail-declaration-reason" className="mb-1.5 block font-medium">Lý do <span className="text-status-danger">*</span></label><Textarea id="detail-declaration-reason" name="reason" required /></div><DialogFooter><Button type="button" variant="outline" onClick={() => setStateAction(null)}>Huỷ</Button><Button type="submit" variant={stateAction?.destructive ? "destructive" : "default"} disabled={setState.isPending}>{stateAction?.label}</Button></DialogFooter></form></DialogContent></Dialog>
     </>
   );

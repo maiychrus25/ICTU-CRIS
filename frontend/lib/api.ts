@@ -3,14 +3,14 @@
 
 import {
   aboutFixture, auditFixture, authorQueueFixture, compareFixture, declarationDetailsFixture, declarationsFixture,
-  duplicateDetailFixture, duplicateGroupsFixture, healthFixture, periodProgressFixture, periodsFixture, personFixture, qualityFixture, statsFixture,
+  duplicateDetailFixture, duplicateGroupsFixture, healthFixture, mentorFixture, periodProgressFixture, periodsFixture, personFixture, qualityFixture, statsFixture,
   lecturerMeFixture, meFixture, myDeclarationsFixture, myWorksFixture, personsFixture, screenCohortsFixture, screenFixture, syncRunDetailsFixture, syncRunsFixture,
   topicDetailsFixture, topicsFixture, workDetailsFixture, workItems, worksFixture,
 } from "@/lib/fixtures";
 import type {
   AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DeclarationCreateIn,
   DeclarationDetail, DeclarationEvidenceIn, DeclarationList, DeclarationRow, DeclarationStateIn,
-  DecideAuthorsIn, DecideDupIn, DecideResult, DupGroupDetail, DupGroupList, EvidenceOut, HealthOut, PeriodOpenIn, PeriodOut, PeriodProgress,
+  AcceptMentorResult, DecideAuthorsIn, DecideDupIn, DecideResult, DupGroupDetail, DupGroupList, EvidenceFileOut, EvidenceOut, HealthOut, MentorFilters, MentorList, PeriodOpenIn, PeriodOut, PeriodProgress,
   FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, MyDeclarationCreateIn, MyWorkList, PeriodFinalizeOut, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
   UserOut,
   WorkDetail, WorkFilters, WorkList,
@@ -35,6 +35,8 @@ const mockDeclarationDetails = structuredClone(declarationDetailsFixture);
 const mockPeriodProgress = structuredClone(periodProgressFixture);
 const mockMyWorks = structuredClone(myWorksFixture);
 const mockMyDeclarationIds = new Set(myDeclarationsFixture.map((row) => row.id));
+const mockAuthorQueue = structuredClone(authorQueueFixture);
+const mockMentors = structuredClone(mentorFixture);
 
 function queryString(params: Record<string, string | number | undefined>) {
   const query = new URLSearchParams();
@@ -106,8 +108,8 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   else if (url.pathname === "/api/queue/authors" && !init?.method) {
     const state = url.searchParams.get("state") ?? "ChoXacNhan";
     const q = url.searchParams.get("q")?.toLocaleLowerCase("vi") ?? "";
-    const items = state === "ChoXacNhan" ? authorQueueFixture.items.filter((row) => !q || row.raw_name.toLocaleLowerCase("vi").includes(q)) : [];
-    data = { ...authorQueueFixture, state, items, page: { ...authorQueueFixture.page, total: items.length } };
+    const items = state === "ChoXacNhan" ? mockAuthorQueue.items.filter((row) => !q || row.raw_name.toLocaleLowerCase("vi").includes(q)) : [];
+    data = { ...mockAuthorQueue, state, items, page: { ...mockAuthorQueue.page, total: items.length } };
   }
   else if (url.pathname === "/api/queue/authors/decide") data = { ok: true, processed: (JSON.parse(String(init?.body)) as DecideAuthorsIn).link_ids };
   else if (url.pathname === "/api/queue/duplicates") {
@@ -127,6 +129,29 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const order = { thap: 0, vua: 1, cao: 2 } as const;
     const items = screenFixture.items.filter((item) => (!cohort || item.cohort === cohort) && (!min || order[item.level as keyof typeof order] >= order[min as keyof typeof order]) && item.max_score >= minScore);
     data = { ...screenFixture, items, page: { ...screenFixture.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
+  }
+  else if (url.pathname === "/api/ai/mentors" && !init?.method) {
+    const minVotes = Number(url.searchParams.get("min_votes")) || 0;
+    const items = mockMentors.items.filter((item) => !minVotes || item.candidates.some((candidate) => candidate.votes >= minVotes));
+    data = { items, page: { ...mockMentors.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
+  }
+  else if (/^\/api\/ai\/mentors\/\d+\/accept$/.test(url.pathname)) {
+    const workId = Number(url.pathname.split("/").at(-2));
+    const item = mockMentors.items.find((mentor) => mentor.work_id === workId);
+    const personId = (JSON.parse(String(init?.body)) as { person_id: number }).person_id;
+    const candidate = item?.candidates.find((person) => person.person_id === personId);
+    if (!item || !candidate) throw new ApiError(404, `Không có ứng viên #${personId} cho đồ án #${workId}.`);
+    if (item.pending_link) throw new ApiError(409, "Lượt tên người hướng dẫn đã có liên kết đang chờ xác nhận.");
+    const linkId = 900 + workId;
+    item.pending_link = { link_id: linkId, person_id: personId, state: "ChoXacNhan" };
+    mockAuthorQueue.items.unshift({
+      link_id: linkId, raw_name: "ICTU_TEACHER", work_id: workId, work_title: item.title,
+      candidate_person_id: personId, candidate_name: candidate.display_name, confidence: "ai_mentor",
+      degree_conflict: false, group_work_count: 1, ai_rank: 1, ai_score: candidate.score,
+      ai_reason: `AI tổng hợp ${candidate.votes} phiếu từ các đồ án gần nhất.`,
+    });
+    mockAuthorQueue.page.total = mockAuthorQueue.items.length;
+    data = { ok: true, link_id: linkId, person_id: personId, state: "ChoXacNhan" } satisfies AcceptMentorResult;
   }
   else if (url.pathname === "/api/quality") data = qualityFixture;
   else if (url.pathname === "/api/about") data = aboutFixture;
@@ -259,11 +284,31 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const body = JSON.parse(String(init?.body)) as DeclarationEvidenceIn;
     if (!detail) data = undefined;
     else {
-      const evidence: EvidenceOut = { id: Date.now(), kind: body.kind, url: body.url ?? null, file_name: body.file_name ?? null, note: body.note ?? null, added_by: mockUser?.id ?? 1, added_at: new Date().toISOString() };
+      const evidence: EvidenceOut = { id: Date.now(), kind: body.kind, url: body.url ?? null, file_name: body.file_name ?? null, note: body.note ?? null, added_by: mockUser?.id ?? 1, added_at: new Date().toISOString(), size_bytes: null, sha256: null, content_type: null };
       detail.evidence.push(evidence);
       const row = Object.values(mockDeclarations).flat().find((item) => item.id === declarationId)!;
       row.evidence_count += 1;
       data = evidence;
+    }
+  }
+  else if (/^\/api\/declarations\/\d+\/evidence\/file$/.test(url.pathname)) {
+    const declarationId = Number(url.pathname.split("/").at(-3));
+    const detail = mockDeclarationDetails[declarationId];
+    const form = init?.body as FormData;
+    const file = form.get("file");
+    if (!detail || !(file instanceof File)) data = undefined;
+    else {
+      const sha256 = "8f14e45fceea167a5a36dedd4bea2543d7c4a0e853ddad8c6d42f72432a07f3e";
+      const contentType = file.type || "application/octet-stream";
+      const evidence: EvidenceOut = {
+        id: Date.now(), kind: "file", url: null, file_name: file.name, note: String(form.get("note") || "") || null,
+        added_by: mockUser?.id ?? 1, added_at: new Date().toISOString(), size_bytes: file.size,
+        sha256, content_type: contentType,
+      };
+      detail.evidence.push(evidence);
+      const row = Object.values(mockDeclarations).flat().find((item) => item.id === declarationId)!;
+      row.evidence_count += 1;
+      data = { id: evidence.id, file_name: file.name, size_bytes: file.size, sha256, content_type: contentType } satisfies EvidenceFileOut;
     }
   }
   else if (/^\/api\/declarations\/\d+$/.test(url.pathname)) data = mockDeclarationDetails[id];
@@ -336,6 +381,18 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   return response.json() as Promise<T>;
 }
 
+export async function apiUpload<T>(path: string, body: FormData): Promise<T> {
+  if (MOCK) return mockRequest<T>(path, { method: "POST", body });
+  const response = await fetch(`${API_BASE}${path}`, { method: "POST", body, credentials: "include" });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new ApiError(response.status, typeof payload.detail === "string" ? payload.detail : JSON.stringify(payload.detail ?? response.statusText));
+  }
+  return response.json() as Promise<T>;
+}
+
+export const evidenceFileUrl = (id: number) => `${API_BASE}/api/evidence/${id}/file`;
+
 export const api = {
   getMe: () => apiRequest<MeOut>("/api/auth/me"),
   login: (input: LoginIn) => apiRequest<UserOut>("/api/auth/login", { method: "POST", body: JSON.stringify(input) }),
@@ -356,6 +413,8 @@ export const api = {
   getComparison: (id: number) => apiRequest<CompareOut>(`/api/compare/${id}`),
   getScreenCohorts: () => apiRequest<ScreenCohortSummary[]>("/api/ai/screen/cohorts"),
   getScreen: (filters: ScreenFilters = {}) => apiRequest<ScreenList>(`/api/ai/screen${queryString({ cohort: filters.cohort, min: filters.min, min_score: filters.min_score, page: filters.page })}`),
+  getMentors: (filters: MentorFilters = {}) => apiRequest<MentorList>(`/api/ai/mentors${queryString({ unit: filters.unit, min_votes: filters.min_votes, page: filters.page })}`),
+  acceptMentor: (workId: number, personId: number) => apiRequest<AcceptMentorResult>(`/api/ai/mentors/${workId}/accept`, { method: "POST", body: JSON.stringify({ person_id: personId }) }),
   getQuality: () => apiRequest<QualityOut>("/api/quality"),
   getAbout: () => apiRequest<AboutOut>("/api/about"),
   getStats: (years = 5) => apiRequest<StatsOut>(`/api/stats${queryString({ years })}`),
@@ -370,6 +429,7 @@ export const api = {
   getDeclaration: (id: number) => apiRequest<DeclarationDetail>(`/api/declarations/${id}`),
   setDeclarationState: (id: number, input: DeclarationStateIn) => apiRequest<DeclarationRow>(`/api/declarations/${id}/state`, { method: "POST", body: JSON.stringify(input) }),
   addDeclarationEvidence: (id: number, input: DeclarationEvidenceIn) => apiRequest<EvidenceOut>(`/api/declarations/${id}/evidence`, { method: "POST", body: JSON.stringify(input) }),
+  uploadDeclarationEvidence: (id: number, body: FormData) => apiUpload<EvidenceFileOut>(`/api/declarations/${id}/evidence/file`, body),
   openPeriod: (input: PeriodOpenIn) => apiRequest<PeriodOut>("/api/periods", { method: "POST", body: JSON.stringify(input) }),
   closePeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/close`, { method: "POST" }),
   cancelPeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/cancel`, { method: "POST" }),

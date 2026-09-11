@@ -87,6 +87,19 @@ export interface ScreenItem {
 export interface ScreenList { items: ScreenItem[]; page: PageInfo; cohorts: string[] }
 export interface ScreenCohortSummary { cohort: string; screened: number; flagged: number }
 export interface ScreenFilters { cohort?: string; min?: ScreenLevel; min_score?: number; page?: number }
+export interface MentorEvidence { work_id: number; title: string | null; score: number }
+export interface MentorCandidate {
+  person_id: number; display_name: string; degree: string | null; votes: number; score: number;
+  evidence: MentorEvidence[];
+}
+export interface MentorPendingLink { link_id: number; person_id: number; state: string }
+export interface MentorItem {
+  work_id: number; title: string | null; cohort: string | null; mention_id: number;
+  candidates: MentorCandidate[]; pending_link: MentorPendingLink | null;
+}
+export interface MentorList { items: MentorItem[]; page: PageInfo }
+export interface MentorFilters { unit?: string; min_votes?: number; page?: number }
+export interface AcceptMentorResult { ok: boolean; link_id: number; person_id: number; state: string }
 export interface QualityMetric { key: string; label: string; value: unknown; queue_url: string | null }
 export interface QualityOut {
   metrics: QualityMetric[]; works_by_type: Record<string, number>; works_with_link_pct: number;
@@ -95,7 +108,7 @@ export interface QualityOut {
 export interface AboutAI {
   provider: string; model: string; dim: number; repo: string; licence: string; size: string;
   runs: number | string; embeddings: number | Record<string, number>; topics: number;
-  suggestions: number | Record<string, number>;
+  suggestions: number | Record<string, number>; mentor_suggestions?: number;
 }
 export interface AboutOut {
   source_url: string; repo_url: string; last_sync: LastSync | null; works: number;
@@ -161,7 +174,11 @@ export interface DeclarationEvidenceIn {
 }
 export interface EvidenceOut {
   id: number; kind: string; url: string | null; file_name: string | null; note: string | null;
-  added_by: number | null; added_at: string;
+  added_by: number | null; added_at: string; size_bytes: number | null; sha256: string | null;
+  content_type: string | null;
+}
+export interface EvidenceFileOut {
+  id: number; file_name: string | null; size_bytes: number; sha256: string; content_type: string;
 }
 export interface DeclarationEventOut {
   id: number; from_state: string | null; to_state: string; actor_id: number | null; reason: string | null; at: string;

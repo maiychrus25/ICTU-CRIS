@@ -5,12 +5,13 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import type { RowSelectionState } from "@tanstack/react-table";
-import { AlertTriangle, Bot, Check, CornerDownRight, Search, UserRoundX } from "lucide-react";
+import { AlertTriangle, Bot, Check, CornerDownRight, Search, Sparkles, UserRoundX } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { AuthorQueueTabs } from "@/components/author-queue-tabs";
 import { PageHeader } from "@/components/page-header";
 import { PersonCombobox } from "@/components/person-combobox";
 import { ErrorView, LoadingView } from "@/components/state-views";
@@ -60,7 +61,7 @@ export default function AuthorQueuePage() {
     { accessorKey: "raw_name", header: "Tên thô", cell: ({ row }) => <div><p className="font-medium">{row.original.raw_name}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Nhóm {row.original.group_work_count} công trình</p></div> },
     { accessorKey: "work_title", header: "Công trình", cell: ({ row }) => <Link href={`/cong-trinh/?id=${row.original.work_id}`} className="block max-w-xs whitespace-normal font-medium text-primary hover:underline">{row.original.work_title ?? "Chưa có tiêu đề"}</Link> },
     { accessorKey: "candidate_name", header: "Ứng viên", cell: ({ row }) => <Link href={`/giang-vien/?id=${row.original.candidate_person_id}`} className="font-medium capitalize text-primary hover:underline">{row.original.candidate_name}</Link> },
-    { accessorKey: "confidence", header: "Tin cậy", cell: ({ row }) => <Badge variant="outline" className={["cao", "ten_day_du_duy_nhat", "orcid"].includes(row.original.confidence) ? "border-status-success/30 bg-status-success/10 text-status-success" : "border-status-warning/30 bg-status-warning/10 text-status-warning"}>{confidenceLabels[row.original.confidence] ?? row.original.confidence}</Badge> },
+    { accessorKey: "confidence", header: "Tin cậy", cell: ({ row }) => <Badge variant="outline" className={row.original.confidence === "ai_mentor" ? "border-primary/30 bg-primary/10 text-primary" : ["cao", "ten_day_du_duy_nhat", "orcid"].includes(row.original.confidence) ? "border-status-success/30 bg-status-success/10 text-status-success" : "border-status-warning/30 bg-status-warning/10 text-status-warning"}>{row.original.confidence === "ai_mentor" && <Sparkles />}{confidenceLabels[row.original.confidence] ?? row.original.confidence}</Badge> },
     { accessorKey: "degree_conflict", header: "Học vị", enableSorting: false, cell: ({ row }) => row.original.degree_conflict ? <span title="Học vị trong nguồn có dấu hiệu xung đột" className="inline-flex items-center gap-1 text-status-warning"><AlertTriangle className="size-4" /><span className="sr-only">Cảnh báo học vị</span></span> : <span className="text-muted-foreground">—</span> },
     { accessorKey: "group_work_count", header: "Cùng tên", cell: ({ row }) => <span className="tabular-nums">{row.original.group_work_count}</span> },
     { accessorKey: "ai_rank", header: "Gợi ý AI", enableSorting: false, cell: ({ row }) => row.original.ai_rank ? <div className="max-w-60 whitespace-normal"><Badge variant="outline" className="mb-1 text-muted-foreground"><Bot />gợi ý · hạng {row.original.ai_rank}</Badge><p className="text-xs leading-5 text-muted-foreground">{row.original.ai_reason ?? "Không có giải thích"}</p></div> : <span className="text-muted-foreground">—</span> },
@@ -84,6 +85,7 @@ export default function AuthorQueuePage() {
   return (
     <>
       <PageHeader title="Hàng đợi tác giả" description="AI chỉ đưa ra gợi ý; người dùng xác nhận, bác bỏ hoặc chuyển liên kết cho người khác." />
+      <AuthorQueueTabs active="queue" />
       <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <Tabs value={state} onValueChange={(value) => { setState(String(value)); setPage(1); setSelection({}); }}>
           <TabsList variant="line" className="max-w-full overflow-x-auto">

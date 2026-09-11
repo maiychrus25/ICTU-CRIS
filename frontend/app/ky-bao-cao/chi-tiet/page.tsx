@@ -10,6 +10,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { EvidenceDialog } from "@/components/evidence-dialog";
 import { PageHeader } from "@/components/page-header";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { StatusBadge } from "@/components/status-badge";
@@ -25,10 +26,10 @@ import { ApiError } from "@/lib/api";
 import { getDeclarationActions, type DeclarationAction } from "@/lib/declarations";
 import { officerRoleRequired, stateLabels } from "@/lib/labels";
 import {
-  useAddDeclaration, useAddDeclarationEvidence, useCancelPeriod, useClosePeriod, useDeclarations,
+  useAddDeclaration, useCancelPeriod, useClosePeriod, useDeclarations,
   useFinalizePeriod, useMe, useOfficerAccess, usePeriodProgress, usePeriods, useSetDeclarationState, useStats, useWorks,
 } from "@/lib/queries";
-import type { DeclarationRow, EvidenceKind, PeriodFinalizeOut } from "@/lib/types";
+import type { DeclarationRow, PeriodFinalizeOut } from "@/lib/types";
 
 const progressGroups = [
   { label: "Đang soạn", states: ["Nhap", "ChoBoSung"], className: "bg-slate-400 dark:bg-slate-500" },
@@ -94,13 +95,11 @@ function DeclarationsTab({ periodId, periodState }: { periodId: number; periodSt
   const stats = useStats();
   const add = useAddDeclaration(periodId);
   const setState = useSetDeclarationState();
-  const addEvidence = useAddDeclarationEvidence();
   const [declareOpen, setDeclareOpen] = useState(false);
   const [workId, setWorkId] = useState<number | null>(null);
   const [unitId, setUnitId] = useState("");
   const [stateAction, setStateAction] = useState<{ row: DeclarationRow; action: DeclarationAction } | null>(null);
   const [evidenceRow, setEvidenceRow] = useState<DeclarationRow | null>(null);
-  const [evidenceKind, setEvidenceKind] = useState<EvidenceKind>("link");
   const canAct = periodState === "DangMo" && canDecide;
 
   async function invalidate(includeProgress = true) {
@@ -138,23 +137,6 @@ function DeclarationsTab({ periodId, periodState }: { periodId: number; periodSt
     } catch (error) { showError(error, "Không thể cập nhật trạng thái hồ sơ."); }
   }
 
-  async function submitEvidence(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canAct || !evidenceRow) return;
-    const form = new FormData(event.currentTarget);
-    try {
-      await addEvidence.mutateAsync({ id: evidenceRow.id, input: {
-        kind: evidenceKind, url: String(form.get("url")).trim() || null,
-        file_name: String(form.get("file_name")).trim() || null, note: String(form.get("note")).trim() || null,
-      } });
-      await invalidate(false);
-      await queryClient.invalidateQueries({ queryKey: ["declaration", evidenceRow.id] });
-      toast.success("Đã thêm minh chứng.");
-      setEvidenceRow(null);
-      setEvidenceKind("link");
-    } catch (error) { showError(error, "Không thể thêm minh chứng."); }
-  }
-
   if (declarations.isLoading || stats.isLoading) return <LoadingView label="Đang tải hồ sơ kê khai…" />;
   if (declarations.isError) return <ErrorView error={declarations.error} retry={() => declarations.refetch()} />;
   if (stats.isError) return <ErrorView error={stats.error} retry={() => stats.refetch()} />;
@@ -188,7 +170,7 @@ function DeclarationsTab({ periodId, periodState }: { periodId: number; periodSt
 
       <Dialog open={stateAction !== null} onOpenChange={(open) => { if (!open) setStateAction(null); }}><DialogContent><form onSubmit={(event) => { event.preventDefault(); if (stateAction) void transition(stateAction.row, stateAction.action, String(new FormData(event.currentTarget).get("reason"))); }}><DialogHeader><DialogTitle>{stateAction?.action.label} hồ sơ?</DialogTitle><DialogDescription>Nêu rõ lý do để quyết định có thể được kiểm tra lại trong dòng thời gian và nhật ký.</DialogDescription></DialogHeader><div className="py-4"><label htmlFor="declaration-reason" className="mb-1.5 block font-medium">Lý do <span className="text-status-danger">*</span></label><Textarea id="declaration-reason" name="reason" required /></div><DialogFooter><Button type="button" variant="outline" onClick={() => setStateAction(null)}>Huỷ</Button><Button type="submit" variant={stateAction?.action.destructive ? "destructive" : "default"} disabled={setState.isPending}>{stateAction?.action.label}</Button></DialogFooter></form></DialogContent></Dialog>
 
-      <Dialog open={evidenceRow !== null} onOpenChange={(open) => { if (!open) setEvidenceRow(null); }}><DialogContent className="sm:max-w-xl"><form onSubmit={(event) => void submitEvidence(event)}><DialogHeader><DialogTitle>Thêm minh chứng</DialogTitle><DialogDescription>Gắn đường dẫn, tệp hoặc ghi chú làm minh chứng cho hồ sơ #{evidenceRow?.id}.</DialogDescription></DialogHeader><div className="space-y-4 py-4"><div><label className="mb-1.5 block font-medium">Loại minh chứng</label><Select value={evidenceKind} onValueChange={(value) => setEvidenceKind(value as EvidenceKind)}><SelectTrigger aria-label="Loại minh chứng" className="w-full"><SelectValue>{(value) => value === "link" ? "Đường dẫn" : value === "file" ? "Tệp" : "Ghi chú"}</SelectValue></SelectTrigger><SelectContent><SelectItem value="link">Đường dẫn</SelectItem><SelectItem value="file">Tệp</SelectItem><SelectItem value="note">Ghi chú</SelectItem></SelectContent></Select></div><div><label htmlFor="evidence-url" className="mb-1.5 block font-medium">URL</label><Input id="evidence-url" name="url" type="url" placeholder="https://…" /></div><div><label htmlFor="evidence-file" className="mb-1.5 block font-medium">Tên tệp</label><Input id="evidence-file" name="file_name" /></div><div><label htmlFor="evidence-note" className="mb-1.5 block font-medium">Ghi chú</label><Textarea id="evidence-note" name="note" /></div></div><DialogFooter><Button type="button" variant="outline" onClick={() => setEvidenceRow(null)}>Huỷ</Button><Button type="submit" disabled={!canAct || addEvidence.isPending}>Thêm minh chứng</Button></DialogFooter></form></DialogContent></Dialog>
+      <EvidenceDialog declarationId={evidenceRow?.id ?? null} open={evidenceRow !== null} onOpenChange={(open) => { if (!open) setEvidenceRow(null); }} onSaved={async () => { if (!evidenceRow) return; await invalidate(false); await queryClient.invalidateQueries({ queryKey: ["declaration", evidenceRow.id] }); }} />
     </section>
   );
 }

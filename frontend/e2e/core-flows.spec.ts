@@ -122,6 +122,47 @@ test("hồ sơ nháp được trình khoa duyệt bởi chuyên viên", async ({
   await expect(page.locator('[data-slot="badge"]').filter({ hasText: /^Chờ khoa duyệt$/ }).first()).toBeVisible();
 });
 
+test("tải tệp minh chứng và hiển thị kích thước cùng mã băm", async ({ page }) => {
+  await page.goto("/ke-khai/?id=601");
+  await page.getByRole("button", { name: "Thêm minh chứng" }).click();
+
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("tab", { name: "Tải tệp lên" }).click();
+  await dialog.getByLabel("Chọn tệp minh chứng").setInputFiles({
+    name: "qua-lon.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.alloc(10 * 1024 * 1024 + 1),
+  });
+  await expect(dialog.getByText("Tệp vượt quá giới hạn 10 MB.")).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Thêm minh chứng" })).toBeDisabled();
+
+  await dialog.getByLabel("Chọn tệp minh chứng").setInputFiles({
+    name: "minh-chung.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4\nminh chung ICTU\n%%EOF"),
+  });
+  await expect(dialog.getByText("minh-chung.pdf", { exact: true })).toBeVisible();
+  await dialog.getByRole("button", { name: "Thêm minh chứng" }).click();
+
+  await expect(page.getByText("Đã tải tệp minh chứng lên.")).toBeVisible();
+  const evidenceRow = page.getByRole("row", { name: /minh-chung\.pdf/ });
+  await expect(evidenceRow).toContainText("KB");
+  await expect(evidenceRow).toContainText("8f14e45fceea");
+  await expect(evidenceRow.getByRole("link", { name: "Tải về" })).toHaveAttribute("href", /\/api\/evidence\/\d+\/file$/);
+});
+
+test("đưa gợi ý người hướng dẫn AI vào hàng đợi xác nhận", async ({ page }) => {
+  await page.goto("/doi-soat/huong-dan/");
+
+  await expect(page.getByText(/4\.621\/5\.375 đồ án/)).toBeVisible();
+  const suggestionRow = page.getByRole("row", { name: /Xây dựng website quản lý thư viện/ }).filter({ hasText: "TS. Nguyễn Văn A" }).first();
+  await expect(suggestionRow).toContainText("TS. Nguyễn Văn A");
+  await suggestionRow.getByRole("button", { name: "Đưa vào hàng đợi" }).click();
+
+  await expect(page.getByText("Đã đưa gợi ý vào hàng đợi tác giả.")).toBeVisible();
+  await expect(suggestionRow.getByRole("link", { name: "Đang chờ xác nhận" })).toHaveAttribute("href", "/doi-soat/tac-gia/");
+});
+
 test("giảng viên tự kê khai công trình rồi trình khoa duyệt", async ({ page }) => {
   await page.goto("/dang-nhap/?next=/ke-khai-cua-toi/");
   await page.getByLabel("Email").fill("giang.vien@ictu.edu.vn");

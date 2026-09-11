@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type {
   AuditFilters, CompareIn, DeclarationCreateIn, DeclarationEvidenceIn, DeclarationStateIn,
-  DecideAuthorsIn, DecideDupIn, FieldEditIn, LoginIn, MyDeclarationCreateIn, PeriodOpenIn, ScreenFilters, WorkFilters,
+  DecideAuthorsIn, DecideDupIn, FieldEditIn, LoginIn, MentorFilters, MyDeclarationCreateIn, PeriodOpenIn, ScreenFilters, WorkFilters,
 } from "@/lib/types";
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: api.getMe, staleTime: 60_000 });
@@ -33,6 +33,8 @@ export const useComparison = (id: number | null) => useQuery({ queryKey: ["compa
 export const useCreateComparison = () => useMutation({ mutationFn: (input: CompareIn) => api.compare(input) });
 export const useScreenCohorts = () => useQuery({ queryKey: ["screen-cohorts"], queryFn: api.getScreenCohorts });
 export const useScreen = (filters: ScreenFilters, enabled = true) => useQuery({ queryKey: ["screen", filters], queryFn: () => api.getScreen(filters), enabled });
+export const useMentors = (filters: MentorFilters, enabled = true) => useQuery({ queryKey: ["mentors", filters], queryFn: () => api.getMentors(filters), enabled });
+export const useAcceptMentor = () => useMutation({ mutationFn: ({ workId, personId }: { workId: number; personId: number }) => api.acceptMentor(workId, personId) });
 export const useQuality = () => useQuery({ queryKey: ["quality"], queryFn: api.getQuality });
 export const useAbout = () => useQuery({ queryKey: ["about"], queryFn: api.getAbout });
 export const useStats = () => useQuery({ queryKey: ["stats", 5], queryFn: () => api.getStats(5) });
@@ -47,6 +49,7 @@ export const useAddDeclaration = (periodId: number) => useMutation({ mutationFn:
 export const useDeclaration = (id: number | null) => useQuery({ queryKey: ["declaration", id], queryFn: () => api.getDeclaration(id!), enabled: id !== null });
 export const useSetDeclarationState = () => useMutation({ mutationFn: ({ id, input }: { id: number; input: DeclarationStateIn }) => api.setDeclarationState(id, input) });
 export const useAddDeclarationEvidence = () => useMutation({ mutationFn: ({ id, input }: { id: number; input: DeclarationEvidenceIn }) => api.addDeclarationEvidence(id, input) });
+export const useUploadDeclarationEvidence = () => useMutation({ mutationFn: ({ id, body }: { id: number; body: FormData }) => api.uploadDeclarationEvidence(id, body) });
 export const useOpenPeriod = () => useMutation({ mutationFn: (input: PeriodOpenIn) => api.openPeriod(input) });
 export const useClosePeriod = (id: number) => useMutation({ mutationFn: () => api.closePeriod(id) });
 export const useCancelPeriod = (id: number) => useMutation({ mutationFn: () => api.cancelPeriod(id) });
