@@ -42,7 +42,9 @@ def test_health_and_openapi(client):
               "/api/queue/duplicates/{gid}/decide", "/api/compare", "/api/compare/{qid}", "/api/quality", "/api/about", "/api/topics",
               "/api/topics/{tid}", "/api/stats", "/api/works.csv", "/api/persons/{pid}/publications.csv", "/api/audit",
               "/api/periods", "/api/periods/{pid}/progress", "/api/periods/{pid}/close", "/api/periods/{pid}/cancel",
-              "/api/ai/screen", "/api/ai/screen/cohorts", "/api/sync/runs", "/api/sync/runs/{rid}"):
+              "/api/ai/screen", "/api/ai/screen/cohorts", "/api/sync/runs", "/api/sync/runs/{rid}",
+              "/api/periods/{pid}/declarations", "/api/declarations/{did}", "/api/declarations/{did}/state",
+              "/api/declarations/{did}/evidence"):
         assert p in paths, p
 
 

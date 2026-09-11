@@ -400,6 +400,82 @@ class PeriodProgress(BaseModel):
     units: list[PeriodUnitProgress]
 
 
+# ---------- kê khai công trình vào kỳ (G3) ----------
+class DeclarationRow(BaseModel):
+    id: int
+    period_id: int
+    work_id: int
+    work_title: str | None
+    doc_type: str
+    doc_type_label: str
+    unit_id: int
+    unit_code: str
+    state: str
+    note: str | None = None
+    evidence_count: int
+    last_event_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class DeclarationList(BaseModel):
+    items: list[DeclarationRow]
+
+
+class DeclarationCreateIn(BaseModel):
+    work_id: int
+    unit_id: int
+    note: str | None = None
+
+
+class DeclarationStateIn(BaseModel):
+    to_state: Literal["Nhap", "ChoBoSung", "Rut"]
+    reason: str | None = None
+
+
+class DeclarationEvidenceIn(BaseModel):
+    kind: Literal["link", "file", "note"]
+    url: str | None = None
+    file_name: str | None = None
+    note: str | None = None
+
+
+class EvidenceOut(BaseModel):
+    id: int
+    kind: str
+    url: str | None = None
+    file_name: str | None = None
+    note: str | None = None
+    added_by: int | None = None
+    added_at: datetime
+
+
+class DeclarationEventOut(BaseModel):
+    id: int
+    from_state: str | None = None
+    to_state: str
+    actor_id: int | None = None
+    reason: str | None = None
+    at: datetime
+
+
+class DeclarationDetail(BaseModel):
+    id: int
+    period_id: int
+    work_id: int
+    work_title: str | None
+    doc_type: str
+    doc_type_label: str
+    unit_id: int
+    unit_code: str
+    state: str
+    note: str | None = None
+    created_at: datetime
+    updated_at: datetime
+    events: list[DeclarationEventOut]
+    evidence: list[EvidenceOut]
+
+
 # ---------- rà soát trùng đề tài theo khoá ----------
 class ScreenNeighbour(BaseModel):
     work_id: int

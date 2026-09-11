@@ -142,7 +142,8 @@ Nguyên tắc: AI **chỉ ghi vào bảng gợi ý của nó** (`ai_embedding`, 
 | FR-K-01 | Lược đồ `period`, `declaration` (duy nhất theo kỳ + công trình + đơn vị), `evidence`, `declaration_event` | ✅ |
 | FR-K-02 | Mở kỳ gắn bộ quy tắc đang hoạt động tại thời điểm mở; đóng nộp; huỷ; mọi chuyển trạng thái ghi `audit_log` | ✅ |
 | FR-K-03 | Tiến độ theo đơn vị cho một kỳ | ✅ |
-| FR-K-04..09 | Gợi ý theo khoa, lập hồ sơ, minh chứng, kiểm tra hai mức, giao diện | ⏳ ngoài bản dự thi |
+| FR-K-04..05 | Kê khai công trình vào kỳ đang mở (`cris/declare.py`, API `/api/periods/{id}/declarations`, `/api/declarations/{id}`), chuyển trạng thái `Nhap`/`ChoBoSung`/`Rut` kèm lý do bắt buộc, thêm minh chứng (`link`/`file`/`note`) | ✅ |
+| FR-K-06..09 | Gợi ý theo khoa, kiểm tra hai mức (khoa duyệt/phòng kiểm tra), giao diện lập hồ sơ | ⏳ ngoài bản dự thi |
 
 ### 3.6 Dòng lệnh (FR-C)
 

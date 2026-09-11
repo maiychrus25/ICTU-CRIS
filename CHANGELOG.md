@@ -38,6 +38,18 @@
   khác giữ công khai.
 - `deploy/setup.sh`, `deploy/.env.example`: biến `CRIS_ADMIN_PASSWORD` tuỳ
   chọn (đặt mật khẩu cho người dùng mặc định lúc cài) và `CRIS_COOKIE_SECURE`.
+- Kê khai công trình vào kỳ báo cáo (lát cắt K, G3, FR-K-04..09 một phần):
+  `cris/declare.py` (mới) — `add_declaration` (kỳ phải `DangMo`, công trình
+  phải còn sống, một (kỳ, công trình, đơn vị) chỉ kê khai một lần),
+  `set_state` (`Nhap`↔`ChoBoSung`, `Nhap`/`ChoBoSung`→`Rut`, bắt buộc lý do
+  khi chuyển sang `ChoBoSung`/`Rut`, từ chối khi kỳ đã `DaDongNop`/`Huy`),
+  `add_evidence` (`kind` ∈ `link`/`file`/`note`), `list_declarations`,
+  `get_declaration`; mỗi thao tác ghi `declaration_event` và `audit_log`.
+  API (`cris/api/routes/declarations.py`): `GET`/`POST
+  /api/periods/{pid}/declarations`, `GET /api/declarations/{id}`, `POST
+  /api/declarations/{id}/state`, `POST /api/declarations/{id}/evidence`;
+  `ValueError` → 409, kỳ/hồ sơ không tìm thấy → 404, POST cần vai trò
+  `rd_officer`.
 
 ## [0.2.0] - 2026-09-11
 
