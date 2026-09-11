@@ -122,6 +122,38 @@ test("hồ sơ nháp được trình khoa duyệt bởi chuyên viên", async ({
   await expect(page.locator('[data-slot="badge"]').filter({ hasText: /^Chờ khoa duyệt$/ }).first()).toBeVisible();
 });
 
+test("giảng viên tự kê khai công trình rồi trình khoa duyệt", async ({ page }) => {
+  await page.goto("/dang-nhap/?next=/ke-khai-cua-toi/");
+  await page.getByLabel("Email").fill("giang.vien@ictu.edu.vn");
+  await page.getByLabel("Mật khẩu").fill("demo1234");
+  await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+
+  await expect(page).toHaveURL(/\/ke-khai-cua-toi\/$/);
+  await expect(page.getByRole("heading", { name: "Kê khai của tôi" })).toBeVisible({ timeout: 15_000 });
+  const navigationLinks = page.getByRole("navigation", { name: "Điều hướng chính" }).getByRole("link");
+  await expect(navigationLinks.nth(1)).toHaveText("Kê khai của tôi");
+
+  const pendingWorkRow = page.getByRole("row", { name: /Phát triển hệ thống điểm danh sinh viên/ });
+  await expect(pendingWorkRow.getByRole("button", { name: "Kê khai vào kỳ này" })).toBeDisabled();
+
+  const workRow = page.getByRole("row", { name: /Mô hình dự báo chất lượng không khí/ });
+  await workRow.getByRole("button", { name: "Kê khai vào kỳ này" }).click();
+  await expect(page.getByText("Đã kê khai công trình vào kỳ báo cáo.")).toBeVisible();
+
+  const declarationRow = page.getByRole("row", { name: /Mô hình dự báo chất lượng không khí/ }).last();
+  await expect(declarationRow.locator('[data-slot="badge"]')).toHaveText(/Nháp/);
+  await declarationRow.getByRole("button", { name: "Trình khoa duyệt" }).click();
+  await expect(page.getByText("Đã trình khoa duyệt.")).toBeVisible();
+  await expect(declarationRow.locator('[data-slot="badge"]')).toHaveText(/Chờ khoa duyệt/);
+
+  await page.getByRole("navigation", { name: "Điều hướng chính" }).getByRole("link", { name: "Kỳ báo cáo" }).click();
+  await page.getByRole("link", { name: "Báo cáo công trình năm 2025", exact: true }).click();
+  await page.getByRole("tab", { name: "Hồ sơ kê khai" }).click();
+  await page.getByRole("link", { name: "#610", exact: true }).click();
+  await expect(page.locator('[data-slot="badge"]').filter({ hasText: /^Nháp$/ }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Trình khoa duyệt" })).toHaveCount(0);
+});
+
 test("quyết định liên kết tác giả dùng lý do và bộ chọn người", async ({ page }) => {
   await page.goto("/doi-soat/tac-gia/");
   await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();

@@ -104,6 +104,7 @@ export interface AboutOut {
 export interface LoginIn { email: string; password: string }
 export interface UserOut {
   id: number; email: string; display_name: string; roles: string[]; unit_id: number | null; unit_code: string | null;
+  person_id: number | null;
 }
 export interface MeOut { user: UserOut | null; auth_required: boolean }
 export interface LogoutOut { ok: boolean }
@@ -148,6 +149,12 @@ export interface DeclarationRow {
 }
 export interface DeclarationList { items: DeclarationRow[] }
 export interface DeclarationCreateIn { work_id: number; unit_id: number; note?: string | null }
+export interface MyWorkRow {
+  work_id: number; title: string | null; doc_type: string; doc_type_label: string;
+  year: number | null; doi: string | null; link_state: string; declared_in: number[];
+}
+export interface MyWorkList { items: MyWorkRow[]; page: PageInfo }
+export interface MyDeclarationCreateIn { period_id: number; work_id: number; note?: string | null }
 export interface DeclarationStateIn { to_state: DeclarationTransitionState; reason?: string | null }
 export interface DeclarationEvidenceIn {
   kind: EvidenceKind; url?: string | null; file_name?: string | null; note?: string | null;

@@ -3,12 +3,17 @@
 
 import type {
   AboutOut, AuditList, AuthorQueueList, CompareOut, DeclarationDetail, DeclarationRow, DupGroupDetail, DupGroupList, HealthOut, MeOut,
-  PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail,
+  MyWorkList, PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail,
   SyncRunList, Topic, TopicDetail, WorkDetail, WorkList, WorkSummary, ScreenCohortSummary, ScreenList,
 } from "@/lib/types";
 
 export const meFixture: MeOut = {
-  user: { id: 1, email: "nguyen.minh.anh@ictu.edu.vn", display_name: "Nguyễn Minh Anh", roles: ["rd_officer"], unit_id: 1, unit_code: "CNTT" },
+  user: { id: 1, email: "nguyen.minh.anh@ictu.edu.vn", display_name: "Nguyễn Minh Anh", roles: ["rd_officer"], unit_id: 1, unit_code: "CNTT", person_id: null },
+  auth_required: true,
+};
+
+export const lecturerMeFixture: MeOut = {
+  user: { id: 6, email: "giang.vien@ictu.edu.vn", display_name: "TS. Nguyễn Văn A", roles: ["lecturer"], unit_id: 1, unit_code: "CNTT", person_id: 1 },
   auth_required: true,
 };
 
@@ -28,6 +33,15 @@ export const workItems: WorkSummary[] = [
 ];
 
 export const worksFixture: WorkList = { items: workItems, page: { page: 1, per_page: 50, total: workItems.length } };
+
+export const myWorksFixture: MyWorkList = {
+  items: [
+    { work_id: 2, title: workItems[1].title, doc_type: workItems[1].doc_type, doc_type_label: workItems[1].doc_type_label, year: workItems[1].year, doi: workItems[1].doi, link_state: "DaXacNhan", declared_in: [401] },
+    { work_id: 3, title: workItems[2].title, doc_type: workItems[2].doc_type, doc_type_label: workItems[2].doc_type_label, year: workItems[2].year, doi: workItems[2].doi, link_state: "ChoXacNhan", declared_in: [] },
+    { work_id: 4, title: workItems[3].title, doc_type: workItems[3].doc_type, doc_type_label: workItems[3].doc_type_label, year: workItems[3].year, doi: workItems[3].doi, link_state: "DaNoiTuDong", declared_in: [] },
+  ],
+  page: { page: 1, per_page: 50, total: 3 },
+};
 
 export const workDetailsFixture: Record<number, WorkDetail> = Object.fromEntries(workItems.map((work) => [work.id, {
   id: work.id,
@@ -253,6 +267,8 @@ export const declarationsFixture: Record<number, DeclarationRow[]> = {
   ],
   403: [],
 };
+
+export const myDeclarationsFixture: DeclarationRow[] = [declarationsFixture[401][7]];
 
 export const declarationDetailsFixture: Record<number, DeclarationDetail> = Object.fromEntries(
   Object.values(declarationsFixture).flat().map((row) => [row.id, {

@@ -4,7 +4,7 @@
 "use client";
 
 import {
-  BarChart3, BookOpenCheck, CalendarRange, CopyCheck, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
+  BarChart3, BookOpenCheck, CalendarRange, CopyCheck, FilePenLine, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
   RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRound, UserRoundCheck,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 
 const navigation = [
   { href: "/tong-quan/", label: "Tổng quan", icon: LayoutDashboard },
+  { href: "/ke-khai-cua-toi/", label: "Kê khai của tôi", icon: FilePenLine, lecturerOnly: true },
   { href: "/tra-cuu/", label: "Tra cứu", icon: Search },
   { href: "/chu-de/", label: "Chủ đề", icon: Tags },
   { href: "/doi-chieu/", label: "Đối chiếu đề tài", icon: Scale },
@@ -36,6 +37,7 @@ const navigation = [
 ];
 
 const routeTitles = [
+  ["/ke-khai-cua-toi", "Kê khai của tôi"],
   ["/ke-khai", "Chi tiết hồ sơ kê khai"],
   ["/dong-bo/chi-tiet", "Chi tiết lượt đồng bộ"],
   ["/chu-de/chi-tiet", "Chi tiết chủ đề"],
@@ -69,9 +71,11 @@ function Brand({ compact = false }: { compact?: boolean }) {
 
 function Navigation({ compact = false }: { compact?: boolean }) {
   const pathname = usePathname();
+  const me = useMe();
+  const showMyDeclarations = Boolean(me.data?.user && (me.data.user.roles.includes("lecturer") || me.data.user.person_id !== null));
   return (
     <nav aria-label="Điều hướng chính" className="space-y-1 px-2 py-3">
-      {navigation.map(({ href, label, icon: Icon }) => {
+      {navigation.filter((item) => !item.lecturerOnly || showMyDeclarations).map(({ href, label, icon: Icon }) => {
         const active = pathname.startsWith(href.replace(/\/$/, ""));
         return (
           <Link key={href} href={href} title={compact ? label : undefined} aria-current={active ? "page" : undefined}

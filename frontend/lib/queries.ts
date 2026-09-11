@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type {
   AuditFilters, CompareIn, DeclarationCreateIn, DeclarationEvidenceIn, DeclarationStateIn,
-  DecideAuthorsIn, DecideDupIn, FieldEditIn, LoginIn, PeriodOpenIn, ScreenFilters, WorkFilters,
+  DecideAuthorsIn, DecideDupIn, FieldEditIn, LoginIn, MyDeclarationCreateIn, PeriodOpenIn, ScreenFilters, WorkFilters,
 } from "@/lib/types";
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: api.getMe, staleTime: 60_000 });
@@ -38,6 +38,9 @@ export const useAbout = () => useQuery({ queryKey: ["about"], queryFn: api.getAb
 export const useStats = () => useQuery({ queryKey: ["stats", 5], queryFn: () => api.getStats(5) });
 export const useAudit = (filters: AuditFilters) => useQuery({ queryKey: ["audit", filters], queryFn: () => api.getAudit(filters) });
 export const usePeriods = () => useQuery({ queryKey: ["periods"], queryFn: api.getPeriods });
+export const useMyWorks = (page: number) => useQuery({ queryKey: ["my-works", page], queryFn: () => api.getMyWorks(page) });
+export const useMyDeclarations = () => useQuery({ queryKey: ["my-declarations"], queryFn: api.getMyDeclarations });
+export const useAddMyDeclaration = () => useMutation({ mutationFn: (input: MyDeclarationCreateIn) => api.addMyDeclaration(input) });
 export const usePeriodProgress = (id: number | null) => useQuery({ queryKey: ["period-progress", id], queryFn: () => api.getPeriodProgress(id!), enabled: id !== null });
 export const useDeclarations = (periodId: number | null, unitId?: number) => useQuery({ queryKey: ["declarations", periodId, unitId], queryFn: () => api.getDeclarations(periodId!, unitId), enabled: periodId !== null });
 export const useAddDeclaration = (periodId: number) => useMutation({ mutationFn: (input: DeclarationCreateIn) => api.addDeclaration(periodId, input) });

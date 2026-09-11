@@ -4,14 +4,14 @@
 import {
   aboutFixture, auditFixture, authorQueueFixture, compareFixture, declarationDetailsFixture, declarationsFixture,
   duplicateDetailFixture, duplicateGroupsFixture, healthFixture, periodProgressFixture, periodsFixture, personFixture, qualityFixture, statsFixture,
-  meFixture, personsFixture, screenCohortsFixture, screenFixture, syncRunDetailsFixture, syncRunsFixture,
+  lecturerMeFixture, meFixture, myDeclarationsFixture, myWorksFixture, personsFixture, screenCohortsFixture, screenFixture, syncRunDetailsFixture, syncRunsFixture,
   topicDetailsFixture, topicsFixture, workDetailsFixture, workItems, worksFixture,
 } from "@/lib/fixtures";
 import type {
   AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DeclarationCreateIn,
   DeclarationDetail, DeclarationEvidenceIn, DeclarationList, DeclarationRow, DeclarationStateIn,
   DecideAuthorsIn, DecideDupIn, DecideResult, DupGroupDetail, DupGroupList, EvidenceOut, HealthOut, PeriodOpenIn, PeriodOut, PeriodProgress,
-  FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, PeriodFinalizeOut, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
+  FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, MyDeclarationCreateIn, MyWorkList, PeriodFinalizeOut, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
   UserOut,
   WorkDetail, WorkFilters, WorkList,
   ScreenCohortSummary, ScreenFilters, ScreenList,
@@ -33,6 +33,8 @@ const mockPeriods = structuredClone(periodsFixture);
 const mockDeclarations = structuredClone(declarationsFixture);
 const mockDeclarationDetails = structuredClone(declarationDetailsFixture);
 const mockPeriodProgress = structuredClone(periodProgressFixture);
+const mockMyWorks = structuredClone(myWorksFixture);
+const mockMyDeclarationIds = new Set(myDeclarationsFixture.map((row) => row.id));
 
 function queryString(params: Record<string, string | number | undefined>) {
   const query = new URLSearchParams();
@@ -48,8 +50,10 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   if (url.pathname === "/api/auth/me") data = { ...meFixture, user: mockUser };
   else if (url.pathname === "/api/auth/login") {
     const body = JSON.parse(String(init?.body)) as LoginIn;
-    if (body.email !== meFixture.user?.email || body.password !== "demo1234") throw new ApiError(401, "Email hoặc mật khẩu không đúng.");
-    mockUser = meFixture.user;
+    const user = body.email === lecturerMeFixture.user?.email ? lecturerMeFixture.user
+      : body.email === meFixture.user?.email ? meFixture.user : null;
+    if (!user || body.password !== "demo1234") throw new ApiError(401, "Email hoặc mật khẩu không đúng.");
+    mockUser = user;
     data = mockUser;
   }
   else if (url.pathname === "/api/auth/logout") {
@@ -140,6 +144,40 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     mockPeriods.unshift(period);
     data = period;
   }
+  else if (url.pathname === "/api/me/works") {
+    if (mockUser?.person_id === null || mockUser?.person_id === undefined) throw new ApiError(409, "Tài khoản chưa gắn với hồ sơ giảng viên");
+    data = { ...mockMyWorks, page: { ...mockMyWorks.page, page: Number(url.searchParams.get("page") ?? 1) } };
+  }
+  else if (url.pathname === "/api/me/declarations" && !init?.method) {
+    data = { items: Object.values(mockDeclarations).flat().filter((row) => mockMyDeclarationIds.has(row.id)) };
+  }
+  else if (url.pathname === "/api/me/declarations" && init?.method === "POST") {
+    const body = JSON.parse(String(init.body)) as MyDeclarationCreateIn;
+    const period = mockPeriods.find((item) => item.id === body.period_id);
+    const work = mockMyWorks.items.find((item) => item.work_id === body.work_id);
+    const unit = statsFixture.by_unit.find((item) => item.unit_id === mockUser?.unit_id);
+    if (!mockUser?.roles.some((role) => ["lecturer", "faculty_officer", "rd_officer"].includes(role))) throw new ApiError(403, "cần vai trò: faculty_officer, rd_officer, lecturer");
+    if (period?.state !== "DangMo") throw new ApiError(409, "chỉ kê khai được khi kỳ báo cáo đang mở");
+    if (!work) throw new ApiError(403, "chỉ kê khai được công trình của chính mình");
+    if (!["DaNoiTuDong", "DaXacNhan"].includes(work.link_state)) throw new ApiError(403, "chỉ kê khai được công trình của chính mình");
+    if (work.declared_in.includes(body.period_id)) throw new ApiError(409, "đã kê khai");
+    if (!unit) throw new ApiError(409, "Không xác định được đơn vị để kê khai");
+    const now = new Date().toISOString();
+    const row: DeclarationRow = {
+      id: Math.max(600, ...Object.keys(mockDeclarationDetails).map(Number)) + 1,
+      period_id: period.id, work_id: work.work_id, work_title: work.title, doc_type: work.doc_type,
+      doc_type_label: work.doc_type_label, unit_id: unit.unit_id, unit_code: unit.code,
+      state: "Nhap", note: body.note ?? null, evidence_count: 0, last_event_at: now, created_at: now, updated_at: now,
+    };
+    mockDeclarations[period.id] ??= [];
+    mockDeclarations[period.id].unshift(row);
+    mockDeclarationDetails[row.id] = {
+      ...row, events: [{ id: Date.now(), from_state: null, to_state: "Nhap", actor_id: mockUser?.id ?? 1, reason: null, at: now }], evidence: [],
+    };
+    mockMyDeclarationIds.add(row.id);
+    work.declared_in.push(period.id);
+    data = row;
+  }
   else if (/^\/api\/periods\/\d+\/declarations$/.test(url.pathname) && !init?.method) {
     const periodId = Number(url.pathname.split("/").at(-2));
     const unitId = Number(url.searchParams.get("unit_id")) || null;
@@ -182,7 +220,7 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     if (!detail) data = undefined;
     else {
       const transitions: Record<string, { roles: string[]; reason?: boolean }> = {
-        "Nhap:ChoKhoaDuyet": { roles: ["faculty_officer", "rd_officer"] },
+        "Nhap:ChoKhoaDuyet": { roles: ["faculty_officer", "rd_officer", "lecturer"] },
         "ChoKhoaDuyet:KhoaDaDuyet": { roles: ["faculty_head"] },
         "ChoKhoaDuyet:Nhap": { roles: ["faculty_head"], reason: true },
         "KhoaDaDuyet:ChoPhongKiemTra": { roles: ["faculty_head", "rd_officer"] },
@@ -190,12 +228,13 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
         "ChoPhongKiemTra:Nhap": { roles: ["rd_officer"], reason: true },
         "Nhap:ChoBoSung": { roles: ["faculty_officer", "rd_officer"], reason: true },
         "ChoBoSung:Nhap": { roles: ["faculty_officer", "rd_officer"] },
-        "Nhap:Rut": { roles: ["faculty_officer", "rd_officer"], reason: true },
-        "ChoBoSung:Rut": { roles: ["faculty_officer", "rd_officer"], reason: true },
+        "Nhap:Rut": { roles: ["faculty_officer", "rd_officer", "lecturer"], reason: true },
+        "ChoBoSung:Rut": { roles: ["faculty_officer", "rd_officer", "lecturer"], reason: true },
       };
       const transition = transitions[`${detail.state}:${body.to_state}`];
       if (!transition) throw new ApiError(409, `không thể chuyển hồ sơ từ ${detail.state} sang ${body.to_state}`);
       if (!transition.roles.some((role) => mockUser?.roles.includes(role))) throw new ApiError(403, `cần vai trò: ${transition.roles.join(", ")}`);
+      if (mockUser?.roles.includes("lecturer") && !mockUser.roles.some((role) => ["faculty_officer", "rd_officer"].includes(role)) && !mockMyDeclarationIds.has(declarationId)) throw new ApiError(403, "chỉ thao tác được hồ sơ do mình tạo");
       if (transition.reason && !body.reason?.trim()) throw new ApiError(409, `chuyển sang ${body.to_state} bắt buộc phải nêu lý do`);
       const fromState = detail.state;
       const now = new Date().toISOString();
@@ -322,6 +361,9 @@ export const api = {
   getStats: (years = 5) => apiRequest<StatsOut>(`/api/stats${queryString({ years })}`),
   getAudit: (filters: AuditFilters = {}) => apiRequest<AuditList>(`/api/audit${queryString({ entity: filters.entity, entity_id: filters.entity_id, actor: filters.actor, page: filters.page })}`),
   getPeriods: () => apiRequest<PeriodOut[]>("/api/periods"),
+  getMyWorks: (page = 1) => apiRequest<MyWorkList>(`/api/me/works${queryString({ page })}`),
+  getMyDeclarations: () => apiRequest<DeclarationList>("/api/me/declarations"),
+  addMyDeclaration: (input: MyDeclarationCreateIn) => apiRequest<DeclarationRow>("/api/me/declarations", { method: "POST", body: JSON.stringify(input) }),
   getPeriodProgress: (id: number) => apiRequest<PeriodProgress>(`/api/periods/${id}/progress`),
   getDeclarations: (periodId: number, unitId?: number) => apiRequest<DeclarationList>(`/api/periods/${periodId}/declarations${queryString({ unit_id: unitId })}`),
   addDeclaration: (periodId: number, input: DeclarationCreateIn) => apiRequest<DeclarationRow>(`/api/periods/${periodId}/declarations`, { method: "POST", body: JSON.stringify(input) }),
