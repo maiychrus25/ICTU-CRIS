@@ -54,6 +54,15 @@ def strip_accents(s):
 def _squash(s):
     return re.sub(r"\s+", " ", s).strip()
 
+def title_case_name(s):
+    """Viết hoa chữ đầu mỗi từ của họ tên tiếng Việt ("nguyễn thế vịnh" → "Nguyễn Thế Vịnh").
+    Chỉ đổi khi tên đang toàn chữ thường; tên đã có hoa (kể cả hoa toàn bộ) giữ nguyên
+    để không phá cách viết có chủ ý ở nguồn. Phần sau gạch nối cũng viết hoa (Xuân-Hà)."""
+    s = _squash(s or "")
+    if not s or s != s.lower():
+        return s
+    return " ".join("-".join(p[:1].upper() + p[1:] for p in w.split("-")) for w in s.split(" "))
+
 def norm_title(s):
     s = strip_accents(s or "").lower()
     s = re.sub(r"[^a-z0-9]+", " ", s)

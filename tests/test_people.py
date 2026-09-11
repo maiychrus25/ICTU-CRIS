@@ -70,3 +70,19 @@ def test_import_continues_after_unique_violation_and_reports_error(conn):
     assert len(result["errors"]) == 1
     assert result["errors"][0]["source_key"] == "https://r/giang-vien/binh/"
     assert len(q(conn, "SELECT 1 FROM person")) == 1
+
+
+def test_lowercase_source_name_is_title_cased_for_display(conn):
+    """Kho nguồn ghi `name` toàn chữ thường (slug); tên hiển thị phải viết hoa có dấu."""
+    rules.seed_rules(conn, None)
+    gv = {"archive": dict(GV["archive"], url="https://r/giang-vien/vinh/", name="nguyễn thế vịnh",
+                           display="TS. nguyễn thế vịnh", email="vinh@example.invalid", orcid=None)}
+    sync.run_sync(conn, source="repository", scope="giang-vien", doc_type="giang_vien",
+                  records=[("https://r/giang-vien/vinh/", gv)], expected=1, full=True)
+    people.import_people(conn)
+    p = q(conn, "SELECT display_name, name_keys FROM person")[0]
+    assert p["display_name"] == "Nguyễn Thế Vịnh"
+    assert p["name_keys"] == ["nguyen the vinh"]
+    assert rules.title_case_name("trần thị xuân-hà") == "Trần Thị Xuân-Hà"
+    assert rules.title_case_name("NGUYỄN VĂN A") == "NGUYỄN VĂN A"
+

@@ -45,14 +45,17 @@ def import_people(conn):
             try:
                 with conn.transaction():
                     a = rec["raw"]["archive"]
-                    raw_name = a.get("name") or a.get("display") or ""
-                    nn, deg = RU.norm_name(raw_name, nb)
+                    # `display` ở nguồn giữ đúng hoa/thường ("PGS.TS. Phùng Trung Nghĩa"), còn
+                    # `name` thường là chữ thường (slug) — ưu tiên display cho tên hiển thị.
+                    raw_name = a.get("display") or a.get("name") or ""
+                    nn, deg = RU.norm_name(a.get("name") or raw_name, nb)
                     display = re.sub(r"\s+", " ", raw_name).strip()
                     for canon, variants in nb["prefixes"].items():
                         matched = next((v for v in variants if display.lower().startswith(v + " ")), None)
                         if matched:
                             display = display[len(matched):].strip()
                             break
+                    display = RU.title_case_name(display)
                     unit_id = ensure_unit(conn, a.get("jobTitle"))
                     vals = dict(display_name=display, name_norm=nn, degree_raw=a.get("degree") or deg,
                                 email=a.get("email"), orcid=(rec["raw"].get("detail") or {}).get("orcid") or a.get("orcid"), unit_id=unit_id,
