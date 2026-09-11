@@ -178,7 +178,28 @@ nhóm.
 
 ---
 
-## 6. Về hệ thống: AI cục bộ, giấy phép, giới hạn (60–75 giây)
+## 6. Kỳ báo cáo & kê khai (45 giây)
+
+**URL**: `/ky-bao-cao/chi-tiet/?id=1`
+
+**Thao tác**:
+1. Mở kỳ mẫu **`2026-H2`** — chỉ vào tab "Hồ sơ kê khai": **3 hồ sơ**, trong đó **1 đang
+   Chờ bổ sung** (huy hiệu vàng) và **1 đã có minh chứng** đính kèm.
+2. Bấm vào hồ sơ Chờ bổ sung — chỉ vào lý do bắt buộc đã ghi khi chuyển trạng thái và
+   nhật ký `declaration_event` bên dưới.
+3. Nếu giám khảo hỏi **"ai được bấm nút này?"** — trả lời ngắn: mọi thao tác ghi nhận
+   (thêm hồ sơ, đổi trạng thái, thêm minh chứng) đòi vai `rd_officer`; đăng nhập cục bộ
+   (mật khẩu băm PBKDF2, phiên cookie) quyết định ai có vai đó — xem `/dang-nhap/`.
+
+**Câu nói then chốt**:
+> "Từ kỳ báo cáo đang mở tới từng hồ sơ kê khai, mỗi lần chuyển trạng thái đều bắt buộc
+> nêu lý do và ghi vào nhật ký — không có sửa ngầm sau khi đã kê khai."
+
+**Con số thật**: kỳ mẫu `2026-H2`, 3 hồ sơ kê khai, 1 Chờ bổ sung, 1 minh chứng.
+
+---
+
+## 7. Về hệ thống: AI cục bộ, giấy phép, giới hạn (60–75 giây)
 
 **URL**: `/ve/`
 
@@ -271,6 +292,18 @@ nhóm.
     rào chắn đếm số dòng `work`, `author_link`, `duplicate_group`, `field_provenance`
     trước và sau mỗi thao tác AI để đảm bảo bằng 0 thay đổi (NFR-43, `docs/ai.md` §1, §7).
 
+11. **Mật khẩu lưu thế nào?**
+    Băm bằng `hashlib.pbkdf2_hmac` (PBKDF2-HMAC-SHA256, 260.000 vòng, salt 16 byte riêng
+    mỗi người) — không lưu mật khẩu gốc, không thêm dependency (`cris/auth.py`). Phiên đăng
+    nhập là cookie `cris_session` (HttpOnly, SameSite=Lax, hết hạn 12 giờ); đăng nhập sai bị
+    giới hạn 5 lần/5 phút theo email. Hệ thống chạy **chế độ mở** (không bắt buộc đăng
+    nhập) cho tới khi một người dùng được đặt mật khẩu — xem `BUILDING.md` §6.5.
+
+12. **Sao không SSO?**
+    Trường chưa có hệ SSO sẵn dùng để tích hợp trong thời gian làm bản dự thi (NFR-01,
+    `docs/ba/14-nfr.md`) — chọn mật khẩu cục bộ băm chuẩn PBKDF2 để có đăng nhập thật ngay,
+    không thêm dependency, và không chặn tích hợp SSO trường thật ở lát cắt sau.
+
 ---
 
 ## Chuẩn bị trước buổi demo
@@ -279,12 +312,17 @@ Checklist chạy theo thứ tự, trên máy sẽ dùng để trình diễn — 
 trước ngày 10/10, tốt nhất là ngắt mạng ở bước cuối để chắc chắn hệ thống chạy offline:
 
 - [ ] `docker compose up -d db` rồi `docker compose build app` — dựng xong không lỗi.
-- [ ] `docker compose run --rm app migrate` — áp đủ `0001`–`0008`.
+- [ ] `docker compose run --rm app migrate` — áp đủ `0001`–`0009`.
 - [ ] Có dữ liệu thật đã đồng bộ (đồng bộ trước, không đồng bộ trực tiếp lúc demo — mất
       khoảng 2 giờ); nếu dùng bản sao dữ liệu demo, đối chiếu số liệu trong kịch bản với
       số liệu bản sao trước khi trình diễn.
 - [ ] Tạo ít nhất một người dùng vai `rd_officer`:
       `INSERT INTO app_user(email, display_name, roles) VALUES ('demo@ictu.edu.vn', 'Người trình diễn', ARRAY['rd_officer']);`
+- [ ] Đặt mật khẩu cho người dùng này **trước** buổi demo nếu định bật đăng nhập:
+      `CRIS_PASSWORD='...' python -m cris user set-password demo@ictu.edu.vn`. Ngay khi đã
+      đặt, **toàn hệ thống** chuyển sang bắt buộc đăng nhập — phải đăng nhập ở `/dang-nhap/`
+      **trước khi** demo các hàng đợi (phân đoạn 3, 4) và kê khai (phân đoạn 6), nếu không
+      mọi nút quyết định sẽ bị ẩn.
 - [ ] Bật AI: `pip install -e ".[ai]"` (hoặc dùng ảnh có `--build-arg EXTRAS="[ai]"`),
       `python -m cris ai download` (tải một lần, kiểm SHA-256).
 - [ ] `export CRIS_AI_PROVIDER=local` rồi lần lượt: `python -m cris ai embed`,
@@ -294,15 +332,16 @@ trước ngày 10/10, tốt nhất là ngắt mạng ở bước cuối để ch
       công trình.
 - [ ] `python -m cris serve` (hoặc container `serve --host 0.0.0.0`) — mở
       `http://localhost:8000` và `http://localhost:8000/docs`, kiểm cả hai trả `200`.
-- [ ] Mở sẵn các tab trình duyệt theo đúng thứ tự sáu phân đoạn ở trên, để không mất thời
+- [ ] Mở sẵn các tab trình duyệt theo đúng thứ tự bảy phân đoạn ở trên, để không mất thời
       gian gõ URL giữa buổi trình diễn: `/tong-quan/`, `/tra-cuu/`, `/doi-soat/tac-gia/`,
-      `/doi-soat/trung-lap/`, `/doi-chieu/`, `/doi-chieu/ra-soat/`, `/ve/`, `/docs`.
+      `/doi-soat/trung-lap/`, `/doi-chieu/`, `/doi-chieu/ra-soat/`,
+      `/ky-bao-cao/chi-tiet/?id=1`, `/ve/`, `/docs`.
   - [ ] Trước khi thao tác thật trên hàng đợi tác giả/nghi trùng (phân đoạn 3, 4), xác
       nhận đây là **bản sao DB dành cho demo**, hoặc đã đánh dấu trước các hàng "an toàn để
       đổi trạng thái" nếu bắt buộc dùng DB thật.
 - [ ] **Kiểm tra chạy offline**: tắt Wi-Fi/mạng, tải lại từng tab đã mở ở trên — mọi trang
       và mọi thao tác AI (đối chiếu, rà soát) vẫn chạy vì mô hình đã tải cục bộ và không
       gọi ra ngoài (`CRIS_AI_PROVIDER=local`, `docs/ai.md` §2, NFR-38).
-- [ ] Chuẩn bị một laptop dự phòng hoặc bản ghi màn hình (video) của toàn bộ sáu phân đoạn,
+- [ ] Chuẩn bị một laptop dự phòng hoặc bản ghi màn hình (video) của toàn bộ bảy phân đoạn,
       phòng khi mạng hội trường hoặc máy chiếu có sự cố — hệ thống không cần mạng để chạy,
       nhưng vẫn nên có phương án dự phòng cho phần cứng.

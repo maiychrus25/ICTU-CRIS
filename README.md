@@ -91,12 +91,12 @@ sẵn thành HTML/CSS/JS tĩnh (`next build`, `output: "export"`), FastAPI phụ
 bản xuất đó ở `/` cùng gốc với `/api/*`: **một ảnh Docker, một container, một
 cổng** cho cả API lẫn giao diện. **Tầng AI** (`cris/ai/`) cũng chỉ gọi vào tầng
 nghiệp vụ và chỉ ghi vào bảng `ai_*`. Lược đồ CSDL nằm ở `cris/migrations/0001`–
-`0008` (PostgreSQL 16, không ORM).
+`0009` (PostgreSQL 16, không ORM).
 
 | Thành phần | Công nghệ | Vai trò |
 |---|---|---|
 | Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3 | Không ORM — truy vấn SQL trực tiếp |
-| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0008` |
+| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0009` |
 | Đóng gói | sdist + wheel đính kèm mỗi Release (không gồm `frontend/`); ảnh `ghcr.io/maiychrus25/ictu-cris` là bản chạy đủ | Workflow `release.yml` kiểm phiên bản khớp tag; `docker.yml` đẩy ảnh theo semver |
 | Triển khai | `deploy/setup.sh` + `deploy/docker-compose.yml` | Một lệnh: DB, lược đồ, người dùng mặc định, giao diện; `--ai` tải mô hình |
 | API | FastAPI + `uvicorn` | Router `/api/*`, tài liệu OpenAPI tương tác ở `/docs` |
@@ -112,10 +112,19 @@ CLI thống nhất:
 python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--json]
 python -m cris serve [--host] [--port]
 python -m cris ai download|embed|topics|suggest|screen|status      # cần CRIS_AI_PROVIDER=local
+python -m cris user set-password <email>|list                     # đăng nhập cục bộ (NFR-01)
 ```
 
 ## ✨ Tính năng (Features)
 
+- **Đăng nhập & vai trò** — mật khẩu cục bộ băm PBKDF2, phiên cookie; **chế độ
+  mở** giữ nguyên tới khi có người đặt mật khẩu bằng `python -m cris user
+  set-password`, khi đó `rd_officer` mới được quyết định.
+- **Chủ đề** (`/chu-de/`) — 40 cụm AI theo từ khoá, xem chi tiết từng cụm và
+  tra cứu công trình theo cụm (drill-down).
+- **Đồng bộ** (`/dong-bo/`) — lịch sử các lượt đồng bộ: thêm/đổi/mất.
+- **Kê khai vào kỳ báo cáo** — hồ sơ theo trạng thái Nháp/Chờ bổ sung/Rút,
+  đính kèm minh chứng, nhật ký từng lần chuyển trạng thái.
 - **Tra cứu & hồ sơ** — tìm công trình theo từ khoá/loại/năm/đơn vị/chủ đề, chi
   tiết có xuất xứ từng trường, hồ sơ công bố giảng viên.
 - **Hàng đợi người quyết** — xác nhận liên kết tác giả, gộp/giữ riêng nghi
@@ -201,8 +210,11 @@ mạng công khai**.
 - [x] Giao diện hàng đợi xác nhận và tra cứu
 - [x] Quét bù phân trang (S-04)
 - [x] Tích hợp AI: đối chiếu đề tài, gợi ý hàng đợi, trục chủ đề — mô hình cục bộ, không cần khoá API ([docs/ai.md](docs/ai.md))
-- [x] Lược đồ kỳ báo cáo (K, task 1)
-- [ ] Kê khai, phê duyệt, chốt báo cáo (phần còn lại của K, D, R)
+- [x] **0.2.0 đã phát hành (11/09)** — API JSON, giao diện Next.js, kỳ báo cáo, rà
+      soát trùng đề tài theo khoá
+- [ ] **Đang phát triển (0.3.0, lát cắt G)** — đăng nhập cục bộ, tìm người,
+      chủ đề, lịch sử đồng bộ, kê khai công trình vào kỳ
+- [ ] Còn lại: SSO trường thật, kê khai bởi chính giảng viên, xuất biểu mẫu Bộ
 
 ## 📚 Tài liệu (Documentation)
 

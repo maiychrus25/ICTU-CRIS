@@ -4,7 +4,7 @@
 
 | # | Yêu cầu | Mức đạt |
 |---|---|---|
-| NFR-01 | Xác thực theo tài khoản trường; không lưu mật khẩu riêng | Tích hợp SSO của trường; `[CẦN XÁC NHẬN]` cơ chế hiện có |
+| NFR-01 | Xác thực theo tài khoản trường; không lưu mật khẩu riêng | Trường chưa có SSO sẵn dùng: đã làm đăng nhập cục bộ (lát cắt G2, `cris/auth.py`) — mật khẩu băm PBKDF2-HMAC-SHA256 (260.000 vòng, salt 16 byte riêng mỗi người, chỉ thư viện chuẩn), phiên 12 giờ qua cookie `cris_session` (HttpOnly, SameSite=Lax), giới hạn 5 lần đăng nhập sai/5 phút theo email. **Chế độ mở** (không bắt buộc đăng nhập) cho tới khi có người đặt mật khẩu. SSO của trường vẫn là mục tiêu, để tích hợp ở lát cắt sau |
 | NFR-02 | Phân quyền theo vai trò **và** phạm vi đơn vị | Mọi truy vấn của vai trò cấp khoa bị lọc theo đơn vị ở tầng dữ liệu, không chỉ ẩn trên giao diện |
 | NFR-03 | Tách vai trò lập và vai trò duyệt | Hệ thống chặn ở tầng nghiệp vụ, không dựa vào quy ước |
 | NFR-04 | Nhật ký thao tác không sửa được | Ghi ai, làm gì, lúc nào, trên đối tượng nào; chỉ thêm, không sửa, không xoá |

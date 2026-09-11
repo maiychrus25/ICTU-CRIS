@@ -20,9 +20,15 @@ với dữ liệu đổi theo mỗi lần đồng bộ). Đường dẫn UI th�
 /doi-soat/trung-lap/                       Hàng đợi nghi trùng
 /doi-soat/trung-lap/chi-tiet/?id=          Chi tiết nhóm nghi trùng (so cạnh nhau)
 /ky-bao-cao/                               Danh sách kỳ báo cáo
-/ky-bao-cao/chi-tiet/?id=                  Chi tiết kỳ: tiến độ theo đơn vị
+/ky-bao-cao/chi-tiet/?id=                  Chi tiết kỳ: tiến độ theo đơn vị, hồ sơ kê khai
+/ke-khai/?id=                              Chi tiết hồ sơ kê khai: trạng thái, minh chứng
 /nhat-ky/                                  Nhật ký thao tác
 /chat-luong-du-lieu/                       Báo cáo chất lượng dữ liệu
+/dang-nhap/                                Đăng nhập cục bộ
+/chu-de/                                   Lưới 40 cụm chủ đề AI
+/chu-de/chi-tiet/?id=                      Chi tiết cụm: từ khoá, công trình khớp
+/dong-bo/                                  Lịch sử các lượt đồng bộ
+/dong-bo/chi-tiet/?id=                     Chi tiết một lượt đồng bộ
 /ve/                                       Về hệ thống
 ```
 

@@ -272,3 +272,13 @@ Ngày 11/09/2026 (E6 — đóng gói một container, gỡ UI cũ), cùng máy p
 | `docker run ... ictu-cris:full serve --host 0.0.0.0 --port 8000` rồi `curl` 11 trang tĩnh (`/`, `/tra-cuu/`, `/tong-quan/`, `/doi-soat/tac-gia/`, `/doi-soat/trung-lap/`, `/doi-chieu/`, `/doi-chieu/ra-soat/`, `/ky-bao-cao/`, `/nhat-ky/`, `/chat-luong-du-lieu/`, `/ve/`) + 3 route API (`/api/health`, `/api/stats`, `/docs`) | tất cả `200`, 0 dòng traceback trong `docker logs` |
 | `CRIS_AI_PROVIDER=none python -c "import cris.api.app, cris.cli"` | `onnxruntime`, `numpy`, `tokenizers` không nằm trong `sys.modules` |
 | Gỡ `cris/web/` (UI HTML cũ) và `tests/test_web_*.py`, bỏ cờ `--legacy` | `ruff check --select E9,F63,F7,F82` sạch; `pytest -q` **193 passed, 3 skipped** (từ 245 passed, 3 skipped trước khi xoá — đúng bằng 52 test web đã gỡ) |
+
+Ngày 11/09/2026 chiều (lát cắt G — đăng nhập, tìm người, chủ đề, lịch sử đồng bộ, kê
+khai), cùng máy phát triển:
+
+| Việc | Kết quả |
+|---|---|
+| `pytest -q -m "not slow"` sau G1–G3 | **243 passed**, 3 skipped (`slow` tự bỏ qua khi chưa có mô hình) |
+| `npx playwright test` (`frontend/e2e/`) | mock (`core-flows.spec.ts`, `NEXT_PUBLIC_MOCK`) **11** kịch bản; thật (`real-backend.spec.ts`, gọi API sống) **9** kịch bản |
+| `docker build -t ictu-cris:full --build-arg EXTRAS="[ai]" .` (Dockerfile đa tầng) sau khi thêm `frontend/` cho lát cắt G | dựng thành công, ảnh đa tầng không đổi cấu trúc |
+| `python -m cris migrate` trên DB đã có `0001`–`0008` | áp thêm `0009_auth.sql` (`app_user.password_hash`, bảng `session`) |
