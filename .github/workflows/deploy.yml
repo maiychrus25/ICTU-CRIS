@@ -13,7 +13,11 @@
 # `ssh-keyscan`). Xem docs/deploy-prod.md.
 name: Deploy
 
+# Lưu ý: Release do release.yml tạo bằng GITHUB_TOKEN nên sự kiện `release: published`
+# KHÔNG kích hoạt workflow khác (giới hạn của GitHub). Vì vậy kích hoạt theo tag đẩy lên.
 on:
+  push:
+    tags: ["v*"]
   release:
     types: [published]
   workflow_dispatch:
@@ -37,6 +41,7 @@ jobs:
         id: tag
         run: |
           TAG="${{ github.event.inputs.tag || github.event.release.tag_name }}"
+          [ -z "$TAG" ] && [ "${GITHUB_REF_TYPE:-}" = "tag" ] && TAG="$GITHUB_REF_NAME"
           if [ -z "$TAG" ]; then
             echo "::error::không xác định được tag (release.tag_name hoặc workflow_dispatch.tag)"
             exit 1
