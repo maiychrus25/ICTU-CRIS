@@ -79,7 +79,7 @@ dùng được cả bằng tay lẫn từ CI):
    trên registry thì kiểm ảnh cùng tên đã có sẵn ở máy (bỏ qua dựng lại nếu
    có), ngược lại `docker build --build-arg EXTRAS="[ai]"` tại chỗ.
 3. Sao lưu CSDL **trước khi đổi gì**: `pg_dump -Fc` vào
-   `deploy/backups/pre-<tag>-<ngày>.dump`.
+   `backups/pre-<tag>-<ngày>.dump` (cùng thư mục `/opt/ictu-cris/backups/` với bản đêm).
 4. Sửa dòng `image:` trong `deploy/docker-compose.override.yml` (giữ bản cũ ở
    `.prev` — cần cho bước quay lui).
 5. `docker compose run --rm -T app migrate`, `docker compose up -d app`, chờ
@@ -101,7 +101,7 @@ dùng được cả bằng tay lẫn từ CI):
 - **Cần lùi cả dữ liệu** (hiếm — chỉ khi một migration làm hỏng dữ liệu):
   1. `docker compose stop app`
   2. Khôi phục bản sao lưu gần nhất trước lúc nâng cấp
-     (`deploy/backups/pre-<tag>-<ngày>.dump`, hoặc bản đêm trong
+     (`backups/pre-<tag>-<ngày>.dump` (cùng thư mục `/opt/ictu-cris/backups/` với bản đêm), hoặc bản đêm trong
      `backups/cris-<ngày>.sql.gz` — xem mục Sao lưu):
      ```bash
      cd /opt/ictu-cris/deploy
@@ -124,7 +124,7 @@ bash /opt/ictu-cris/deploy/upgrade.sh vX.Y.Z
 ## Sao lưu
 
 - **Trước mỗi nâng cấp**: `deploy/upgrade.sh` tự tạo
-  `deploy/backups/pre-<tag>-<ngày>.dump` (định dạng `pg_dump -Fc`, dùng
+  `backups/pre-<tag>-<ngày>.dump` (cùng thư mục `/opt/ictu-cris/backups/` với bản đêm) (định dạng `pg_dump -Fc`, dùng
   `pg_restore` để khôi phục).
 - **Hàng đêm** (cron `deploy`, 03:30): `deploy/backups/cris-<ngày>.sql.gz`
   (`pg_dump | gzip`, dùng `gunzip | psql` để khôi phục); giữ 7 ngày gần nhất,

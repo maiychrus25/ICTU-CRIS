@@ -53,7 +53,7 @@ VER="${TAG#v}"
 IMAGE_TAG="${IMAGE_REPO}:${VER}-ai"
 LOCAL_IMAGE="ictu-cris:${VER}-ai"
 NGAY="$(date +%F)"
-BACKUP_FILE="$DEPLOY_DIR/backups/pre-${TAG}-${NGAY}.dump"
+BACKUP_FILE="$REPO_DIR/backups/pre-${TAG}-${NGAY}.dump"   # cùng chỗ với cron pg_dump
 
 echo "== ICTU-CRIS upgrade → ${TAG} (ảnh ${IMAGE_TAG}) =="
 
@@ -72,7 +72,7 @@ if $DRY_RUN; then
     #   ngược lại → docker build -t "$LOCAL_IMAGE" --build-arg EXTRAS="[ai]" "$REPO_DIR"
 
 3/6 Sao lưu CSDL trước khi đổi
-    mkdir -p "$DEPLOY_DIR/backups"
+    mkdir -p "$REPO_DIR/backups"
     docker compose exec -T db pg_dump -U \$POSTGRES_USER -d \$POSTGRES_DB -Fc > "$BACKUP_FILE"
 
 4/6 Ghi ảnh mới vào override (giữ bản cũ ở .prev)
@@ -122,7 +122,7 @@ set +a
 
 # 3/6 — sao lưu CSDL trước khi đổi gì
 echo "-- 3/6 sao lưu CSDL vào ${BACKUP_FILE}"
-mkdir -p "$DEPLOY_DIR/backups"
+mkdir -p "$REPO_DIR/backups"
 docker compose exec -T db pg_dump -U "${POSTGRES_USER:-cris}" -d "${POSTGRES_DB:-cris}" -Fc > "$BACKUP_FILE"
 echo "   $(du -h "$BACKUP_FILE" | cut -f1) — ${BACKUP_FILE}"
 
