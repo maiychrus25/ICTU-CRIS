@@ -42,24 +42,24 @@ jobs:
             exit 1
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-      - name: Chờ ảnh ghcr.io/maiychrus25/ictu-cris:<phiên bản>-ai (tối đa 15 phút)
+      - name: Chờ ảnh ghcr.io/maiychrus25/ictu-cris:<phiên bản>-ai (tối đa 5 phút)
         env:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           VER="${TAG#v}"
           IMG="ghcr.io/maiychrus25/ictu-cris:${VER}-ai"
           echo "chờ ${IMG} (docker.yml dựng ảnh này song song khi tag được đẩy) ..."
-          for i in $(seq 1 30); do
+          for i in $(seq 1 10); do
             if docker manifest inspect "$IMG" >/dev/null 2>&1; then
               echo "có ảnh sau $(( (i - 1) * 30 ))s"
               exit 0
             fi
-            echo "  chưa có (lần $i/30) — chờ 30s"
+            echo "  chưa có (lần $i/10) — chờ 30s"
             sleep 30
           done
           # Không chặn: upgrade.sh trên máy chủ tự dựng ảnh từ mã nguồn khi GHCR
           # chưa có (ví dụ tag phát hành trước khi docker.yml có biến thể -ai).
-          echo "::warning::không thấy ${IMG} trên GHCR sau 15 phút — máy chủ sẽ tự dựng ảnh"
+          echo "::warning::không thấy ${IMG} trên GHCR sau 5 phút — máy chủ sẽ tự dựng ảnh (hoặc dùng ảnh local sẵn có)"
           exit 0
 
   deploy:
