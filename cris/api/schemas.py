@@ -391,6 +391,37 @@ class AboutOut(BaseModel):
     auth_required: bool = False
 
 
+# ---------- cảnh báo bất thường dữ liệu (K2) ----------
+class AnomalyRow(BaseModel):
+    id: int
+    kind: str
+    kind_label: str
+    severity: str
+    state: str
+    work_id: int | None = None
+    title: str | None = None
+    person_id: int | None = None
+    display_name: str | None = None
+    detail: dict[str, Any]
+    created_at: datetime
+
+
+class AnomalyList(BaseModel):
+    items: list[AnomalyRow]
+    page: Page
+    summary: dict[str, dict[str, int]]
+
+
+class DismissAnomalyIn(BaseModel):
+    reason: str = ""
+
+
+class DismissAnomalyOut(BaseModel):
+    ok: bool
+    id: int
+    state: str
+
+
 # ---------- đăng nhập ----------
 class LoginIn(BaseModel):
     email: str = Field(min_length=1)

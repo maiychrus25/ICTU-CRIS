@@ -46,6 +46,26 @@
   công trình thêm/đổi ở lượt đồng bộ gần nhất đã xong (`cris/api/routes/recent.py`).
   `GET /api/feed.xml` RSS 2.0 công khai 20 công trình mới nhất (`cris/api/routes/feed.py`,
   đường dẫn công khai đọc từ `CRIS_PUBLIC_URL`).
+- Cảnh báo bất thường dữ liệu (lát cắt K2): `python -m cris quality scan`
+  (`cris/anomaly.py`, `scan`) quét sáu loại bất thường chỉ đọc `work`/`person` —
+  ghi Scopus/WoS (nhóm ISI) nhưng không có DOI; năm ngoài khoảng 1990–năm hiện
+  tại+1; luận văn/đồ án trùng tiêu đề chuẩn hoá với một bài báo; hai giảng viên
+  cùng ORCID (bình thường bị chặn bởi `UNIQUE(orcid)`, cờ này phòng khi ràng
+  buộc bị nới); DOI sai định dạng `10.xxxx/…`; bài báo không có tóm tắt — ghi/
+  đóng `quality_flag` (migration `0017_quality_flag.sql`, UNIQUE theo
+  `COALESCE(work_id,0), COALESCE(person_id,0)` vì NULL không bị ràng buộc UNIQUE
+  thường của PostgreSQL chặn trùng); quét idempotent, cờ `dismissed` không bao
+  giờ bị đụng lại, cờ `resolved` mở lại nếu bất thường tái xuất hiện.
+  `GET /api/quality/anomalies?kind=&state=&severity=&page=` (lọc, `summary`
+  đếm cờ đang mở theo loại) và `POST /api/quality/anomalies/{id}/dismiss
+  {reason}` (vai trò `rd_officer`, lý do bắt buộc — 400 nếu thiếu, 404 nếu
+  không có cờ, ghi audit `quality.dismiss`); `GET /api/quality` thêm chỉ số
+  `anomalies_open`. Quét trên DB thật (7.618 công trình, 400 giảng viên):
+  `scopus_no_doi` 64, `thesis_title_equals_article` 2, `missing_abstract_article`
+  1.697; `year_out_of_range`, `orcid_duplicate`, `doi_invalid` đều 0 — ORCID
+  trùng không xảy ra được trong dữ liệu hiện có vì bị `UNIQUE(orcid)` chặn từ
+  lúc nhập (xem mục Known issues bản 0.4.0: 10/410 hồ sơ bị từ chối vì lý do
+  này), không phải cờ chưa quét đúng.
 
 ### Fixed
 

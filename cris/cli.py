@@ -6,7 +6,7 @@ import json
 import os
 import sys
 
-from cris import auth, db, dedup, link, normalize, people, quality, rules, sync
+from cris import anomaly, auth, db, dedup, link, normalize, people, quality, rules, sync
 from cris.source import repository as R
 
 
@@ -20,7 +20,10 @@ def main(argv=None):
     np.add_argument("--redo", action="store_true", help="chuẩn hoá lại toàn bộ bản ghi sống, không chỉ phần đang chờ")
     np.add_argument("--doc-type", choices=list(normalize.WORK_TYPES), help="chỉ chuẩn hoá một loại (mặc định: tất cả)")
     sub.add_parser("link"); sub.add_parser("dedup")
-    qp = sub.add_parser("quality"); qp.add_argument("--json", action="store_true")
+    qp = sub.add_parser("quality")
+    qp.add_argument("action", nargs="?", default="report", choices=["report", "scan"],
+                     help="report (mặc định, như trước): số liệu quality.report; scan (K2): quét bất thường")
+    qp.add_argument("--json", action="store_true")
     ai = sub.add_parser("ai", help="vector ngữ nghĩa và gợi ý (cần CRIS_AI_PROVIDER)")
     ais = ai.add_subparsers(dest="ai_cmd", required=True)
     e = ais.add_parser("embed"); e.add_argument("--all", action="store_true", help="tính lại toàn bộ, không chỉ phần đổi")
@@ -132,8 +135,13 @@ def main(argv=None):
                 r = ai_map.build_map(conn, prov)
                 print(f"points={r['points']} topics={r['topics']} seconds={r['seconds']}")
     elif a.cmd == "quality":
-        r = quality.report(conn)
-        print(json.dumps(r, ensure_ascii=False, indent=None if a.json else 2))
+        if a.action == "scan":
+            r = anomaly.scan(conn)
+            for kind, s in r.items():
+                print(f"{kind}: found={s['found']} new={s['new']} resolved={s['resolved']}")
+        else:
+            r = quality.report(conn)
+            print(json.dumps(r, ensure_ascii=False, indent=None if a.json else 2))
     elif a.cmd == "user":
         if a.user_cmd == "set-password":
             pw = os.environ.get("CRIS_PASSWORD") or getpass.getpass(f"Mật khẩu cho {a.email}: ")
