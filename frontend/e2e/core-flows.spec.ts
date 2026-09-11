@@ -13,6 +13,27 @@ test("trang gốc mở tổng quan với bốn chỉ số và biểu đồ", asy
   await expect(page.getByRole("img", { name: "Biểu đồ cột chồng công trình theo năm và loại tài liệu" })).toBeVisible();
 });
 
+test("đăng nhập sai hiển thị nguyên văn lỗi từ API", async ({ page }) => {
+  await page.goto("/dang-nhap/");
+  await page.getByLabel("Email").fill("sai@ictu.edu.vn");
+  await page.getByLabel("Mật khẩu").fill("khong-dung");
+  await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+  await expect(page.getByText("Email hoặc mật khẩu không đúng.")).toBeVisible();
+});
+
+test("đăng nhập đúng hiển thị người dùng, vai trò và quyền quyết định", async ({ page }) => {
+  await page.goto("/dang-nhap/?next=/doi-soat/tac-gia/");
+  await page.getByLabel("Email").fill("nguyen.minh.anh@ictu.edu.vn");
+  await page.getByLabel("Mật khẩu").fill("demo1234");
+  await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+
+  await expect(page).toHaveURL(/\/doi-soat\/tac-gia\/$/);
+  await expect(page.getByText("Nguyễn Minh Anh", { exact: true })).toBeVisible();
+  await expect(page.getByText("Chuyên viên KHCN", { exact: true })).toBeVisible();
+  await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();
+  await expect(page.getByRole("button", { name: "Xác nhận" })).toBeEnabled();
+});
+
 test("nhật ký lọc theo loại thực thể", async ({ page }) => {
   await page.goto("/nhat-ky/");
   await expect(page.getByText("Nhóm nghi trùng #301")).toBeVisible();

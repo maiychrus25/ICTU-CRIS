@@ -7,9 +7,10 @@ import { Bot, CheckCircle2, Database, ExternalLink, GitBranch, ShieldAlert } fro
 
 import { PageHeader } from "@/components/page-header";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { docTypeLabels } from "@/lib/labels";
-import { useAbout, useScreenCohorts } from "@/lib/queries";
+import { useAbout, useMe, useScreenCohorts } from "@/lib/queries";
 
 function Metric({ label, value }: { label: string; value: React.ReactNode }) {
   return <div className="border-b py-3 last:border-0"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1 font-medium tabular-nums">{value}</dd></div>;
@@ -22,6 +23,7 @@ function totalCount(value: number | Record<string, number>) {
 export default function AboutPage() {
   const query = useAbout();
   const cohorts = useScreenCohorts();
+  const me = useMe();
   if (query.isLoading || cohorts.isLoading) return <><PageHeader title="Về hệ thống" /><LoadingView /></>;
   if (query.isError || cohorts.isError) return <><PageHeader title="Về hệ thống" /><ErrorView error={query.error ?? cohorts.error} retry={() => { query.refetch(); cohorts.refetch(); }} /></>;
   if (!query.data) return <><PageHeader title="Về hệ thống" /><EmptyView description="Chưa có thông tin hệ thống. Hãy thử lại sau lần đồng bộ tiếp theo." /></>;
@@ -31,6 +33,7 @@ export default function AboutPage() {
   return (
     <>
       <PageHeader title="Về hệ thống" description="ICTU-CRIS hợp nhất dữ liệu công bố khoa học, giữ xuất xứ rõ ràng và đặt quyết định trong tay người dùng." />
+      {me.data && !me.data.auth_required && <Alert className="mb-6 border-status-warning/30 bg-status-warning/10 text-status-warning"><ShieldAlert /><AlertTitle>Chưa bật đăng nhập</AlertTitle><AlertDescription>Đặt mật khẩu bằng <code className="rounded bg-background/70 px-1 py-0.5 font-mono text-xs">python -m cris user set-password</code>.</AlertDescription></Alert>}
       <div className="grid gap-8 lg:grid-cols-[1fr_1.15fr]">
         <div className="space-y-7">
           <section><div className="mb-3 flex items-center gap-2"><Database className="size-4 text-primary" /><h2 className="text-base font-semibold">Nguồn và đồng bộ</h2></div><dl className="rounded-lg border bg-card px-4"><Metric label="Tổng số công trình" value={about.works.toLocaleString("vi-VN")} /><Metric label="Nguồn dữ liệu" value={<a href={about.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">Kho dữ liệu ICTU <ExternalLink className="size-3" /></a>} /><Metric label="Mã nguồn" value={<a href={about.repo_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">Kho ICTU-CRIS <GitBranch className="size-3" /></a>} /><Metric label="Lần đồng bộ gần nhất" value={about.last_sync?.finished_at ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(about.last_sync.finished_at)) : "Chưa có"} /></dl></section>

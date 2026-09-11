@@ -4,16 +4,21 @@
 "use client";
 
 import {
-  BarChart3, BookOpenCheck, CalendarRange, CopyCheck, Info, LayoutDashboard, Menu, Moon,
-  RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRoundCheck,
+  BarChart3, BookOpenCheck, CalendarRange, CopyCheck, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
+  RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRound, UserRoundCheck,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ApiError } from "@/lib/api";
+import { userRoleLabels } from "@/lib/labels";
+import { useLogout, useMe } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -48,6 +53,7 @@ const routeTitles = [
   ["/giang-vien", "Hồ sơ giảng viên"],
   ["/doi-chieu", "Đối chiếu đề tài"],
   ["/tra-cuu", "Tra cứu"],
+  ["/dang-nhap", "Đăng nhập"],
   ["/ve", "Về hệ thống"],
 ] as const;
 
@@ -87,6 +93,32 @@ function ThemeToggle() {
   );
 }
 
+function Account({ compact = false }: { compact?: boolean }) {
+  const me = useMe();
+  const logout = useLogout();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  async function signOut() {
+    try {
+      await logout.mutateAsync();
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+      router.push("/tong-quan/");
+    } catch (error) {
+      if (!(error instanceof ApiError && error.handled)) toast.error(error instanceof ApiError ? error.detail : "Không thể đăng xuất.");
+    }
+  }
+
+  if (me.isLoading) return <div className="border-t border-sidebar-border p-3 text-center text-[11px] text-muted-foreground">Đang tải tài khoản…</div>;
+  if (me.data?.user) {
+    const user = me.data.user;
+    const roles = user.roles.map((role) => userRoleLabels[role] ?? role).join(", ");
+    return compact ? <div className="border-t border-sidebar-border p-3 text-center" title={`${user.display_name} · ${roles}`}><Button type="button" variant="ghost" size="icon" aria-label="Đăng xuất" onClick={() => void signOut()} disabled={logout.isPending}><LogOut /></Button></div> : <div className="border-t border-sidebar-border p-3"><div className="flex items-center gap-2"><UserRound className="size-5 shrink-0 text-primary" /><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold">{user.display_name}</p><p className="truncate text-[11px] text-muted-foreground">{roles || "Chưa có vai trò"}</p></div><Button type="button" variant="ghost" size="icon-sm" title="Đăng xuất" aria-label="Đăng xuất" onClick={() => void signOut()} disabled={logout.isPending}><LogOut /></Button></div></div>;
+  }
+  if (me.data?.auth_required) return <div className="border-t border-sidebar-border p-3"><Button render={<Link href="/dang-nhap/" />} variant="outline" size={compact ? "icon" : "default"} className="w-full" title={compact ? "Đăng nhập" : undefined}><LogIn />{!compact && "Đăng nhập"}</Button></div>;
+  return <div className="border-t border-sidebar-border p-3 text-center text-[11px] text-muted-foreground"><span className="hidden lg:inline">AI gợi ý, người quyết</span><span className="lg:hidden">v0.1</span></div>;
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const title = routeTitles.find(([route]) => pathname.startsWith(route))?.[1] ?? "ICTU-CRIS";
@@ -96,16 +128,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-16 border-r border-sidebar-border bg-sidebar md:flex md:flex-col lg:w-60">
         <div className="lg:hidden"><Brand compact /></div><div className="hidden lg:block"><Brand /></div>
         <div className="border-t border-sidebar-border lg:hidden"><Navigation compact /></div><div className="hidden border-t border-sidebar-border lg:block"><Navigation /></div>
-        <div className="mt-auto border-t border-sidebar-border p-3 text-center text-[11px] text-muted-foreground"><span className="hidden lg:inline">AI gợi ý, người quyết</span><span className="lg:hidden">v0.1</span></div>
+        <div className="mt-auto lg:hidden"><Account compact /></div><div className="mt-auto hidden lg:block"><Account /></div>
       </aside>
 
       <div className="md:pl-16 lg:pl-60">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:px-6">
           <Sheet>
             <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden" aria-label="Mở điều hướng" />}><Menu /></SheetTrigger>
-            <SheetContent side="left" className="w-72 bg-sidebar p-0">
+            <SheetContent side="left" className="flex w-72 flex-col bg-sidebar p-0">
               <SheetHeader className="sr-only"><SheetTitle>Điều hướng</SheetTitle><SheetDescription>Các khu vực của hệ thống</SheetDescription></SheetHeader>
-              <Brand /><div className="border-t border-sidebar-border"><Navigation /></div>
+              <Brand /><div className="flex-1 overflow-y-auto border-t border-sidebar-border"><Navigation /></div><Account />
             </SheetContent>
           </Sheet>
           <div className="min-w-0 flex-1">

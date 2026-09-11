@@ -31,6 +31,13 @@ export const roleLabels: Record<string, string> = {
   chu_bien: "Chủ biên",
 };
 
+export const userRoleLabels: Record<string, string> = {
+  rd_officer: "Chuyên viên KHCN", lecturer: "Giảng viên", school_leader: "Lãnh đạo",
+  admin: "Quản trị", faculty_officer: "Chuyên viên khoa",
+};
+
+export const officerRoleRequired = "Cần vai trò Chuyên viên KHCN";
+
 export const confidenceLabels: Record<string, string> = {
   ten_day_du_duy_nhat: "Tên đầy đủ, một ứng viên",
   ten_day_du_nhieu_ung_vien: "Tên đầy đủ, nhiều ứng viên",

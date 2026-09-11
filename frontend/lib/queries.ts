@@ -4,7 +4,15 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
-import type { AuditFilters, CompareIn, DecideAuthorsIn, DecideDupIn, PeriodOpenIn, ScreenFilters, WorkFilters } from "@/lib/types";
+import type { AuditFilters, CompareIn, DecideAuthorsIn, DecideDupIn, LoginIn, PeriodOpenIn, ScreenFilters, WorkFilters } from "@/lib/types";
+
+export const useMe = () => useQuery({ queryKey: ["me"], queryFn: api.getMe, staleTime: 60_000 });
+export const useLogin = () => useMutation({ mutationFn: (input: LoginIn) => api.login(input) });
+export const useLogout = () => useMutation({ mutationFn: api.logout });
+export function useOfficerAccess() {
+  const me = useMe();
+  return me.data ? !me.data.auth_required || Boolean(me.data.user?.roles.includes("rd_officer")) : false;
+}
 
 export const useWorks = (filters: WorkFilters) => useQuery({ queryKey: ["works", filters], queryFn: () => api.getWorks(filters) });
 export const useWork = (id: number | null) => useQuery({ queryKey: ["work", id], queryFn: () => api.getWork(id!), enabled: id !== null });

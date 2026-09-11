@@ -99,6 +99,12 @@ export interface AboutOut {
   source_url: string; repo_url: string; last_sync: LastSync | null; works: number;
   works_by_type: Record<string, number>; ai: AboutAI; limits: string[];
 }
+export interface LoginIn { email: string; password: string }
+export interface UserOut {
+  id: number; email: string; display_name: string; roles: string[]; unit_id: number | null;
+}
+export interface MeOut { user: UserOut | null; auth_required: boolean }
+export interface LogoutOut { ok: boolean }
 export interface YearTypeRow {
   year: number; bai_bao: number; do_an: number; luan_van: number; luan_an: number; hoc_lieu: number;
 }

@@ -2,10 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type {
-  AboutOut, AuditList, AuthorQueueList, CompareOut, DupGroupDetail, DupGroupList, HealthOut,
+  AboutOut, AuditList, AuthorQueueList, CompareOut, DupGroupDetail, DupGroupList, HealthOut, MeOut,
   PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail,
   SyncRunList, Topic, TopicDetail, WorkDetail, WorkList, WorkSummary, ScreenCohortSummary, ScreenList,
 } from "@/lib/types";
+
+export const meFixture: MeOut = {
+  user: { id: 1, email: "nguyen.minh.anh@ictu.edu.vn", display_name: "Nguyễn Minh Anh", roles: ["rd_officer"], unit_id: 1 },
+  auth_required: true,
+};
 
 export const workItems: WorkSummary[] = [
   { id: 1, title: "Xây dựng website quản lý thư viện trường THPT Lương Ngọc Quyến", doc_type: "do_an", doc_type_label: "Đồ án", year: 2025, doi: null, state: "DaXacNhan", needs_review: false },

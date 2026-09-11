@@ -4,26 +4,28 @@
 import {
   aboutFixture, auditFixture, authorQueueFixture, compareFixture, duplicateDetailFixture, duplicateGroupsFixture,
   healthFixture, periodProgressFixture, periodsFixture, personFixture, qualityFixture, statsFixture,
-  personsFixture, screenCohortsFixture, screenFixture, syncRunDetailsFixture, syncRunsFixture,
+  meFixture, personsFixture, screenCohortsFixture, screenFixture, syncRunDetailsFixture, syncRunsFixture,
   topicDetailsFixture, topicsFixture, workDetailsFixture, worksFixture,
 } from "@/lib/fixtures";
 import type {
   AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DecideAuthorsIn, DecideDupIn,
   DecideResult, DupGroupDetail, DupGroupList, HealthOut, PeriodOpenIn, PeriodOut, PeriodProgress,
-  PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
+  LoginIn, LogoutOut, MeOut, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
+  UserOut,
   WorkDetail, WorkFilters, WorkList,
   ScreenCohortSummary, ScreenFilters, ScreenList,
 } from "@/lib/types";
-
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 const MOCK = process.env.NEXT_PUBLIC_MOCK === "1";
 
 export class ApiError extends Error {
-  constructor(public status: number, public detail: string) {
+  constructor(public status: number, public detail: string, public handled = false) {
     super(detail);
     this.name = "ApiError";
   }
 }
+
+let mockUser = meFixture.user;
 
 function queryString(params: Record<string, string | number | undefined>) {
   const query = new URLSearchParams();
@@ -36,7 +38,18 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const id = Number(url.pathname.split("/").at(-1));
   let data: unknown;
 
-  if (url.pathname === "/api/works") {
+  if (url.pathname === "/api/auth/me") data = { ...meFixture, user: mockUser };
+  else if (url.pathname === "/api/auth/login") {
+    const body = JSON.parse(String(init?.body)) as LoginIn;
+    if (body.email !== meFixture.user?.email || body.password !== "demo1234") throw new ApiError(401, "Email hoặc mật khẩu không đúng.");
+    mockUser = meFixture.user;
+    data = mockUser;
+  }
+  else if (url.pathname === "/api/auth/logout") {
+    mockUser = null;
+    data = { ok: true };
+  }
+  else if (url.pathname === "/api/works") {
     const q = url.searchParams.get("q")?.toLocaleLowerCase("vi") ?? "";
     const docType = url.searchParams.get("doc_type");
     const year = url.searchParams.get("year");
@@ -109,16 +122,30 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   if (MOCK) return mockRequest<T>(path, init);
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
+    credentials: "include",
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({ detail: response.statusText }));
-    throw new ApiError(response.status, typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail ?? response.statusText));
+    const error = new ApiError(response.status, typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail ?? response.statusText));
+    if (typeof window !== "undefined" && path !== "/api/auth/login") {
+      if (error.status === 401) {
+        error.handled = true;
+        window.dispatchEvent(new CustomEvent("cris:api-error", { detail: { status: 401 } }));
+      } else if (error.status === 403) {
+        error.handled = true;
+        window.dispatchEvent(new CustomEvent("cris:api-error", { detail: { status: 403 } }));
+      }
+    }
+    throw error;
   }
   return response.json() as Promise<T>;
 }
 
 export const api = {
+  getMe: () => apiRequest<MeOut>("/api/auth/me"),
+  login: (input: LoginIn) => apiRequest<UserOut>("/api/auth/login", { method: "POST", body: JSON.stringify(input) }),
+  logout: () => apiRequest<LogoutOut>("/api/auth/logout", { method: "POST" }),
   getWorks: (filters: WorkFilters = {}) => apiRequest<WorkList>(`/api/works${queryString({ q: filters.q, doc_type: filters.doc_type, year: filters.year, unit: filters.unit, topic: filters.topic, page: filters.page })}`),
   getWork: (id: number) => apiRequest<WorkDetail>(`/api/works/${id}`),
   getPerson: (id: number) => apiRequest<PersonProfile>(`/api/persons/${id}`),
