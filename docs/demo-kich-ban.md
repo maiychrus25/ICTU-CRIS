@@ -1,6 +1,9 @@
 # Kịch bản trình diễn — chung kết 10/10/2026
 
-Thời lượng mục tiêu: **9–12 phút** trình diễn sống + phần hỏi đáp riêng (mục cuối). Chạy
+Thời lượng mục tiêu: **9–12 phút** cho bảy phân đoạn lõi (1–7), cộng tối đa **3 phút** cho
+năm phân đoạn bổ sung lát cắt J/K (8–12, bản đồ tri thức/tìm chuyên gia/cổng sinh
+viên/trích dẫn/cảnh báo bất thường) nếu chương trình còn thời gian — cắt bớt đoạn 8–12 đầu
+tiên khi phải rút ngắn, không cắt đoạn 1–7. Cộng phần hỏi đáp riêng (mục cuối). Chạy
 trên container đã dựng (`docker compose up`), dữ liệu thật đồng bộ từ
 `repository.ictu.edu.vn` (7.618 công trình, 410 giảng viên, 903 liên kết chờ xác nhận, 39
 nhóm nghi trùng, khoá 21: 529 đồ án đã rà, 47 gắn cờ). Ảnh tham chiếu: `docs/images/*.png`
@@ -283,6 +286,101 @@ trả về Nháp, lý do "Thiếu minh chứng trang bìa tạp chí".
 
 ---
 
+## 8. Bản đồ tri thức & xu hướng (60 giây)
+
+**URL**: `/ban-do/`
+
+**Thao tác**:
+1. Mở `/ban-do/` — canvas hiện 7.618 điểm, tô màu mặc định theo chủ đề; đổi tiêu chí tô
+   màu sang "Đơn vị" hoặc "Năm" bằng ô chọn phía trên.
+2. Zoom/pan bằng chuột hoặc chạm, hover một điểm để hiện tiêu đề công trình, click một
+   điểm để mở chi tiết công trình đó.
+3. Chuyển tab "Xu hướng" — chọn một cụm chủ đề lớn, chỉ vào biểu đồ vùng xếp chồng theo
+   khoá/năm.
+4. Chuyển tab "Đồng tác giả" — chỉ vào một nút lớn (nhiều công trình chung), bấm ra hồ sơ
+   giảng viên.
+
+**Câu nói then chốt**:
+> "Đây không phải một phép đo chính xác — chỉ 2 trên 384 chiều của vector ngữ nghĩa gốc,
+> dùng để định hướng vùng nào gần vùng nào, không phải để kết luận hai công trình giống
+> nhau bao nhiêu phần trăm."
+
+**Con số thật**: 7.618 điểm, 39 cụm chủ đề, dựng trong 9,7 giây (`python -m cris ai map`);
+`GET /api/ai/map` trả JSON khoảng 1,5 MB.
+
+---
+
+## 9. Tìm chuyên gia (45 giây)
+
+**URL**: `/doi-chieu/chuyen-gia/` (tab thứ ba của "Đối chiếu đề tài")
+
+**Thao tác**:
+1. Nhập một đề tài mẫu, lọc học vị (ví dụ "TS" trở lên) nếu cần, bấm tìm.
+2. Chỉ vào một thẻ giảng viên: thanh điểm, số công trình liên quan, 3 dẫn chứng kèm điểm.
+3. Đọc dòng nhắc cuối kết quả: "gợi ý trên tóm tắt, người quyết".
+
+**Câu nói then chốt**:
+> "Đo trên 30 đồ án có GVHD thật — che tên người hướng dẫn rồi hỏi lại: đúng ngay vị trí
+> đầu 23,3% số ca, nằm trong 5 gợi ý đầu 46,7%. Nghĩa là hơn một nửa số ca, người hướng dẫn
+> thật **không** nằm trong top-5 — đây không phải AI đoán đúng người hướng dẫn, chỉ là suy
+> luận từ tương đồng đề tài với công trình đã liên kết, dùng để thu hẹp danh sách liên hệ,
+> không thay cho tìm hiểu thực tế."
+
+**Con số thật**: top-1 7/30 (23,3%), top-5 14/30 (46,7%) (`scripts/eval_experts.py`,
+`docs/ai.md` mục 8); thời gian trung bình mỗi lượt tìm 3,94 giây.
+
+---
+
+## 10. Cổng kiểm tra đề tài (30 giây)
+
+**URL**: `/kiem-tra-de-tai/` — mở ở một tab ẩn danh mới để cho thấy không cần tài khoản.
+
+**Thao tác**:
+1. Vào thẳng `/kiem-tra-de-tai/` — không sidebar, không nút đăng nhập, một ô nhập lớn.
+2. Nhập một đề tài dự kiến, bấm kiểm tra.
+3. Chỉ vào hai khối kết quả: "Đề tài tương tự các khoá trước" (mức cao/vừa/thấp) và "Giảng
+   viên gần chuyên môn" — chỉ rõ không có email hay số điện thoại nào hiện trong kết quả.
+
+**Câu nói then chốt**:
+> "Sinh viên tự vào trước khi đăng ký chính thức, không cần tài khoản, không lưu lại lượt
+> tra cứu nào — chỉ giới hạn 20 lượt mỗi 5 phút theo địa chỉ IP để tránh dùng quá tải."
+
+---
+
+## 11. Trích dẫn & lý lịch khoa học (20 giây)
+
+**URL**: `/cong-trinh/?id=` rồi `/giang-vien/ly-lich/?id=`
+
+**Thao tác**:
+1. Ở chi tiết công trình, bấm nút "Trích dẫn" — hộp thoại ba tab APA/IEEE/BibTeX, bấm sao
+   chép một kiểu.
+2. Từ hồ sơ giảng viên, bấm "Lý lịch khoa học" — trang in được (A4), bấm nút In/PDF để
+   minh hoạ `window.print()`.
+
+**Câu nói then chốt**:
+> "Trích dẫn dựng thẳng từ metadata đã chuẩn hoá, không phải nhập tay; lý lịch khoa học tự
+> tổng hợp số liệu công bố theo loại/năm và danh sách công trình dạng APA, sẵn sàng nộp hồ
+> sơ xét duyệt."
+
+---
+
+## 12. Cảnh báo bất thường dữ liệu (20 giây)
+
+**URL**: `/chat-luong-du-lieu/` → tab "Cảnh báo"
+
+**Thao tác**:
+1. Chỉ vào bảng cảnh báo theo loại — dòng "Ghi Scopus/ISI nhưng không có DOI" đang mở
+   **64** cờ.
+2. Bấm "Bỏ qua" trên một dòng, nhập lý do, xác nhận — cờ chuyển trạng thái ngay, có ghi
+   nhật ký thao tác.
+
+**Câu nói then chốt**:
+> "Quét chỉ đọc dữ liệu, không tự sửa gì — 64 bài Scopus/WoS thiếu DOI, 2 luận văn trùng
+> tiêu đề với một bài báo, 1.697 bài báo chưa có tóm tắt là ba con số nổi nhất; chuyên viên
+> tự xem và bỏ qua kèm lý do nếu đã kiểm tra là không sao."
+
+---
+
 ## Câu hỏi giám khảo có thể hỏi & trả lời ngắn
 
 1. **Vì sao không dùng LLM (ChatGPT/Claude/Gemini) mà chỉ dùng mô hình embedding nhỏ?**
@@ -390,6 +488,24 @@ trả về Nháp, lý do "Thiếu minh chứng trang bìa tạp chí".
     dấu đã duyệt, nên không có tình huống khoa và phòng cùng giữ hai bản "đã duyệt" khác
     nhau của cùng một hồ sơ.
 
+16. **Tìm kiếm ngữ nghĩa khác gì Google?**
+    Google (và tìm từ khoá cũ của hệ thống) khớp chuỗi ký tự — gõ "ứng dụng học tiếng Anh"
+    sẽ bỏ lỡ một đồ án ghi "app luyện phát âm Anh ngữ" dù cùng đề tài. Tìm kiếm ngữ nghĩa
+    embed câu đã gõ thành vector 384 chiều rồi so cosine với vector tiêu đề+tóm tắt+từ khoá
+    của toàn kho — không cần trùng từ nào, xuyên được cả tiếng Việt–tiếng Anh. Đây không
+    phải một công cụ tìm kiếm web tổng quát: chỉ tìm trong 7.618 công trình đã có trong kho,
+    top-200 gần nghĩa nhất trước khi lọc tiếp (`docs/ai.md` mục 7) — không nhằm thay Google
+    cho tra cứu ngoài phạm vi kho.
+
+17. **Bản đồ PCA có tin được không?**
+    Tin được để *định hướng*, không tin được để *đo khoảng cách chính xác*. PCA chỉ giữ lại
+    2 trong 384 chiều của vector gốc (phần lớn "phương sai" — biến thiên dữ liệu — vẫn mất),
+    nên hai điểm gần nhau trên bản đồ **thường** cùng chủ đề nhưng không phải lúc nào cũng
+    đúng, và khoảng cách hình học trên canvas không phải một con số tương đồng có thể tin
+    tuyệt đối. Muốn so hai công trình cụ thể chính xác hơn, dùng đối chiếu đề tài hoặc tìm
+    kiếm ngữ nghĩa (so trên đủ 384 chiều) — bản đồ chỉ để nhìn toàn cảnh hướng nghiên cứu và
+    mạng lưới hợp tác, không phải công cụ đo lường (`docs/ai.md` mục 10).
+
 ---
 
 ## Chuẩn bị trước buổi demo
@@ -398,7 +514,7 @@ Checklist chạy theo thứ tự, trên máy sẽ dùng để trình diễn — 
 trước ngày 10/10, tốt nhất là ngắt mạng ở bước cuối để chắc chắn hệ thống chạy offline:
 
 - [ ] `docker compose up -d db` rồi `docker compose build app` — dựng xong không lỗi.
-- [ ] `docker compose run --rm app migrate` — áp đủ `0001`–`0010`.
+- [ ] `docker compose run --rm app migrate` — áp đủ `0001`–`0017`.
 - [ ] Có dữ liệu thật đã đồng bộ (đồng bộ trước, không đồng bộ trực tiếp lúc demo — mất
       khoảng 2 giờ); nếu dùng bản sao dữ liệu demo, đối chiếu số liệu trong kịch bản với
       số liệu bản sao trước khi trình diễn.
@@ -422,20 +538,28 @@ trước ngày 10/10, tốt nhất là ngắt mạng ở bước cuối để ch
 - [ ] `python -m cris normalize --redo --doc-type do_an` (vá lượt tên vai `mentor` giữ chỗ
       hồi tố cho đồ án đã đồng bộ trước lát cắt I4) rồi `python -m cris ai mentors` — xác
       nhận `suggested > 0` trước khi mở `/doi-soat/huong-dan/` cho phân đoạn 3 Phần B.
+- [ ] `python -m cris ai map` (cần `ai embed` + `ai topics` trước) — xác nhận in ra
+      `points=7618 topics=39`, rồi `GET /api/ai/map` trả `200` trước khi mở `/ban-do/` cho
+      phân đoạn 8.
+- [ ] `python -m cris quality scan` — xác nhận báo cáo có cờ mở (`scopus_no_doi` 64,
+      `thesis_title_equals_article` 2, `missing_abstract_article` 1.697) trước khi mở
+      `/chat-luong-du-lieu/` tab "Cảnh báo" cho phân đoạn 12.
 - [ ] Mở `/huong-dan/` — kiểm đủ ảnh cho bốn vai trò, để lại tab này cho giám khảo tự xem
       trong lúc chờ, không cần chờ người thuyết trình dẫn qua từng bước.
 - [ ] `python -m cris serve` (hoặc container `serve --host 0.0.0.0`) — mở
       `http://localhost:8000` và `http://localhost:8000/docs`, kiểm cả hai trả `200`.
-- [ ] Mở sẵn các tab trình duyệt theo đúng thứ tự bảy phân đoạn ở trên, để không mất thời
-      gian gõ URL giữa buổi trình diễn: `/tong-quan/`, `/tra-cuu/`, `/doi-soat/tac-gia/`,
+- [ ] Mở sẵn các tab trình duyệt theo đúng thứ tự mười hai phân đoạn ở trên, để không mất
+      thời gian gõ URL giữa buổi trình diễn: `/tong-quan/`, `/tra-cuu/`, `/doi-soat/tac-gia/`,
       `/doi-soat/huong-dan/`, `/doi-soat/trung-lap/`, `/doi-chieu/`, `/doi-chieu/ra-soat/`,
-      `/ky-bao-cao/chi-tiet/?id=1`, `/ke-khai/?id=`, `/huong-dan/`, `/ve/`, `/docs`.
+      `/ky-bao-cao/chi-tiet/?id=1`, `/ke-khai/?id=`, `/huong-dan/`, `/ve/`, `/docs`, `/ban-do/`,
+      `/doi-chieu/chuyen-gia/`, `/kiem-tra-de-tai/`, `/giang-vien/ly-lich/?id=`,
+      `/chat-luong-du-lieu/`.
   - [ ] Trước khi thao tác thật trên hàng đợi tác giả/nghi trùng (phân đoạn 3, 4), xác
       nhận đây là **bản sao DB dành cho demo**, hoặc đã đánh dấu trước các hàng "an toàn để
       đổi trạng thái" nếu bắt buộc dùng DB thật.
 - [ ] **Kiểm tra chạy offline**: tắt Wi-Fi/mạng, tải lại từng tab đã mở ở trên — mọi trang
       và mọi thao tác AI (đối chiếu, rà soát) vẫn chạy vì mô hình đã tải cục bộ và không
       gọi ra ngoài (`CRIS_AI_PROVIDER=local`, `docs/ai.md` §2, NFR-38).
-- [ ] Chuẩn bị một laptop dự phòng hoặc bản ghi màn hình (video) của toàn bộ bảy phân đoạn,
-      phòng khi mạng hội trường hoặc máy chiếu có sự cố — hệ thống không cần mạng để chạy,
-      nhưng vẫn nên có phương án dự phòng cho phần cứng.
+- [ ] Chuẩn bị một laptop dự phòng hoặc bản ghi màn hình (video) của toàn bộ mười hai phân
+      đoạn, phòng khi mạng hội trường hoặc máy chiếu có sự cố — hệ thống không cần mạng để
+      chạy, nhưng vẫn nên có phương án dự phòng cho phần cứng.

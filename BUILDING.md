@@ -338,6 +338,18 @@ gợi ý người hướng dẫn, hướng dẫn sử dụng trong ứng dụng)
 | `python -m cris normalize --redo --doc-type do_an` trên 5.375 đồ án thật | ~41,5 s, `{'created': 0, 'updated': 5375, 'skipped': 0}`, tạo đúng **4.621** lượt tên vai `mentor` giữ chỗ (khớp README "Ba số liệu") |
 | `python -m cris ai mentors` (mặc định `k=5, min_votes=2, min_score=0.70`) sau khi embed | ~12 s, `scanned=4621 suggested=1381` (**29,9%**) — chi tiết ngưỡng và ví dụ ở [docs/ai.md](docs/ai.md) mục 6 |
 
+Ngày 12/09/2026 (lát cắt J + K — tìm kiếm ngữ nghĩa, tìm chuyên gia, cổng công khai kiểm
+tra đề tài, bản đồ tri thức, trích dẫn, lý lịch khoa học, mới cập nhật + RSS, cảnh báo bất
+thường dữ liệu), cùng máy phát triển:
+
+| Việc | Kết quả |
+|---|---|
+| `pytest -q -m "not slow"` sau J1–J2, K1–K2 | **395 passed**, 3 skipped (`slow` cần mô hình) |
+| `python -m cris migrate` trên DB đã có `0001`–`0013` | áp thêm `0014_ai_query_kind.sql` (cột `kind` của `ai_query`), `0015_ai_map.sql` (bảng `ai_map`), `0016_person_rank.sql` (cột `person.rank`), `0017_quality_flag.sql` (bảng `quality_flag`) — tới `0017` |
+| Chuẩn bị dữ liệu AI đầy đủ trên DB thật (thứ tự bắt buộc — `ai map`/`quality scan` cần vector, cụm chủ đề và liên kết mentor đã có trước) | `python -m cris ai embed` → `python -m cris ai topics` → `python -m cris ai suggest` → `python -m cris ai screen --cohort 21` → `python -m cris normalize --redo --doc-type do_an` → `python -m cris ai mentors` → `python -m cris ai map` → `python -m cris quality scan` |
+| `python -m cris ai map` (7.618 công trình đã embed, 39 cụm chủ đề) | 7.618 điểm, 39 cụm, 9,7 s; `GET /api/ai/map` trả JSON ≈ 1,5 MB |
+| `python -m cris quality scan` (7.618 công trình, 400 giảng viên) | `scopus_no_doi` 64, `thesis_title_equals_article` 2, `missing_abstract_article` 1.697; `year_out_of_range`/`orcid_duplicate`/`doi_invalid` đều 0 |
+
 ## 10. Triển khai máy chủ thật (Production deploy)
 
 `deploy/setup.sh` ở trên là cài **một máy** bằng tay. Máy chủ thật

@@ -91,12 +91,12 @@ sẵn thành HTML/CSS/JS tĩnh (`next build`, `output: "export"`), FastAPI phụ
 bản xuất đó ở `/` cùng gốc với `/api/*`: **một ảnh Docker, một container, một
 cổng** cho cả API lẫn giao diện. **Tầng AI** (`cris/ai/`) cũng chỉ gọi vào tầng
 nghiệp vụ và chỉ ghi vào bảng `ai_*`. Lược đồ CSDL nằm ở `cris/migrations/0001`–
-`0013` (PostgreSQL 16, không ORM).
+`0017` (PostgreSQL 16, không ORM).
 
 | Thành phần | Công nghệ | Vai trò |
 |---|---|---|
 | Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3 | Không ORM — truy vấn SQL trực tiếp |
-| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0013` |
+| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0017` |
 | Đóng gói | sdist + wheel đính kèm mỗi Release (không gồm `frontend/`); ảnh `ghcr.io/maiychrus25/ictu-cris` là bản chạy đủ (`:<version>-ai` kèm thư viện AI) | Workflow `release.yml` kiểm phiên bản khớp tag; `docker.yml` đẩy ảnh theo semver |
 | Triển khai | `deploy/setup.sh` + `deploy/docker-compose.yml` | Một lệnh: DB, lược đồ, người dùng mặc định, giao diện; `--ai` tải mô hình |
 | API | FastAPI + `uvicorn` | Router `/api/*`, tài liệu OpenAPI tương tác ở `/docs` |
@@ -112,7 +112,8 @@ CLI thống nhất:
 python -m cris migrate|seed|sync [paths]|people|link|dedup|quality [--json]
 python -m cris normalize [--redo] [--doc-type do_an]               # --redo vá hồi tố work đã chuẩn hoá (I4)
 python -m cris serve [--host] [--port]
-python -m cris ai download|embed|topics|suggest|screen|mentors|status   # cần CRIS_AI_PROVIDER=local
+python -m cris ai download|embed|topics|suggest|screen|mentors|experts|map|status   # cần CRIS_AI_PROVIDER=local
+python -m cris quality scan                                        # cảnh báo bất thường dữ liệu (K2)
 python -m cris user set-password <email>|list                     # đăng nhập cục bộ (NFR-01)
 python -m cris user create --email --name --roles a,b [--unit CODE] [--password]
 python -m cris user set-unit --email --unit CODE
@@ -126,6 +127,12 @@ python -m cris user create-lecturers [--unit CODE] [--dry-run]     # tài khoả
   set-password`, khi đó `rd_officer` mới được quyết định.
 - **Chủ đề** (`/chu-de/`) — 40 cụm AI theo từ khoá, xem chi tiết từng cụm và
   tra cứu công trình theo cụm (drill-down).
+- **Bản đồ tri thức** (`/ban-do/`) — chiếu 2 chiều (PCA) toàn bộ vector ngữ
+  nghĩa lên canvas, tô màu theo chủ đề/đơn vị/năm/loại, zoom/pan, click ra chi
+  tiết công trình; tab **Xu hướng** (biểu đồ vùng xếp chồng chủ đề theo
+  khoá/năm) và tab **Đồng tác giả** (đồ thị giảng viên cùng đứng tên công
+  trình). Chỉ để định hướng — 2/384 chiều gốc, không dùng để so khoảng cách
+  tuyệt đối.
 - **Đồng bộ** (`/dong-bo/`) — lịch sử các lượt đồng bộ: thêm/đổi/mất.
 - **Kê khai vào kỳ báo cáo — duyệt hai cấp theo BA** — hồ sơ đi qua Nháp →
   Chờ khoa duyệt → Khoa đã duyệt → Chờ phòng kiểm tra → Đạt yêu cầu → Đã
@@ -147,6 +154,10 @@ python -m cris user create-lecturers [--unit CODE] [--dry-run]     # tài khoả
   (gõ không dấu vẫn ra kết quả đúng), chi tiết có xuất xứ từng trường, hồ sơ
   công bố giảng viên; lọc thêm theo chỉ mục/quartile/khoá/từ khoá riêng
   (`GET /api/works/facets` đếm số lượng từng giá trị).
+- **Tìm kiếm ngữ nghĩa** — công tắc "Theo từ khoá / Theo nghĩa (AI)" ngay
+  cạnh ô tra cứu, tìm công trình gần nghĩa với câu đã gõ dù không trùng từ,
+  giữ nguyên mọi bộ lọc khác; rơi về tìm từ khoá kèm giải thích khi AI chưa
+  bật, không bao giờ trả lỗi.
 - **Trích dẫn công trình** — APA 7, IEEE, BibTeX dựng từ metadata đã chuẩn
   hoá (tác giả theo vai trong `author_mention`; đồ án/luận văn/luận án ghi
   sinh viên là tác giả, GVHD là người hướng dẫn), tải trực tiếp tệp `.bib`.
@@ -176,8 +187,22 @@ python -m cris user create-lecturers [--unit CODE] [--dry-run]     # tài khoả
   số phiếu + tổng cosine kèm đồ án dẫn chứng; chuyên viên đưa ứng viên vào
   hàng đợi xác nhận (`ChoXacNhan`) — quyết định cuối vẫn ở hàng đợi tác giả
   (BR-18), không tự nối bao giờ.
-- **Chất lượng dữ liệu** (`/chat-luong-du-lieu/`) — báo cáo độ phủ liên kết,
-  cảnh báo dữ liệu thiếu/nghi vấn.
+- **Tìm chuyên gia / gợi ý phản biện** (tab thứ ba của "Đối chiếu đề tài",
+  `/doi-chieu/chuyen-gia/`) — nhập một đề tài, AI gợi ý giảng viên gần chuyên
+  môn nhất dựa trên công trình đã liên kết, kèm bằng chứng 3 công trình mỗi
+  người; lọc học vị/đơn vị, loại trừ người. Đo trên 30 đồ án có GVHD thật:
+  top-1 đúng 23,3%, top-5 chứa đúng người 46,7% — chỉ để thu hẹp danh sách
+  liên hệ, người quyết đọc bằng chứng rồi tự liên hệ.
+- **Cổng kiểm tra đề tài cho sinh viên** (`/kiem-tra-de-tai/`, **công khai,
+  không cần tài khoản**) — sinh viên tự nhập đề tài dự kiến trước khi đăng
+  ký, xem đề tài tương tự các khoá trước và giảng viên gần chuyên môn; giới
+  hạn 20 lượt/5 phút/IP, không lưu lại lượt tra cứu, không hiện email/điện
+  thoại giảng viên.
+- **Chất lượng dữ liệu** (`/chat-luong-du-lieu/`) — báo cáo độ phủ liên kết;
+  **cảnh báo bất thường dữ liệu** (`python -m cris quality scan`): Scopus/WoS
+  không có DOI, năm ngoài khoảng hợp lệ, luận văn/đồ án trùng tiêu đề với một
+  bài báo, hai giảng viên cùng ORCID, DOI sai định dạng, bài báo không có tóm
+  tắt — mỗi cờ bấm "Bỏ qua" kèm lý do bắt buộc, ghi nhật ký thao tác.
 - **Hướng dẫn sử dụng trong ứng dụng** (`/huong-dan/`) — mục lục theo vai
   trò (Phòng KH-CN / Khoa / Giảng viên / Lãnh đạo), mỗi mục kèm ảnh và thuật
   ngữ (xuất xứ, hàng đợi, nghi trùng, khía cạnh, chế độ mở), không cần đọc
@@ -277,6 +302,12 @@ trúc máy chủ, secrets GitHub cần tạo, quy trình phát hành và quay lu
       `ICTU_TEACHER`, hướng dẫn sử dụng trong ứng dụng, CI/CD triển khai máy
       chủ thật với sao lưu và quay lui (I) (xem
       [docs/release-notes/v0.4.0.md](docs/release-notes/v0.4.0.md))
+- [ ] **0.5.0 (lát cắt J + K) đang chốt** — tìm kiếm ngữ nghĩa, tìm chuyên
+      gia/gợi ý phản biện, cổng công khai kiểm tra đề tài cho sinh viên, bản
+      đồ tri thức (PCA) + xu hướng chủ đề + đồng tác giả (J); trích dẫn
+      APA/IEEE/BibTeX, lý lịch khoa học in được, mới cập nhật + RSS, cảnh báo
+      bất thường dữ liệu (K) — xem
+      [docs/release-notes/v0.5.0.md](docs/release-notes/v0.5.0.md)
 - [ ] Còn lại: SSO trường thật, biểu mẫu Bộ
 
 ## 📚 Tài liệu (Documentation)
@@ -286,7 +317,7 @@ trúc máy chủ, secrets GitHub cần tạo, quy trình phát hành và quay lu
 | 🎯 | [docs/BRD.md](docs/BRD.md) | Yêu cầu nghiệp vụ: 6 vấn đề đo được, YN-01..10, ràng buộc cuộc thi |
 | 📐 | [docs/SRS.md](docs/SRS.md) | Đặc tả phần mềm: FR theo giai đoạn, tích hợp AI, ma trận truy vết YN → FR → UC → US |
 | 🤖 | [docs/ai.md](docs/ai.md) | AI làm gì và không làm gì, ba nhà cung cấp, mô hình, thuật toán, giới hạn |
-| 🏷️ | [docs/release-notes/v0.4.0.md](docs/release-notes/v0.4.0.md) | Ghi chú phát hành bản hiện tại (cũ hơn: [v0.3.0](docs/release-notes/v0.3.0.md), [v0.2.0](docs/release-notes/v0.2.0.md), [v0.1.0](docs/release-notes/v0.1.0.md)) |
+| 🏷️ | [docs/release-notes/v0.5.0.md](docs/release-notes/v0.5.0.md) | Ghi chú phát hành bản đang chốt (cũ hơn: [v0.4.0](docs/release-notes/v0.4.0.md), [v0.3.0](docs/release-notes/v0.3.0.md), [v0.2.0](docs/release-notes/v0.2.0.md), [v0.1.0](docs/release-notes/v0.1.0.md)) |
 | 🛰️ | [docs/deploy-prod.md](docs/deploy-prod.md) | Triển khai máy chủ thật: kiến trúc, secrets, quy trình phát hành, quay lui |
 | 📋 | [docs/ba/00-README.md](docs/ba/00-README.md) | Bộ tài liệu phân tích nghiệp vụ (BA) — 18 tệp |
 | 🗄️ | [docs/ba/17-mo-hinh-du-lieu.md](docs/ba/17-mo-hinh-du-lieu.md) | Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 |
@@ -314,6 +345,14 @@ viên (tên, email, điện thoại, ngày sinh); tên tác giả trên fixture 
 là dữ liệu thư mục công khai (bibliographic data). Dữ liệu cá nhân thật
 (số điện thoại, ngày sinh giảng viên, ...) không bao giờ được đưa vào Git —
 đây là các cột bị hạn chế truy cập.
+
+Cổng công khai không cần đăng nhập (`/kiem-tra-de-tai/`, `/api/feed.xml`)
+không bao giờ trả email hay số điện thoại giảng viên — kết quả chuyên gia ở
+đó chỉ gồm tên, học vị, đơn vị, điểm gần chuyên môn (khác `/api/ai/experts`
+đầy đủ, chỉ dùng được sau khi đăng nhập).
+
+Dữ liệu lấy từ DSpace của Trường CNTT&TT – ĐH Thái Nguyên
+(`repository.ictu.edu.vn`), chỉ nhằm mục đích học tập.
 
 ## 📜 Giấy phép (License)
 
