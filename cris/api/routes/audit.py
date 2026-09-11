@@ -32,6 +32,7 @@ ACTION_LABELS = {
     "declaration.evidence": "Thêm minh chứng",
     "source_record.new_version": "Nguồn có phiên bản mới",
     "mention.orphaned": "Lượt tên mất nguồn",
+    "work.edit": "Chỉnh tay trường dữ liệu",
 }
 
 

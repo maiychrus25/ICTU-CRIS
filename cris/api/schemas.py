@@ -69,6 +69,18 @@ class WorkDetail(BaseModel):
     mentions: list[MentionRow]
 
 
+class FieldEditIn(BaseModel):
+    field: str
+    value: Any = None
+    reason: str | None = None      # tầng nghiệp vụ (cris.edit) từ chối nếu rỗng → 409
+
+
+class FieldEditOut(BaseModel):
+    field: str
+    old: Any
+    new: Any
+
+
 class PersonPublication(BaseModel):
     work_id: int
     title: str | None

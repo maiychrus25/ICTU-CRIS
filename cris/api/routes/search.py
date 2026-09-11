@@ -2,11 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tra cứu công trình, chi tiết có xuất xứ từng trường, hồ sơ giảng viên, trục chủ đề.
 SQL chuyển nguyên từ UI HTML cũ (đã gỡ, xem CHANGELOG)."""
-from fastapi import APIRouter, HTTPException, Query
+from typing import Annotated
 
-from cris.api.deps import Conn
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from cris import edit as edit_mod
+from cris import rules as RU
+from cris.api.deps import Conn, require_role
 from cris.api.schemas import (
     DOC_TYPE_LABELS,
+    FieldEditIn,
+    FieldEditOut,
     FieldRow,
     LastSync,
     MentionRow,
@@ -22,6 +28,7 @@ from cris.api.schemas import (
 )
 
 router = APIRouter(prefix="/api", tags=["tra-cuu"])
+RdOfficer = Annotated[int, Depends(require_role("rd_officer"))]
 
 PER_PAGE = 50
 FIELD_LABELS = [
@@ -61,7 +68,9 @@ def _works_query(q: str, doc_type: str, year: int | None, unit: str, topic: int 
     where, params = [], []
     if q.strip():
         like = f"%{q.strip()}%"
-        where.append("(w.title ILIKE %s OR m.raw_name ILIKE %s)"); params += [like, like]
+        norm_like = f"%{RU.strip_accents(q.strip()).lower()}%"
+        where.append("(w.title ILIKE %s OR m.raw_name ILIKE %s OR w.title_norm ILIKE %s)")
+        params += [like, like, norm_like]
     if doc_type:
         where.append("w.doc_type = %s"); params.append(doc_type)
     if year is not None:
@@ -144,6 +153,26 @@ def work_detail(conn: Conn, wid: int):
                       doc_type_label=DOC_TYPE_LABELS.get(w["doc_type"], w["doc_type"]), state=w["state"],
                       needs_review=bool(w["needs_review"]), has_manual=bool(w.get("has_manual")),
                       fields=fields, mentions=ms)
+
+
+@router.patch("/works/{wid}/fields", response_model=FieldEditOut)
+def edit_field(conn: Conn, actor: RdOfficer, wid: int, body: FieldEditIn):
+    """Chỉnh tay một trường của công trình (H2, BR-23: chỉ các trường trong
+    `cris.edit.EDITABLE` — không tác giả/đơn vị/minh chứng). 400 nếu trường
+    không cho sửa, 404 nếu không có công trình, 409 cho lỗi nghiệp vụ (lý do
+    trống, giá trị không hợp lệ, công trình đã gộp)."""
+    if body.field not in edit_mod.EDITABLE:
+        raise HTTPException(400, f"không cho phép chỉnh trường '{body.field}'; chỉ: "
+                                  f"{', '.join(edit_mod.EDITABLE)}")
+    with conn.cursor() as cur:
+        cur.execute("SELECT id FROM work WHERE id=%s", (wid,))
+        if cur.fetchone() is None:
+            raise HTTPException(404, f"không tìm thấy công trình #{wid}")
+    try:
+        result = edit_mod.set_field(conn, wid, body.field, body.value, actor, body.reason)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    return FieldEditOut(**result)
 
 
 @router.get("/persons/{pid}", response_model=PersonProfile)

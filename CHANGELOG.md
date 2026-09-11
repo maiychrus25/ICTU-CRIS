@@ -5,6 +5,29 @@
 
 ## [Unreleased]
 
+### Added
+
+- Chỉnh tay có xuất xứ (lát cắt H2, BR-23): `cris/edit.py` — `EDITABLE`
+  (`title`, `doi`, `year_issue`, `journal`, `volume`, `pub_type_raw`,
+  `cohort`, `abstract`, `keywords_raw`; **không** gồm tác giả/đơn vị/minh
+  chứng) và `set_field(conn, work_id, field, value, actor_id, reason)`: một
+  giao dịch, lý do bắt buộc, công trình phải còn sống (`merged_into_id IS
+  NULL`), `year_issue` ép int (rỗng → NULL), `title` cập nhật lại
+  `title_norm` (`rules.norm_title`), ghi `field_provenance(set_kind='manual',
+  set_by)` và `audit.log('work.edit')`.
+- `PATCH /api/works/{id}/fields` (vai trò `rd_officer`) body
+  `{field, value, reason}` → `{field, old, new}`; 400 nếu `field` ngoài
+  `EDITABLE` (kèm danh sách trường cho phép), 404 nếu không có công trình,
+  409 cho lỗi nghiệp vụ (`cris/api/routes/search.py`). `ACTION_LABELS` thêm
+  `work.edit` "Chỉnh tay trường dữ liệu".
+
+### Changed
+
+- Tìm kiếm công trình (`_works_query`, `GET /api/works`) khớp thêm
+  `w.title_norm ILIKE` với từ khoá đã bỏ dấu (`rules.strip_accents`), cạnh
+  hai điều kiện cũ (`w.title ILIKE`, `m.raw_name ILIKE`) — gõ không dấu vẫn
+  ra kết quả đúng.
+
 ## [0.3.0] - 2026-09-11
 
 ### Added
