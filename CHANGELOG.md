@@ -22,6 +22,23 @@
   `deploy/docker-compose.override.example.yml` (tệp thật đặc thù máy chủ,
   không commit). Tài liệu mới [docs/deploy-prod.md](docs/deploy-prod.md).
 
+- Minh chứng dạng tệp thật (lát cắt I2): `cris/declare.py` —
+  `sniff_content_type` nhận diện pdf/png/jpeg/docx qua chữ ký byte (không tin
+  phần mở rộng tên tệp gửi lên), `add_evidence_file` kiểm kích thước (tối đa
+  10 MB) và loại, băm SHA-256, ghi tệp vào `CRIS_DATA_DIR/evidence/<id
+  hồ sơ>/<sha256 rút gọn><đuôi>` (ghi tạm rồi `os.replace`), `get_evidence`
+  kiểm phạm vi đơn vị (NFR-02) khi tải về. Migration
+  `0011_evidence_file.sql` thêm `evidence.storage_path/size_bytes/sha256/
+  content_type/original_name`. API `POST /api/declarations/{id}/evidence/file`
+  (multipart, vai trò `rd_officer` như minh chứng dạng liên kết/ghi chú hiện
+  có) → 201, 413 nếu quá khổ, 415 nếu loại không hợp lệ; `GET
+  /api/evidence/{id}/file` trả `FileResponse` kèm `Content-Disposition`, cần
+  đăng nhập khi auth bật và 403 nếu khác đơn vị (cấp khoa), 404 nếu không có
+  minh chứng dạng tệp. Thêm phụ thuộc `python-multipart` (MIT) để FastAPI
+  phân tích `multipart/form-data`. `Dockerfile` tạo `/data`
+  (`ENV CRIS_DATA_DIR=/data`) — triển khai thật cần thêm volume `cris_data:/data`
+  vào `deploy/docker-compose.yml`.
+
 ### Fixed
 
 - `python -m cris ai download` nay tải vào `CRIS_AI_MODEL_DIR` (nếu đặt) như provider

@@ -25,6 +25,7 @@
 | `starlette` (kéo theo bởi `fastapi`) | theo `fastapi` | BSD-3-Clause | ASGI nền cho FastAPI: routing, middleware, `TestClient` |
 | `uvicorn` | `>=0.30,<1` | BSD-3-Clause | Máy chủ ASGI chạy bởi `python -m cris serve` |
 | `pydantic` | `>=2.7,<3` | MIT | Kiểu dữ liệu vào/ra của API (`cris/api/schemas.py`) |
+| `python-multipart` | `>=0.0.9,<1` | MIT | FastAPI phân tích `multipart/form-data` cho tải tệp minh chứng lên (`UploadFile`, `POST /api/declarations/{id}/evidence/file`) |
 
 Tầng nghiệp vụ (`cris/*.py` ngoài `cris/api/`) vẫn chỉ phụ thuộc `psycopg`; bốn
 thư viện web ở trên chỉ phục vụ lớp API JSON mỏng gọi vào tầng đó.

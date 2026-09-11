@@ -22,10 +22,26 @@ actor_id`); khác người tạo → `PermissionError` (`_assert_owner`). Khi ac
 thêm vai trò `faculty_officer`/`rd_officer` thì không bị ràng buộc sở hữu này
 (giữ hành vi rộng hơn của các vai trò đó).
 """
+import hashlib
+import io
+import os
+import pathlib
+import zipfile
+
 from cris import audit
 from cris.db import tx
 
 EVIDENCE_KINDS = ("link", "file", "note")
+
+# Minh chứng dạng tệp (I2): kích thước tối đa và loại nội dung nhận qua chữ ký
+# byte (không tin phần mở rộng tên tệp) — xem `sniff_content_type`.
+EVIDENCE_MAX_BYTES = 10 * 1024 * 1024
+EVIDENCE_TYPES = {
+    "application/pdf": ".pdf",
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+}
 
 # (from_state, to_state) hợp lệ kèm vai trò được phép và lý do có bắt buộc
 # không — đúng bảng chuyển trạng thái của lát cắt H1 (docs/ba/03-state.md).
@@ -260,6 +276,92 @@ def add_evidence(conn, declaration_id, *, kind, url=None, file_name=None, note=N
         audit.log(conn, actor_id, "declaration.evidence", "declaration", declaration_id,
                   after={"evidence_id": evidence_id, "kind": kind})
     return evidence_id
+
+
+def sniff_content_type(data: bytes) -> str | None:
+    """Nhận diện loại tệp qua chữ ký byte đầu — không tin phần mở rộng tên
+    tệp. `docx` là tệp zip (`PK\\x03\\x04`) có thư mục `word/` bên trong (kiểm
+    bằng `zipfile`, không chỉ nhìn 4 byte đầu vì `.xlsx`/`.pptx` cũng là zip).
+    Trả `None` nếu không khớp loại nào trong `EVIDENCE_TYPES`."""
+    if data.startswith(b"%PDF-"):
+        return "application/pdf"
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if data[:4] == b"PK\x03\x04":
+        try:
+            with zipfile.ZipFile(io.BytesIO(data)) as zf:
+                if any(n.startswith("word/") for n in zf.namelist()):
+                    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        except zipfile.BadZipFile:
+            return None
+    return None
+
+
+def add_evidence_file(conn, declaration_id, *, data: bytes, original_name, actor_id, actor_roles=None,
+                       actor_unit_id=None, note=None, data_dir=None):
+    """Thêm một minh chứng dạng tệp thật (I2). Kiểm quyền như `add_evidence`
+    (hồ sơ phải tồn tại — `ValueError` nếu không). Kiểm kích thước
+    (`EVIDENCE_MAX_BYTES`) và loại nội dung (`sniff_content_type`, chữ ký
+    byte — không tin tên/`Content-Type` tệp gửi lên) → `ValueError` nếu vượt
+    kích thước hoặc loại không thuộc `EVIDENCE_TYPES`.
+
+    Băm SHA-256 rồi ghi tệp vào `<data_dir hoặc biến môi trường
+    CRIS_DATA_DIR hoặc /data>/evidence/<declaration_id>/<16 ký tự đầu của
+    sha256><đuôi>` — ghi ra tệp tạm trong cùng thư mục rồi `os.replace` để
+    không bao giờ để lại tệp ghi dở. Chèn `evidence(kind='file', ...)` và ghi
+    `audit_log('declaration.evidence')` như `add_evidence`. Trả về id minh
+    chứng.
+    """
+    with conn.cursor() as cur:
+        _get_declaration(cur, declaration_id)
+
+    if len(data) > EVIDENCE_MAX_BYTES:
+        raise ValueError(f"tệp vượt quá kích thước cho phép {EVIDENCE_MAX_BYTES // (1024 * 1024)} MB")
+    content_type = sniff_content_type(data)
+    if content_type is None or content_type not in EVIDENCE_TYPES:
+        raise ValueError("loại tệp không hợp lệ; chỉ nhận pdf, png, jpg, jpeg, docx")
+
+    sha256 = hashlib.sha256(data).hexdigest()
+    digest = sha256[:16]
+    ext = EVIDENCE_TYPES[content_type]
+    base_dir = pathlib.Path(data_dir or os.environ.get("CRIS_DATA_DIR", "/data"))
+    dest_dir = base_dir / "evidence" / str(declaration_id)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest_path = dest_dir / f"{digest}{ext}"
+    tmp_path = dest_dir / f".{digest}{ext}.tmp"
+    tmp_path.write_bytes(data)
+    os.replace(tmp_path, dest_path)
+
+    with tx(conn), conn.cursor() as cur:
+        _get_declaration(cur, declaration_id, lock=True)
+        cur.execute(
+            "INSERT INTO evidence(declaration_id, kind, file_name, original_name, storage_path, "
+            "size_bytes, sha256, content_type, note, added_by) "
+            "VALUES (%s,'file',%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+            (declaration_id, original_name, original_name, str(dest_path), len(data), sha256, content_type,
+             note, actor_id))
+        evidence_id = cur.fetchone()["id"]
+        audit.log(conn, actor_id, "declaration.evidence", "declaration", declaration_id,
+                  after={"evidence_id": evidence_id, "kind": "file", "sha256": sha256, "size_bytes": len(data)})
+    return evidence_id
+
+
+def get_evidence(conn, evidence_id, *, actor_roles=None, actor_unit_id=None):
+    """Một minh chứng theo id, kiểm phạm vi đơn vị (NFR-02) của hồ sơ kê khai
+    chứa nó như các hàm khác của module — `PermissionError` nếu vai trò cấp
+    khoa khác đơn vị. Trả `None` nếu không có (tầng API map 404)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT e.*, d.unit_id AS declaration_unit_id FROM evidence e "
+            "JOIN declaration d ON d.id = e.declaration_id WHERE e.id=%s",
+            (evidence_id,))
+        row = cur.fetchone()
+    if row is None:
+        return None
+    _check_unit_scope(actor_roles, actor_unit_id, row["declaration_unit_id"])
+    return row
 
 
 def list_declarations(conn, period_id, unit_id=None, *, actor_roles=None, actor_unit_id=None):

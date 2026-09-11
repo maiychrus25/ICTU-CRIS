@@ -1,14 +1,19 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
-"""Kê khai công trình vào kỳ báo cáo (lát cắt K, G3, nâng cấp H1): lớp mỏng
+"""Kê khai công trình vào kỳ báo cáo (lát cắt K, G3, nâng cấp H1, I2): lớp mỏng
 gọi `cris.declare`. `ValueError` từ tầng nghiệp vụ (kỳ chưa mở, đã kê khai, sai
-bước chuyển trạng thái, thiếu lý do...) → 409; `PermissionError` (sai vai trò
-hoặc khác đơn vị, NFR-02/NFR-03) → 403; không tìm thấy kỳ/hồ sơ theo id trên
-đường dẫn → 404. Kê khai và chuyển trạng thái dùng `current_user` để tầng
-nghiệp vụ kiểm vai trò/đơn vị; thêm minh chứng vẫn cần vai trò `rd_officer`."""
+bước chuyển trạng thái, thiếu lý do...) → 409 (tệp minh chứng quá khổ/sai loại
+→ 413/415 riêng, xem `add_evidence_file`); `PermissionError` (sai vai trò
+hoặc khác đơn vị, NFR-02/NFR-03) → 403; không tìm thấy kỳ/hồ sơ/minh chứng
+theo id trên đường dẫn → 404. Kê khai và chuyển trạng thái dùng `current_user`
+để tầng nghiệp vụ kiểm vai trò/đơn vị; thêm minh chứng (kể cả tệp) vẫn cần vai
+trò `rd_officer`; tải tệp minh chứng về cần đăng nhập khi auth bật và kiểm
+phạm vi đơn vị (`cris.declare.get_evidence`)."""
 from typing import Annotated
+from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 
 from cris import declare
 from cris.api.deps import Conn, CurrentUser, require_role
@@ -21,6 +26,7 @@ from cris.api.schemas import (
     DeclarationList,
     DeclarationRow,
     DeclarationStateIn,
+    EvidenceFileOut,
     EvidenceOut,
 )
 
@@ -97,7 +103,8 @@ def declaration_detail(conn: Conn, did: int):
                                     actor_id=e["actor_id"], reason=e["reason"], at=e["at"])
                 for e in data["events"]],
         evidence=[EvidenceOut(id=e["id"], kind=e["kind"], url=e["url"], file_name=e["file_name"], note=e["note"],
-                              added_by=e["added_by"], added_at=e["added_at"])
+                              added_by=e["added_by"], added_at=e["added_at"], size_bytes=e.get("size_bytes"),
+                              sha256=e.get("sha256"), content_type=e.get("content_type"))
                   for e in data["evidence"]],
     )
 
@@ -128,3 +135,36 @@ def add_evidence(conn: Conn, actor: RdOfficer, did: int, body: DeclarationEviden
         row = cur.fetchone()
     return EvidenceOut(id=row["id"], kind=row["kind"], url=row["url"], file_name=row["file_name"],
                        note=row["note"], added_by=row["added_by"], added_at=row["added_at"])
+
+
+@router.post("/declarations/{did}/evidence/file", response_model=EvidenceFileOut, status_code=201)
+def add_evidence_file(conn: Conn, actor: RdOfficer, did: int, file: Annotated[UploadFile, File()],
+                      note: Annotated[str | None, Form()] = None):
+    _fetch_declaration(conn, did)
+    data = file.file.read()
+    try:
+        eid = declare.add_evidence_file(conn, did, data=data, original_name=file.filename or "minh-chung",
+                                        actor_id=actor, note=note)
+    except ValueError as exc:
+        msg = str(exc)
+        status = 413 if "kích thước" in msg else 415
+        raise HTTPException(status, msg) from exc
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM evidence WHERE id=%s", (eid,))
+        row = cur.fetchone()
+    return EvidenceFileOut(id=row["id"], file_name=row["file_name"], size_bytes=row["size_bytes"],
+                           sha256=row["sha256"], content_type=row["content_type"])
+
+
+@router.get("/evidence/{eid}/file")
+def get_evidence_file(conn: Conn, user: CurrentUser, eid: int):
+    try:
+        row = declare.get_evidence(conn, eid, actor_roles=user["roles"], actor_unit_id=user["unit_id"])
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    if row is None or not row.get("storage_path"):
+        raise HTTPException(404, f"không tìm thấy minh chứng dạng tệp #{eid}")
+    filename = row.get("file_name") or f"minh-chung-{eid}"
+    return FileResponse(
+        row["storage_path"], media_type=row["content_type"] or "application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"})

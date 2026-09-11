@@ -22,9 +22,10 @@ COPY cris ./cris
 # EXTRAS="[ai]" cài thêm onnxruntime/tokenizers/numpy; mặc định chỉ web + psycopg
 RUN pip install --no-cache-dir ".${EXTRAS}"
 COPY --from=ui /ui/out ./frontend/out
-RUN useradd --system --create-home --uid 10001 cris && mkdir -p /models && chown cris /models
+RUN useradd --system --create-home --uid 10001 cris && mkdir -p /models /data && chown cris /models /data
 USER cris
 ENV CRIS_AI_MODEL_DIR=/models
+ENV CRIS_DATA_DIR=/data
 EXPOSE 8000
 ENTRYPOINT ["python", "-m", "cris"]
 CMD ["serve", "--host", "0.0.0.0"]

@@ -495,6 +495,18 @@ class EvidenceOut(BaseModel):
     note: str | None = None
     added_by: int | None = None
     added_at: datetime
+    size_bytes: int | None = None
+    sha256: str | None = None
+    content_type: str | None = None
+
+
+# ---------- minh chứng dạng tệp (I2) ----------
+class EvidenceFileOut(BaseModel):
+    id: int
+    file_name: str | None = None
+    size_bytes: int
+    sha256: str
+    content_type: str
 
 
 class DeclarationEventOut(BaseModel):
