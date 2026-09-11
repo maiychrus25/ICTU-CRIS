@@ -4,7 +4,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ExternalLink, History, PenLine, UserRound } from "lucide-react";
+import { AlertTriangle, BookMarked, Copy, Download, ExternalLink, FileText, History, PenLine, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -19,10 +19,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { ApiError } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { getFieldValueLabel, labelSourceText, roleLabels } from "@/lib/labels";
-import { useEditWorkField, useOfficerAccess, useWork } from "@/lib/queries";
+import { useCitation, useEditWorkField, useOfficerAccess, useWork } from "@/lib/queries";
 import type { FieldRow } from "@/lib/types";
 
 const editableFields = new Set(["title", "doi", "year_issue", "journal", "volume", "pub_type_raw", "cohort", "abstract", "keywords_raw"]);
@@ -35,6 +36,24 @@ function WorkContent() {
   const edit = useEditWorkField(id ?? 0);
   const canEdit = useOfficerAccess();
   const [editing, setEditing] = useState<FieldRow | null>(null);
+  const [citationOpen, setCitationOpen] = useState(false);
+  const [citationStyle, setCitationStyle] = useState<"apa" | "ieee" | "bibtex">("apa");
+  const citation = useCitation(id ?? 0, citationStyle, citationOpen && id !== null);
+
+  async function copyCitation() {
+    if (!citation.data) return;
+    try { await navigator.clipboard.writeText(citation.data); toast.success("Đã sao chép trích dẫn."); }
+    catch { toast.error("Không thể sao chép. Hãy chọn và sao chép thủ công."); }
+  }
+
+  async function downloadBib() {
+    if (id === null) return;
+    try {
+      const text = citationStyle === "bibtex" && citation.data ? citation.data : await api.getCitation(id, "bibtex");
+      const url = URL.createObjectURL(new Blob([text], { type: "application/x-bibtex;charset=utf-8" }));
+      const link = document.createElement("a"); link.href = url; link.download = `ictu-cris-${id}.bib`; link.click(); URL.revokeObjectURL(url);
+    } catch (error) { toast.error(error instanceof ApiError ? error.detail : "Không thể tải tệp BibTeX."); }
+  }
 
   async function submitEdit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,7 +78,7 @@ function WorkContent() {
   return (
     <>
       <PageHeader title="Chi tiết công trình" description="Mỗi giá trị đều có thể truy ngược về nguồn hình thành." action={<div className="flex flex-wrap gap-2"><StatusBadge value={work.doc_type} kind="docType" /><StatusBadge value={work.state} /></div>} />
-      <div className="mb-7"><p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Mã công trình #{work.id}</p><div className="mt-2 flex flex-wrap items-center gap-2"><h2 className="max-w-4xl text-xl font-semibold leading-8">{work.title ?? "Chưa có tiêu đề"}</h2>{work.has_manual && <Badge variant="outline" className="border-primary/25 bg-primary/10 text-primary"><PenLine />Đã chỉnh tay</Badge>}</div>{work.needs_review && <Alert className="mt-4 border-status-warning/30 bg-status-warning/10 text-status-warning"><AlertTriangle /><AlertTitle>Cần đối soát</AlertTitle><AlertDescription>Bản ghi còn thông tin cần người dùng kiểm tra và quyết định.</AlertDescription></Alert>}</div>
+      <div className="mb-7"><p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Mã công trình #{work.id}</p><div className="mt-2 flex flex-wrap items-center gap-2"><h2 className="max-w-4xl text-xl font-semibold leading-8">{work.title ?? "Chưa có tiêu đề"}</h2>{work.has_manual && <Badge variant="outline" className="border-primary/25 bg-primary/10 text-primary"><PenLine />Đã chỉnh tay</Badge>}</div><div className="mt-3 flex flex-wrap gap-2">{work.pdf_url && <Button render={<a href={work.pdf_url} target="_blank" rel="noreferrer" />} variant="outline"><FileText />Mở PDF ở kho</Button>}<Button type="button" variant="outline" onClick={() => setCitationOpen(true)}><BookMarked />Trích dẫn</Button></div>{work.keywords?.length ? <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Từ khoá">{work.keywords.map((keyword) => <Link key={keyword} href={`/tra-cuu/?keyword=${encodeURIComponent(keyword)}`}><Badge variant="outline" className="font-normal hover:border-primary hover:text-primary">{keyword}</Badge></Link>)}</div> : null}{work.needs_review && <Alert className="mt-4 border-status-warning/30 bg-status-warning/10 text-status-warning"><AlertTriangle /><AlertTitle>Cần đối soát</AlertTitle><AlertDescription>Bản ghi còn thông tin cần người dùng kiểm tra và quyết định.</AlertDescription></Alert>}</div>
       {work.has_manual && <Link href="/nhat-ky/" className="mb-7 flex items-center justify-between rounded-lg border bg-card px-4 py-3 hover:bg-muted/50"><span><strong className="block text-sm">Lịch sử chỉnh sửa</strong><span className="text-xs text-muted-foreground">Bản ghi có giá trị do người dùng chỉnh sửa; mở nhật ký để đối chiếu.</span></span><History className="size-4 text-primary" /></Link>}
       <section className="mb-8" aria-labelledby="provenance-title">
         <div className="mb-3"><h2 id="provenance-title" className="text-base font-semibold">Xuất xứ dữ liệu</h2><p className="text-xs text-muted-foreground">So sánh giá trị đang sử dụng với dữ liệu gốc từ từng nguồn.</p></div>
@@ -71,6 +90,7 @@ function WorkContent() {
         {work.mentions.length ? <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Vị trí</TableHead><TableHead>Tên trong nguồn</TableHead><TableHead>Vai trò</TableHead><TableHead>Giảng viên liên kết</TableHead><TableHead>Trạng thái</TableHead><TableHead>Ứng viên chờ</TableHead></TableRow></TableHeader><TableBody>{work.mentions.map((mention) => <TableRow key={mention.mention_id}><TableCell className="tabular-nums">{mention.position}</TableCell><TableCell className="font-medium">{mention.raw_name}</TableCell><TableCell>{roleLabels[mention.role] ?? mention.role_label}</TableCell><TableCell>{mention.linked_person_id ? <Link href={`/giang-vien/?id=${mention.linked_person_id}`} className="inline-flex items-center gap-1.5 text-primary hover:underline"><UserRound className="size-3.5" />{mention.linked_person_name}</Link> : "Chưa liên kết"}</TableCell><TableCell>{mention.link_state ? <StatusBadge value={mention.link_state} /> : "—"}</TableCell><TableCell className="tabular-nums">{mention.pending_count}</TableCell></TableRow>)}</TableBody></Table></div> : <EmptyView description="Chưa có tác giả trong nguồn. Hãy kiểm tra lại bản ghi gốc." />}
       </section>
       <Dialog open={editing !== null} onOpenChange={(open) => { if (!open) setEditing(null); }}><DialogContent className="sm:max-w-xl"><form key={editing?.field} onSubmit={(event) => void submitEdit(event)}><DialogHeader><DialogTitle>Chỉnh {editing?.label.toLocaleLowerCase("vi")}</DialogTitle><DialogDescription>Giá trị mới sẽ được lưu cùng người chỉnh, thời điểm và lý do để bảo toàn xuất xứ.</DialogDescription></DialogHeader><div className="space-y-4 py-4"><div><label htmlFor="field-current" className="mb-1.5 block font-medium">Giá trị hiện tại</label><Textarea id="field-current" value={editing?.value ?? ""} readOnly className="min-h-20 bg-muted" /></div><div><label htmlFor="field-new" className="mb-1.5 block font-medium">Giá trị mới <span className="text-status-danger">*</span></label>{editing && ["abstract", "keywords_raw"].includes(editing.field) ? <Textarea id="field-new" name="value" required defaultValue={editing.value ?? ""} className="min-h-28" /> : <Input id="field-new" name="value" required defaultValue={editing?.value ?? ""} inputMode={editing?.field === "year_issue" ? "numeric" : undefined} />}</div><div><label htmlFor="field-reason" className="mb-1.5 block font-medium">Lý do <span className="text-status-danger">*</span></label><Textarea id="field-reason" name="reason" required placeholder="Nêu nguồn đối chiếu hoặc lý do cần sửa…" /></div></div><DialogFooter><Button type="button" variant="outline" onClick={() => setEditing(null)}>Huỷ</Button><Button type="submit" disabled={!canEdit || edit.isPending}>Lưu chỉnh sửa</Button></DialogFooter></form></DialogContent></Dialog>
+      <Dialog open={citationOpen} onOpenChange={setCitationOpen}><DialogContent className="sm:max-w-2xl"><DialogHeader><DialogTitle>Trích dẫn công trình</DialogTitle><DialogDescription>Chọn định dạng phù hợp, sau đó sao chép hoặc tải BibTeX.</DialogDescription></DialogHeader><Tabs value={citationStyle} onValueChange={(value) => setCitationStyle(value as typeof citationStyle)}><TabsList><TabsTrigger value="apa">APA</TabsTrigger><TabsTrigger value="ieee">IEEE</TabsTrigger><TabsTrigger value="bibtex">BibTeX</TabsTrigger></TabsList></Tabs>{citation.isLoading ? <LoadingView label="Đang tạo trích dẫn…" /> : citation.isError ? <ErrorView error={citation.error} retry={() => citation.refetch()} /> : <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-md border bg-muted/50 p-4 text-sm leading-6">{citation.data}</pre>}<DialogFooter><Button type="button" variant="outline" onClick={() => void downloadBib()}><Download />Tải .bib</Button><Button type="button" onClick={() => void copyCitation()} disabled={!citation.data}><Copy />Sao chép</Button></DialogFooter></DialogContent></Dialog>
     </>
   );
 }

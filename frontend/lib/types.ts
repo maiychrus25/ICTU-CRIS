@@ -6,8 +6,9 @@ export interface PageInfo { page: number; per_page: number; total: number }
 export interface WorkSummary {
   id: number; title: string | null; doc_type: string; doc_type_label: string;
   year: number | null; doi: string | null; state: string; needs_review: boolean;
+  score?: number | null; keywords?: string[]; first_seen_at?: string; version?: number;
 }
-export interface WorkList { items: WorkSummary[]; page: PageInfo }
+export interface WorkList { items: WorkSummary[]; page: PageInfo; mode?: "keyword" | "semantic"; note?: string | null }
 export interface FieldRow { field: string; label: string; value: string | null; raw: string | null; source: string }
 export interface MentionRow {
   mention_id: number; role: string; role_label: string; position: number; raw_name: string;
@@ -17,6 +18,7 @@ export interface MentionRow {
 export interface WorkDetail {
   id: number; title: string | null; doc_type: string; doc_type_label: string; state: string;
   needs_review: boolean; has_manual: boolean; fields: FieldRow[]; mentions: MentionRow[];
+  pdf_url?: string | null; source_url?: string | null; keywords?: string[];
 }
 export interface FieldEditIn { field: string; value: unknown; reason: string }
 export interface FieldEditOut { field: string; old: unknown; new: unknown }
@@ -32,6 +34,7 @@ export interface PersonProfile {
   id: number; display_name: string; degree: string | null; email: string | null; orcid: string | null;
   by_type: Record<string, number>; by_year: Record<string, number>; publications: PersonPublication[];
   pending_count: number; last_sync: LastSync | null;
+  rank?: string | null; scholar_url?: string | null; citation_stats?: Record<string, number> | null;
 }
 export interface PersonSearchRow {
   id: number; display_name: string; degree: string | null; unit_code: string | null; kind: string; works: number;
@@ -199,4 +202,54 @@ export interface SyncRunDetail extends SyncRunSummary {
   triggered_by: number | null; records: SourceRecordRow[];
 }
 export interface HealthOut { status: "ok" }
-export interface WorkFilters { q?: string; doc_type?: string; year?: number; unit?: string; topic?: number; page?: number }
+export interface FacetOption { value: string; label: string; n: number }
+export interface WorkFacets {
+  pub_types: FacetOption[]; quartiles: FacetOption[]; cohorts: FacetOption[];
+  years: FacetOption[]; units: FacetOption[];
+}
+export interface WorkFilters {
+  q?: string; mode?: "keyword" | "semantic"; doc_type?: string; year?: number; unit?: string;
+  topic?: number; pub_type?: string; quartile?: string; cohort?: string; keyword?: string; page?: number;
+}
+export interface ExpertEvidence { work_id: number; title: string | null; doc_type: string; year: number | null; score: number }
+export interface ExpertResult {
+  person_id: number; display_name: string; degree: string | null; unit_code: string | null;
+  score: number; works_matched: number; evidence: ExpertEvidence[];
+}
+export interface ExpertIn {
+  title: string; description?: string; aspects?: Record<string, string>; k?: number;
+  exclude_person_ids?: number[]; min_degree?: "TS" | "ThS" | null; unit?: number; recent_years?: number;
+}
+export interface ExpertOut {
+  query_id: number; provider: string; fallback: boolean; note: string; results: ExpertResult[];
+}
+export interface PublicSimilar {
+  work_id: number; title: string | null; doc_type: string; cohort: string | null;
+  year: number | null; score: number; level: "cao" | "vua" | "thap";
+}
+export interface PublicExpert {
+  person_id: number; display_name: string; degree: string | null; unit_code: string | null; score: number;
+}
+export interface PublicTopicCheckIn { title: string; description?: string }
+export interface PublicTopicCheckOut { similar: PublicSimilar[]; experts: PublicExpert[]; note: string }
+export type MapColor = "topic" | "unit" | "year" | "doc_type";
+export interface MapPoint {
+  id: number; x: number; y: number; topic_id: number | null; unit_id: number | null;
+  year: number | null; doc_type: string; title: string | null;
+}
+export interface MapTopic { id: number; label: string; size: number; cx: number; cy: number }
+export interface MapOut { points: MapPoint[]; topics: MapTopic[]; built_at: string; method: "pca" }
+export interface TrendValue { key: string; count: number; share: number }
+export interface TrendSeries { topic_id: number | null; label: string; values: TrendValue[] }
+export interface TrendsOut { series: TrendSeries[]; keys: string[] }
+export interface CoauthorNode { person_id: number; display_name: string; unit_code: string | null; works: number }
+export interface CoauthorEdge { a: number; b: number; weight: number }
+export interface CoauthorsOut { nodes: CoauthorNode[]; edges: CoauthorEdge[] }
+export interface RecentOut { added: WorkSummary[]; changed: WorkSummary[]; run: LastSync }
+export interface QualityAnomaly {
+  id: number; kind: string; kind_label: string; work_id: number | null; title: string | null;
+  detail: Record<string, unknown> | string; severity: string; state: string;
+}
+export interface QualityAnomalyList { items: QualityAnomaly[]; page: PageInfo }
+export interface QualityAnomalyFilters { kind?: string; page?: number }
+export interface DismissAnomalyIn { reason: string }

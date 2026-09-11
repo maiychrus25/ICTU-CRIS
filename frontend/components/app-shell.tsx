@@ -5,7 +5,7 @@
 
 import {
   BarChart3, BookOpenCheck, CalendarRange, CircleHelp, CopyCheck, FilePenLine, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
-  RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRound, UserRoundCheck,
+  GraduationCap, Map, RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRound, UserRoundCheck,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -26,6 +26,7 @@ const navigation = [
   { href: "/ke-khai-cua-toi/", label: "Kê khai của tôi", icon: FilePenLine, lecturerOnly: true },
   { href: "/tra-cuu/", label: "Tra cứu", icon: Search },
   { href: "/chu-de/", label: "Chủ đề", icon: Tags },
+  { href: "/ban-do/", label: "Bản đồ tri thức", icon: Map },
   { href: "/doi-chieu/", label: "Đối chiếu đề tài", icon: Scale },
   { href: "/doi-soat/tac-gia/", label: "Hàng đợi tác giả", icon: UserRoundCheck },
   { href: "/doi-soat/trung-lap/", label: "Hàng đợi nghi trùng", icon: CopyCheck },
@@ -44,11 +45,13 @@ const routeTitles = [
   ["/chu-de/chi-tiet", "Chi tiết chủ đề"],
   ["/ky-bao-cao/chi-tiet", "Chi tiết kỳ báo cáo"],
   ["/doi-chieu/ra-soat", "Rà soát theo khoá"],
+  ["/doi-chieu/chuyen-gia", "Tìm chuyên gia"],
   ["/doi-soat/trung-lap/chi-tiet", "Chi tiết nhóm nghi trùng"],
   ["/doi-soat/huong-dan", "Gợi ý người hướng dẫn"],
   ["/doi-soat/trung-lap", "Hàng đợi nghi trùng"],
   ["/doi-soat/tac-gia", "Hàng đợi tác giả"],
   ["/chat-luong-du-lieu", "Chất lượng dữ liệu"],
+  ["/ban-do", "Bản đồ tri thức"],
   ["/dong-bo", "Đồng bộ"],
   ["/chu-de", "Chủ đề"],
   ["/ky-bao-cao", "Kỳ báo cáo"],
@@ -101,6 +104,10 @@ function ThemeToggle() {
   );
 }
 
+function PublicPortalLink({ compact = false }: { compact?: boolean }) {
+  return <Link href="/kiem-tra-de-tai/" title={compact ? "Kiểm tra đề tài công khai" : undefined} className="mx-2 mb-2 flex h-10 items-center justify-center gap-2 rounded-lg border border-sidebar-border px-2 text-xs font-medium text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><GraduationCap className="size-4" />{!compact && "Kiểm tra đề tài công khai"}</Link>;
+}
+
 function Account({ compact = false }: { compact?: boolean }) {
   const me = useMe();
   const logout = useLogout();
@@ -131,12 +138,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const title = routeTitles.find(([route]) => pathname.startsWith(route))?.[1] ?? "ICTU-CRIS";
 
+  if (pathname.startsWith("/kiem-tra-de-tai")) return <>{children}</>;
+
   return (
     <div className="min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
         <div className="lg:hidden"><Brand compact /></div><div className="hidden lg:block"><Brand /></div>
         <div className="border-t border-sidebar-border lg:hidden"><Navigation compact /></div><div className="hidden border-t border-sidebar-border lg:block"><Navigation /></div>
-        <div className="mt-auto lg:hidden"><Account compact /></div><div className="mt-auto hidden lg:block"><Account /></div>
+        <div className="mt-auto lg:hidden"><PublicPortalLink compact /><Account compact /></div><div className="mt-auto hidden lg:block"><PublicPortalLink /><Account /></div>
       </aside>
 
       <div className="lg:pl-60">
@@ -145,7 +154,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <SheetTrigger render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label="Mở điều hướng" />}><Menu /></SheetTrigger>
             <SheetContent side="left" className="flex w-72 flex-col bg-sidebar p-0">
               <SheetHeader className="sr-only"><SheetTitle>Điều hướng</SheetTitle><SheetDescription>Các khu vực của hệ thống</SheetDescription></SheetHeader>
-              <Brand /><div className="flex-1 overflow-y-auto border-t border-sidebar-border"><Navigation /></div><Account />
+              <Brand /><div className="flex-1 overflow-y-auto border-t border-sidebar-border"><Navigation /></div><PublicPortalLink /><Account />
             </SheetContent>
           </Sheet>
           <div className="min-w-0 flex-1">

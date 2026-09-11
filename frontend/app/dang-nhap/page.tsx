@@ -4,7 +4,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleHelp, LogIn, ShieldCheck } from "lucide-react";
+import { CircleHelp, GraduationCap, LogIn, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -52,7 +52,7 @@ function LoginContent() {
           <Button type="submit" className="w-full" disabled={login.isPending}><LogIn />{login.isPending ? "Đang đăng nhập…" : "Đăng nhập"}</Button>
         </form>
       </div>
-      <p className="mx-auto mt-4 max-w-md text-center text-sm text-muted-foreground"><Link href="/huong-dan/" className="inline-flex items-center gap-1.5 font-medium text-primary underline-offset-4 hover:underline"><CircleHelp className="size-4" />Xem hướng dẫn sử dụng</Link></p>
+      <div className="mx-auto mt-4 flex max-w-md flex-col items-center gap-2 text-center text-sm"><Link href="/kiem-tra-de-tai/" className="inline-flex items-center gap-1.5 font-medium text-primary underline-offset-4 hover:underline"><GraduationCap className="size-4" />Sinh viên: kiểm tra đề tài không cần tài khoản</Link><Link href="/huong-dan/" className="inline-flex items-center gap-1.5 text-muted-foreground underline-offset-4 hover:underline"><CircleHelp className="size-4" />Xem hướng dẫn sử dụng</Link></div>
     </>
   );
 }

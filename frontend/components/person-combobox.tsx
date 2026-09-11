@@ -9,8 +9,9 @@ import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePersonSearch } from "@/lib/queries";
+import type { PersonSearchRow } from "@/lib/types";
 
-export function PersonCombobox({ id, onValueChange }: { id?: string; onValueChange: (id: number | null) => void }) {
+export function PersonCombobox({ id, onValueChange, onSelect }: { id?: string; onValueChange: (id: number | null) => void; onSelect?: (person: PersonSearchRow) => void }) {
   const generatedId = useId();
   const listId = useId();
   const inputId = id ?? generatedId;
@@ -47,7 +48,7 @@ export function PersonCombobox({ id, onValueChange }: { id?: string; onValueChan
           {people.isFetching ? <p className="px-3 py-2 text-sm text-muted-foreground">Đang tìm người…</p>
             : people.isError ? <div className="flex items-center justify-between gap-2 px-3 py-2 text-sm text-destructive"><span>Không thể tìm người.</span><Button type="button" variant="ghost" size="sm" onMouseDown={(event) => event.preventDefault()} onClick={() => people.refetch()}>Thử lại</Button></div>
             : people.data?.length ? people.data.map((person) => (
-              <button key={person.id} type="button" role="option" aria-selected="false" className="block w-full rounded-md px-3 py-2 text-left hover:bg-accent focus:bg-accent focus:outline-none" onMouseDown={(event) => event.preventDefault()} onClick={() => { setText(person.display_name); onValueChange(person.id); setOpen(false); }}>
+              <button key={person.id} type="button" role="option" aria-selected="false" className="block w-full rounded-md px-3 py-2 text-left hover:bg-accent focus:bg-accent focus:outline-none" onMouseDown={(event) => event.preventDefault()} onClick={() => { setText(person.display_name); onValueChange(person.id); onSelect?.(person); setOpen(false); }}>
                 <span className="block font-medium">{person.display_name}</span>
                 <span className="block text-xs text-muted-foreground">{[person.degree, person.unit_code, `${person.works} công trình`].filter(Boolean).join(" · ")}</span>
               </button>

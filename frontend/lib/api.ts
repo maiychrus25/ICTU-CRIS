@@ -3,7 +3,9 @@
 
 import {
   aboutFixture, auditFixture, authorQueueFixture, compareFixture, declarationDetailsFixture, declarationsFixture,
-  duplicateDetailFixture, duplicateGroupsFixture, healthFixture, mentorFixture, periodProgressFixture, periodsFixture, personFixture, qualityFixture, statsFixture,
+  anomaliesFixture, citationsFixture, coauthorsFixture, duplicateDetailFixture, duplicateGroupsFixture, expertsFixture,
+  facetsFixture, healthFixture, mapFixture, mentorFixture, periodProgressFixture, periodsFixture, personFixture,
+  publicTopicFixture, qualityFixture, recentFixture, statsFixture, trendsFixture,
   lecturerMeFixture, meFixture, myDeclarationsFixture, myWorksFixture, personsFixture, screenCohortsFixture, screenFixture, syncRunDetailsFixture, syncRunsFixture,
   topicDetailsFixture, topicsFixture, workDetailsFixture, workItems, worksFixture,
 } from "@/lib/fixtures";
@@ -12,8 +14,9 @@ import type {
   DeclarationDetail, DeclarationEvidenceIn, DeclarationList, DeclarationRow, DeclarationStateIn,
   AcceptMentorResult, DecideAuthorsIn, DecideDupIn, DecideResult, DupGroupDetail, DupGroupList, EvidenceFileOut, EvidenceOut, HealthOut, MentorFilters, MentorList, PeriodOpenIn, PeriodOut, PeriodProgress,
   FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, MyDeclarationCreateIn, MyWorkList, PeriodFinalizeOut, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
-  UserOut,
-  WorkDetail, WorkFilters, WorkList,
+  CoauthorsOut, DismissAnomalyIn, ExpertIn, ExpertOut, MapColor, MapOut, PublicTopicCheckIn,
+  PublicTopicCheckOut, QualityAnomalyFilters, QualityAnomalyList, RecentOut, TrendsOut, UserOut,
+  WorkDetail, WorkFacets, WorkFilters, WorkList,
   ScreenCohortSummary, ScreenFilters, ScreenList,
 } from "@/lib/types";
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
@@ -62,14 +65,20 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     mockUser = null;
     data = { ok: true };
   }
+  else if (url.pathname === "/api/works/facets") data = facetsFixture;
   else if (url.pathname === "/api/works") {
     const q = url.searchParams.get("q")?.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "") ?? "";
     const docType = url.searchParams.get("doc_type");
     const year = url.searchParams.get("year");
     const topic = Number(url.searchParams.get("topic")) || null;
+    const mode = url.searchParams.get("mode") === "semantic" ? "semantic" : "keyword";
+    const pubType = url.searchParams.get("pub_type");
+    const quartile = url.searchParams.get("quartile");
+    const cohort = url.searchParams.get("cohort");
+    const keyword = url.searchParams.get("keyword")?.toLocaleLowerCase("vi");
     const topicWorkIds = topic ? new Set(topicDetailsFixture[topic]?.works.map((work) => work.id) ?? []) : null;
-    const items = mockWorks.items.filter((work) => (!q || work.title?.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)) && (!docType || work.doc_type === docType) && (!year || work.year === Number(year)) && (!topicWorkIds || topicWorkIds.has(work.id)));
-    data = { items, page: { ...mockWorks.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
+    const items = mockWorks.items.filter((work) => (mode === "semantic" || !q || work.title?.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)) && (!docType || work.doc_type === docType) && (!year || work.year === Number(year)) && (!topicWorkIds || topicWorkIds.has(work.id)) && (!pubType || pubType === "journal_intl") && (!quartile || quartile === "Q1") && (!cohort || work.doc_type === "do_an") && (!keyword || work.keywords?.some((item) => item.toLocaleLowerCase("vi").includes(keyword))));
+    data = { items, mode, note: mode === "semantic" ? "Tìm theo nghĩa (AI): kết quả có thể không chứa từ đã gõ." : null, page: { ...mockWorks.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
   } else if (/^\/api\/works\/\d+\/fields$/.test(url.pathname) && init?.method === "PATCH") {
     const workId = Number(url.pathname.split("/").at(-2));
     const work = mockWorkDetails[workId];
@@ -97,6 +106,9 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
       }
       data = { field: body.field, old, new: value } satisfies FieldEditOut;
     }
+  } else if (/^\/api\/works\/\d+\/citation$/.test(url.pathname)) {
+    const style = url.searchParams.get("style") as keyof typeof citationsFixture;
+    data = citationsFixture[style] ?? citationsFixture.apa;
   } else if (/^\/api\/works\/\d+$/.test(url.pathname)) data = mockWorkDetails[id];
   else if (/^\/api\/persons\/\d+$/.test(url.pathname)) data = id === personFixture.id ? personFixture : undefined;
   else if (url.pathname === "/api/persons") {
@@ -121,6 +133,15 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   else if (/^\/api\/queue\/duplicates\/\d+\/decide$/.test(url.pathname)) data = { ok: true, processed: [Number(url.pathname.split("/").at(-2))] };
   else if (url.pathname === "/api/compare" && init?.method === "POST") data = { ...compareFixture, query_id: Date.now(), input: JSON.parse(String(init.body)) };
   else if (/^\/api\/compare\/\d+$/.test(url.pathname)) data = { ...compareFixture, query_id: id };
+  else if (url.pathname === "/api/ai/experts" && init?.method === "POST") data = { ...expertsFixture, query_id: Date.now() };
+  else if (/^\/api\/ai\/experts\/\d+$/.test(url.pathname)) data = { ...expertsFixture, query_id: id };
+  else if (url.pathname === "/api/public/check-topic") data = publicTopicFixture;
+  else if (url.pathname === "/api/ai/map") data = mapFixture;
+  else if (url.pathname === "/api/ai/trends") {
+    const by = url.searchParams.get("by");
+    data = by === "cohort" ? { ...trendsFixture, keys: ["K18", "K19", "K20", "K21"], series: trendsFixture.series.map((series) => ({ ...series, values: series.values.slice(0, 4).map((value, index) => ({ ...value, key: `K${18 + index}` })) })) } : trendsFixture;
+  }
+  else if (url.pathname === "/api/ai/coauthors") data = coauthorsFixture;
   else if (url.pathname === "/api/ai/screen/cohorts") data = screenCohortsFixture;
   else if (url.pathname === "/api/ai/screen") {
     const cohort = url.searchParams.get("cohort");
@@ -154,6 +175,11 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     data = { ok: true, link_id: linkId, person_id: personId, state: "ChoXacNhan" } satisfies AcceptMentorResult;
   }
   else if (url.pathname === "/api/quality") data = qualityFixture;
+  else if (url.pathname === "/api/quality/anomalies") data = { ...anomaliesFixture, page: { ...anomaliesFixture.page, page: Number(url.searchParams.get("page") ?? 1) } };
+  else if (/^\/api\/quality\/anomalies\/\d+\/dismiss$/.test(url.pathname)) data = { ok: true };
+  else if (url.pathname === "/api/recent") data = recentFixture;
+  else if (/^\/api\/persons\/\d+\/cv$/.test(url.pathname)) data = "<!doctype html><html lang=\"vi\"><body><h1>Lý lịch khoa học</h1></body></html>";
+  else if (url.pathname === "/api/feed.xml") data = "<?xml version=\"1.0\"?><rss version=\"2.0\"><channel><title>ICTU-CRIS</title></channel></rss>";
   else if (url.pathname === "/api/about") data = aboutFixture;
   else if (url.pathname === "/api/stats") data = statsFixture;
   else if (url.pathname === "/api/audit") {
@@ -381,6 +407,16 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   return response.json() as Promise<T>;
 }
 
+export async function apiTextRequest(path: string, init?: RequestInit): Promise<string> {
+  if (MOCK) return mockRequest<string>(path, init);
+  const response = await fetch(`${API_BASE}${path}`, { ...init, credentials: "include" });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new ApiError(response.status, typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail ?? response.statusText));
+  }
+  return response.text();
+}
+
 export async function apiUpload<T>(path: string, body: FormData): Promise<T> {
   if (MOCK) return mockRequest<T>(path, { method: "POST", body });
   const response = await fetch(`${API_BASE}${path}`, { method: "POST", body, credentials: "include" });
@@ -397,8 +433,10 @@ export const api = {
   getMe: () => apiRequest<MeOut>("/api/auth/me"),
   login: (input: LoginIn) => apiRequest<UserOut>("/api/auth/login", { method: "POST", body: JSON.stringify(input) }),
   logout: () => apiRequest<LogoutOut>("/api/auth/logout", { method: "POST" }),
-  getWorks: (filters: WorkFilters = {}) => apiRequest<WorkList>(`/api/works${queryString({ q: filters.q, doc_type: filters.doc_type, year: filters.year, unit: filters.unit, topic: filters.topic, page: filters.page })}`),
+  getWorks: (filters: WorkFilters = {}) => apiRequest<WorkList>(`/api/works${queryString({ q: filters.q, mode: filters.mode, doc_type: filters.doc_type, year: filters.year, unit: filters.unit, topic: filters.topic, pub_type: filters.pub_type, quartile: filters.quartile, cohort: filters.cohort, keyword: filters.keyword, page: filters.page })}`),
+  getWorkFacets: () => apiRequest<WorkFacets>("/api/works/facets"),
   getWork: (id: number) => apiRequest<WorkDetail>(`/api/works/${id}`),
+  getCitation: (id: number, style: "apa" | "ieee" | "bibtex") => apiTextRequest(`/api/works/${id}/citation${queryString({ style })}`),
   editWorkField: (id: number, input: FieldEditIn) => apiRequest<FieldEditOut>(`/api/works/${id}/fields`, { method: "PATCH", body: JSON.stringify(input) }),
   getPerson: (id: number) => apiRequest<PersonProfile>(`/api/persons/${id}`),
   searchPersons: (q: string, limit = 20) => apiRequest<PersonSearchRow[]>(`/api/persons${queryString({ q, limit })}`),
@@ -411,11 +449,22 @@ export const api = {
   decideDuplicate: (id: number, input: DecideDupIn) => apiRequest<DecideResult>(`/api/queue/duplicates/${id}/decide`, { method: "POST", body: JSON.stringify(input) }),
   compare: (input: CompareIn) => apiRequest<CompareOut>("/api/compare", { method: "POST", body: JSON.stringify(input) }),
   getComparison: (id: number) => apiRequest<CompareOut>(`/api/compare/${id}`),
+  findExperts: (input: ExpertIn) => apiRequest<ExpertOut>("/api/ai/experts", { method: "POST", body: JSON.stringify(input) }),
+  getExperts: (id: number) => apiRequest<ExpertOut>(`/api/ai/experts/${id}`),
+  checkPublicTopic: (input: PublicTopicCheckIn) => apiRequest<PublicTopicCheckOut>("/api/public/check-topic", { method: "POST", body: JSON.stringify(input) }),
+  getMap: (color: MapColor) => apiRequest<MapOut>(`/api/ai/map${queryString({ color })}`),
+  getTrends: (by: "cohort" | "year") => apiRequest<TrendsOut>(`/api/ai/trends${queryString({ by })}`),
+  getCoauthors: (minWorks = 2) => apiRequest<CoauthorsOut>(`/api/ai/coauthors${queryString({ min_works: minWorks })}`),
   getScreenCohorts: () => apiRequest<ScreenCohortSummary[]>("/api/ai/screen/cohorts"),
   getScreen: (filters: ScreenFilters = {}) => apiRequest<ScreenList>(`/api/ai/screen${queryString({ cohort: filters.cohort, min: filters.min, min_score: filters.min_score, page: filters.page })}`),
   getMentors: (filters: MentorFilters = {}) => apiRequest<MentorList>(`/api/ai/mentors${queryString({ unit: filters.unit, min_votes: filters.min_votes, page: filters.page })}`),
   acceptMentor: (workId: number, personId: number) => apiRequest<AcceptMentorResult>(`/api/ai/mentors/${workId}/accept`, { method: "POST", body: JSON.stringify({ person_id: personId }) }),
   getQuality: () => apiRequest<QualityOut>("/api/quality"),
+  getQualityAnomalies: (filters: QualityAnomalyFilters = {}) => apiRequest<QualityAnomalyList>(`/api/quality/anomalies${queryString({ kind: filters.kind, page: filters.page })}`),
+  dismissQualityAnomaly: (id: number, input: DismissAnomalyIn) => apiRequest<{ ok: boolean }>(`/api/quality/anomalies/${id}/dismiss`, { method: "POST", body: JSON.stringify(input) }),
+  getRecent: (limit = 20) => apiRequest<RecentOut>(`/api/recent${queryString({ limit })}`),
+  getPersonCv: (id: number) => apiTextRequest(`/api/persons/${id}/cv?format=html`),
+  getFeed: () => apiTextRequest("/api/feed.xml"),
   getAbout: () => apiRequest<AboutOut>("/api/about"),
   getStats: (years = 5) => apiRequest<StatsOut>(`/api/stats${queryString({ years })}`),
   getAudit: (filters: AuditFilters = {}) => apiRequest<AuditList>(`/api/audit${queryString({ entity: filters.entity, entity_id: filters.entity_id, actor: filters.actor, page: filters.page })}`),

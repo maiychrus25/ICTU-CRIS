@@ -3,8 +3,9 @@
 
 import type {
   AboutOut, AuditList, AuthorQueueList, CompareOut, DeclarationDetail, DeclarationRow, DupGroupDetail, DupGroupList, HealthOut, MeOut,
-  MentorList, MyWorkList, PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail,
-  SyncRunList, Topic, TopicDetail, WorkDetail, WorkList, WorkSummary, ScreenCohortSummary, ScreenList,
+  CoauthorsOut, ExpertOut, MentorList, MyWorkList, PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow,
+  PublicTopicCheckOut, QualityAnomalyList, QualityOut, RecentOut, StatsOut, SyncRunDetail, SyncRunList, Topic,
+  TopicDetail, TrendsOut, WorkDetail, WorkFacets, WorkList, WorkSummary, ScreenCohortSummary, ScreenList, MapOut,
 } from "@/lib/types";
 
 export const meFixture: MeOut = {
@@ -32,6 +33,11 @@ export const workItems: WorkSummary[] = [
   { id: 12, title: "Bảo đảm an toàn dữ liệu trong điện toán biên", doc_type: "luan_van", doc_type_label: "Luận văn", year: 2022, doi: null, state: "DaBacBo", needs_review: false },
 ];
 
+workItems.forEach((work, index) => {
+  work.keywords = index % 2 ? ["trí tuệ nhân tạo", "dữ liệu"] : ["hệ thống thông tin", "ứng dụng web"];
+  work.score = Number((0.93 - index * 0.045).toFixed(3));
+});
+
 export const worksFixture: WorkList = { items: workItems, page: { page: 1, per_page: 50, total: workItems.length } };
 
 export const myWorksFixture: MyWorkList = {
@@ -51,6 +57,9 @@ export const workDetailsFixture: Record<number, WorkDetail> = Object.fromEntries
   state: work.state,
   needs_review: work.needs_review,
   has_manual: false,
+  pdf_url: work.id % 2 ? `https://repository.ictu.edu.vn/works/${work.id}.pdf` : null,
+  source_url: `https://repository.ictu.edu.vn/works/${work.id}`,
+  keywords: work.keywords,
   fields: [
     { field: "title", label: "Tiêu đề", value: work.title, raw: work.id === 1 ? "XAY DUNG WEBSITE QUAN LY THU VIEN TRUONG THPT LUONG NGOC QUYEN" : work.title, source: work.id === 1 ? "Chuẩn hoá từ kho đồ án ICTU" : "Đồng bộ kho dữ liệu ICTU" },
     { field: "doc_type", label: "Loại tài liệu", value: work.doc_type_label, raw: work.doc_type, source: "Ánh xạ danh mục chuẩn" },
@@ -91,7 +100,7 @@ export const personFixture: PersonProfile = {
   orcid: "0000-0002-1825-0097", by_type: { bai_bao: 8, do_an: 14, hoc_lieu: 2 },
   by_year: { "2022": 3, "2023": 5, "2024": 7, "2025": 9 },
   publications: workItems.slice(0, 6).map((work) => ({ work_id: work.id, title: work.title, doc_type: work.doc_type, year: work.year, doi: work.doi, link_state: "DaXacNhan", confidence: "cao" })),
-  pending_count: 2,
+  pending_count: 2, rank: null, scholar_url: "https://scholar.google.com/", citation_stats: null,
   last_sync: { id: 18, source: "Kho dữ liệu ICTU", scope: "Hồ sơ giảng viên", status: "success", started_at: "2026-09-10T01:00:00Z", finished_at: "2026-09-10T01:04:12Z" },
 };
 
@@ -328,5 +337,87 @@ export const syncRunDetailsFixture: Record<number, SyncRunDetail> = Object.fromE
     { id: 902, source_key: "repository:cong-trinh:2", doc_type: "bai_bao", version: 2, fetched_at: run.finished_at },
   ],
 }])) as Record<number, SyncRunDetail>;
+
+export const facetsFixture: WorkFacets = {
+  pub_types: [{ value: "journal_intl", label: "Tạp chí quốc tế", n: 126 }, { value: "conference", label: "Hội thảo", n: 84 }],
+  quartiles: ["Q1", "Q2", "Q3", "Q4"].map((value, index) => ({ value, label: value, n: 42 - index * 7 })),
+  cohorts: ["21", "20", "19"].map((value, index) => ({ value, label: `Khoá ${value}`, n: 174 - index * 12 })),
+  years: [2025, 2024, 2023].map((value, index) => ({ value: String(value), label: String(value), n: 307 - index * 28 })),
+  units: statsFixture.by_unit.map((unit) => ({ value: String(unit.unit_id), label: `${unit.code} — ${unit.name}`, n: unit.works })),
+};
+
+export const citationsFixture = {
+  apa: "Nguyễn, V. A. (2025). Xây dựng website quản lý thư viện trường THPT Lương Ngọc Quyến. Đồ án tốt nghiệp, ICTU.",
+  ieee: "V. A. Nguyễn, “Xây dựng website quản lý thư viện trường THPT Lương Ngọc Quyến,” Đồ án tốt nghiệp, ICTU, 2025.",
+  bibtex: "@thesis{nguyen2025thuvien,\n  author = {Nguyễn Văn A},\n  title = {Xây dựng website quản lý thư viện trường THPT Lương Ngọc Quyến},\n  school = {ICTU},\n  year = {2025}\n}",
+};
+
+export const expertsFixture: ExpertOut = {
+  query_id: 701, provider: "sentence-transformers", fallback: false,
+  note: "Gợi ý được tính trên tiêu đề và tóm tắt công trình, không phải toàn văn; người dùng quyết định.",
+  results: personsFixture.map((person, index) => ({
+    person_id: person.id, display_name: person.display_name, degree: person.degree, unit_code: person.unit_code,
+    score: [3.84, 3.12, 2.46][index], works_matched: [7, 5, 4][index],
+    evidence: [0, 1, 2].map((offset) => {
+      const work = workItems[(index * 3 + offset) % workItems.length];
+      return { work_id: work.id, title: work.title, doc_type: work.doc_type, year: work.year, score: Number((0.94 - index * 0.07 - offset * 0.06).toFixed(2)) };
+    }),
+  })),
+};
+
+export const publicTopicFixture: PublicTopicCheckOut = {
+  similar: workItems.filter((work) => work.doc_type === "do_an").slice(0, 4).map((work, index) => ({
+    work_id: work.id, title: work.title, doc_type: work.doc_type, cohort: String(21 - index), year: work.year,
+    score: [0.81, 0.58, 0.39, 0.28][index], level: (["cao", "vua", "vua", "thap"] as const)[index],
+  })),
+  experts: expertsFixture.results.map((person) => ({ person_id: person.person_id, display_name: person.display_name, degree: person.degree, unit_code: person.unit_code, score: person.score })),
+  note: "AI cục bộ đối chiếu trên tiêu đề và tóm tắt, không phải toàn văn. Kết quả chỉ để tham khảo.",
+};
+
+const mapCenters = [[-0.48, -0.35], [0.42, -0.28], [-0.25, 0.5], [0.52, 0.42]] as const;
+export const mapFixture: MapOut = {
+  points: Array.from({ length: 96 }, (_, index) => {
+    const topicIndex = index % 4;
+    const angle = index * 2.399;
+    const radius = 0.04 + (index % 12) * 0.018;
+    const work = workItems[index % workItems.length];
+    return { id: work.id, x: mapCenters[topicIndex][0] + Math.cos(angle) * radius, y: mapCenters[topicIndex][1] + Math.sin(angle) * radius, topic_id: topicIndex + 1, unit_id: index % 3 + 1, year: work.year, doc_type: work.doc_type, title: work.title };
+  }),
+  topics: topicsFixture.map((topic, index) => ({ id: topic.id, label: topic.label, size: topic.size, cx: mapCenters[index][0], cy: mapCenters[index][1] })),
+  built_at: "2026-09-12T02:00:00Z", method: "pca",
+};
+
+export const trendsFixture: TrendsOut = {
+  keys: ["2021", "2022", "2023", "2024", "2025"],
+  series: topicsFixture.concat({ id: 0, label: "Khác", size: 12, keywords: [], built_at: null }).map((topic, topicIndex) => ({
+    topic_id: topic.id || null, label: topic.label,
+    values: ["2021", "2022", "2023", "2024", "2025"].map((key, keyIndex) => ({ key, count: 8 + topicIndex * 4 + keyIndex * (topicIndex + 2), share: Number((0.08 + topicIndex * 0.025 + keyIndex * 0.008).toFixed(3)) })),
+  })),
+};
+
+export const coauthorsFixture: CoauthorsOut = {
+  nodes: [
+    { person_id: 1, display_name: "TS. Nguyễn Văn A", unit_code: "CNTT", works: 42 },
+    { person_id: 2, display_name: "TS. Nguyễn Văn An", unit_code: "KHMT", works: 31 },
+    { person_id: 3, display_name: "ThS. Trần Thị Bình", unit_code: "HTTT", works: 24 },
+    { person_id: 4, display_name: "TS. Lê Văn Hoàng", unit_code: "CNTT", works: 18 },
+    { person_id: 5, display_name: "ThS. Phạm Minh Đức", unit_code: "KHMT", works: 14 },
+  ],
+  edges: [{ a: 1, b: 2, weight: 6 }, { a: 1, b: 4, weight: 4 }, { a: 2, b: 3, weight: 3 }, { a: 2, b: 5, weight: 2 }, { a: 3, b: 4, weight: 2 }],
+};
+
+export const recentFixture: RecentOut = {
+  added: workItems.slice(0, 3).map((work, index) => ({ ...work, first_seen_at: `2026-09-1${index}T02:00:00Z` })),
+  changed: workItems.slice(3, 5).map((work, index) => ({ ...work, version: index + 2 })),
+  run: statsFixture.last_sync!,
+};
+
+export const anomaliesFixture: QualityAnomalyList = {
+  items: [
+    { id: 801, kind: "doi_invalid", kind_label: "DOI không hợp lệ", work_id: 2, title: workItems[1].title, detail: "DOI không đúng định dạng chuẩn.", severity: "high", state: "open" },
+    { id: 802, kind: "missing_abstract_article", kind_label: "Bài báo thiếu tóm tắt", work_id: 6, title: workItems[5].title, detail: { field: "abstract" }, severity: "medium", state: "open" },
+  ],
+  page: { page: 1, per_page: 50, total: 2 },
+};
 
 export const healthFixture: HealthOut = { status: "ok" };

@@ -6,7 +6,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type {
   AuditFilters, CompareIn, DeclarationCreateIn, DeclarationEvidenceIn, DeclarationStateIn,
-  DecideAuthorsIn, DecideDupIn, FieldEditIn, LoginIn, MentorFilters, MyDeclarationCreateIn, PeriodOpenIn, ScreenFilters, WorkFilters,
+  DecideAuthorsIn, DecideDupIn, DismissAnomalyIn, ExpertIn, FieldEditIn, LoginIn, MapColor,
+  MentorFilters, MyDeclarationCreateIn, PeriodOpenIn, PublicTopicCheckIn, QualityAnomalyFilters,
+  ScreenFilters, WorkFilters,
 } from "@/lib/types";
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: api.getMe, staleTime: 60_000 });
@@ -18,7 +20,9 @@ export function useOfficerAccess() {
 }
 
 export const useWorks = (filters: WorkFilters, enabled = true) => useQuery({ queryKey: ["works", filters], queryFn: () => api.getWorks(filters), enabled });
+export const useWorkFacets = (enabled = true) => useQuery({ queryKey: ["work-facets"], queryFn: api.getWorkFacets, enabled });
 export const useWork = (id: number | null) => useQuery({ queryKey: ["work", id], queryFn: () => api.getWork(id!), enabled: id !== null });
+export const useCitation = (id: number, style: "apa" | "ieee" | "bibtex", enabled = true) => useQuery({ queryKey: ["citation", id, style], queryFn: () => api.getCitation(id, style), enabled });
 export const useEditWorkField = (id: number) => useMutation({ mutationFn: (input: FieldEditIn) => api.editWorkField(id, input) });
 export const usePerson = (id: number | null) => useQuery({ queryKey: ["person", id], queryFn: () => api.getPerson(id!), enabled: id !== null });
 export const usePersonSearch = (q: string) => useQuery({ queryKey: ["person-search", q], queryFn: () => api.searchPersons(q), enabled: q.length > 0 });
@@ -31,11 +35,22 @@ export const useDuplicateGroup = (id: number | null) => useQuery({ queryKey: ["d
 export const useDecideDuplicate = (id: number) => useMutation({ mutationFn: (input: DecideDupIn) => api.decideDuplicate(id, input) });
 export const useComparison = (id: number | null) => useQuery({ queryKey: ["comparison", id], queryFn: () => api.getComparison(id!), enabled: id !== null });
 export const useCreateComparison = () => useMutation({ mutationFn: (input: CompareIn) => api.compare(input) });
+export const useExperts = (id: number | null) => useQuery({ queryKey: ["experts", id], queryFn: () => api.getExperts(id!), enabled: id !== null });
+export const useFindExperts = () => useMutation({ mutationFn: (input: ExpertIn) => api.findExperts(input) });
+export const useCheckPublicTopic = () => useMutation({ mutationFn: (input: PublicTopicCheckIn) => api.checkPublicTopic(input) });
+export const useKnowledgeMap = (color: MapColor) => useQuery({ queryKey: ["knowledge-map", color], queryFn: () => api.getMap(color) });
+export const useTrends = (by: "cohort" | "year") => useQuery({ queryKey: ["trends", by], queryFn: () => api.getTrends(by) });
+export const useCoauthors = () => useQuery({ queryKey: ["coauthors"], queryFn: () => api.getCoauthors() });
 export const useScreenCohorts = () => useQuery({ queryKey: ["screen-cohorts"], queryFn: api.getScreenCohorts });
 export const useScreen = (filters: ScreenFilters, enabled = true) => useQuery({ queryKey: ["screen", filters], queryFn: () => api.getScreen(filters), enabled });
 export const useMentors = (filters: MentorFilters, enabled = true) => useQuery({ queryKey: ["mentors", filters], queryFn: () => api.getMentors(filters), enabled });
 export const useAcceptMentor = () => useMutation({ mutationFn: ({ workId, personId }: { workId: number; personId: number }) => api.acceptMentor(workId, personId) });
 export const useQuality = () => useQuery({ queryKey: ["quality"], queryFn: api.getQuality });
+export const useQualityAnomalies = (filters: QualityAnomalyFilters) => useQuery({ queryKey: ["quality-anomalies", filters], queryFn: () => api.getQualityAnomalies(filters) });
+export const useDismissQualityAnomaly = () => useMutation({ mutationFn: ({ id, input }: { id: number; input: DismissAnomalyIn }) => api.dismissQualityAnomaly(id, input) });
+export const useRecent = () => useQuery({ queryKey: ["recent"], queryFn: () => api.getRecent() });
+export const usePersonCv = (id: number | null) => useQuery({ queryKey: ["person-cv", id], queryFn: () => api.getPersonCv(id!), enabled: id !== null });
+export const useFeed = () => useQuery({ queryKey: ["feed"], queryFn: api.getFeed });
 export const useAbout = () => useQuery({ queryKey: ["about"], queryFn: api.getAbout });
 export const useStats = () => useQuery({ queryKey: ["stats", 5], queryFn: () => api.getStats(5) });
 export const useAudit = (filters: AuditFilters) => useQuery({ queryKey: ["audit", filters], queryFn: () => api.getAudit(filters) });

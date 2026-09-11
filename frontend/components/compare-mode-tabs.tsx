@@ -8,13 +8,14 @@ import { cn } from "@/lib/utils";
 const modes = [
   ["/doi-chieu/", "Đối chiếu một đề tài"],
   ["/doi-chieu/ra-soat/", "Rà soát theo khoá"],
+  ["/doi-chieu/chuyen-gia/", "Tìm chuyên gia"],
 ] as const;
 
-export function CompareModeTabs({ active }: { active: "compare" | "screen" }) {
+export function CompareModeTabs({ active }: { active: "compare" | "screen" | "experts" }) {
   return (
     <nav role="tablist" aria-label="Chế độ đối chiếu đề tài" className="mb-5 flex w-fit rounded-lg bg-muted p-1">
       {modes.map(([href, label], index) => {
-        const selected = index === (active === "compare" ? 0 : 1);
+        const selected = index === { compare: 0, screen: 1, experts: 2 }[active];
         return <Link key={href} href={href} role="tab" aria-selected={selected} className={cn("rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground", selected && "bg-background text-foreground shadow-sm")}>{label}</Link>;
       })}
     </nav>
