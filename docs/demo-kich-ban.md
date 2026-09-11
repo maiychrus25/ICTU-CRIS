@@ -178,24 +178,48 @@ nhóm.
 
 ---
 
-## 6. Kỳ báo cáo & kê khai (45 giây)
+## 6. Kỳ báo cáo, kê khai hai cấp & chỉnh tay có xuất xứ (90–120 giây)
 
-**URL**: `/ky-bao-cao/chi-tiet/?id=1`
+**Chuẩn bị riêng cho phân đoạn này**: quy trình duyệt hai cấp đổi vai giữa chuyên viên
+khoa, lãnh đạo khoa và phòng KH-CN. **Trước** buổi demo: đặt mật khẩu cho ba tài khoản mẫu
+(xem "Chuẩn bị trước buổi demo" cuối tài liệu), rồi mở sẵn **ba tab trình duyệt ẩn danh** —
+mỗi tab giữ một phiên đăng nhập riêng, tránh việc đăng nhập ở tab sau ghi đè cookie phiên
+của tab trước:
 
-**Thao tác**:
-1. Mở kỳ mẫu **`2026-H2`** — chỉ vào tab "Hồ sơ kê khai": **3 hồ sơ**, trong đó **1 đang
-   Chờ bổ sung** (huy hiệu vàng) và **1 đã có minh chứng** đính kèm.
-2. Bấm vào hồ sơ Chờ bổ sung — chỉ vào lý do bắt buộc đã ghi khi chuyển trạng thái và
-   nhật ký `declaration_event` bên dưới.
-3. Nếu giám khảo hỏi **"ai được bấm nút này?"** — trả lời ngắn: mọi thao tác ghi nhận
-   (thêm hồ sơ, đổi trạng thái, thêm minh chứng) đòi vai `rd_officer`; đăng nhập cục bộ
-   (mật khẩu băm PBKDF2, phiên cookie) quyết định ai có vai đó — xem `/dang-nhap/`.
+| Tab | Tài khoản | Vai trò | Đơn vị |
+|---|---|---|---|
+| 1 | `rd@ictu.edu.vn` | `rd_officer` — phòng KH-CN | toàn trường |
+| 2 | `khoa.cntt@ictu.edu.vn` | `faculty_officer` — chuyên viên khoa | `HIEUTRUONG` |
+| 3 | `truong.khoa@ictu.edu.vn` | `faculty_head` — lãnh đạo khoa | `HIEUTRUONG` |
+
+**Phần A — duyệt hai cấp** (`/ky-bao-cao/chi-tiet/?id=1`, mỗi tab):
+1. Tab 2 — mở kỳ mẫu **`2026-H2`**, tab "Hồ sơ kê khai", chỉ vào **hồ sơ #2**: đã đi hết
+   vòng duyệt tới **Đạt yêu cầu** — mở nhật ký `declaration_event`, đọc to bốn bước Trình
+   khoa duyệt → Khoa đã duyệt → Gửi phòng → Đạt yêu cầu.
+2. Tab 3 — mở **hồ sơ #3**: đang ở **Nháp** kèm huy hiệu "đã bị trả về"; chỉ vào lý do bắt
+   buộc trong nhật ký: *"Thiếu minh chứng trang bìa tạp chí"* — nhấn mạnh hồ sơ **mất dấu
+   đã duyệt**, phải sửa và trình lại từ đầu, không giữ nguyên trạng thái cũ.
+3. Tab 1 — chỉ vào bảng tiến độ theo đơn vị (đủ cột cho 8 trạng thái, Nháp + Chờ bổ sung
+   gộp thành "Đang soạn"); nếu kỳ đã Đã đóng nộp, bấm **Chốt kỳ** để minh hoạ chuyển hàng
+   loạt hồ sơ Đạt yêu cầu → Đã chốt.
+
+**Phần B — chỉnh tay có xuất xứ** (30 giây, tab 1 — `rd_officer`, tại `/cong-trinh/?id=`):
+1. Ở bảng "Xuất xứ dữ liệu", bấm bút chì cạnh dòng **DOI**.
+2. Nhập DOI mới và lý do bắt buộc (ví dụ "DOI cũ trỏ sai bản in lại"), lưu.
+3. Chỉ vào dòng "Nguồn" vừa đổi thành **"Chỉnh tay bởi … lúc …"** kèm badge "Đã chỉnh
+   tay" — cột "Giá trị gốc" vẫn giữ nguyên giá trị từ kho, không bị ghi đè.
 
 **Câu nói then chốt**:
-> "Từ kỳ báo cáo đang mở tới từng hồ sơ kê khai, mỗi lần chuyển trạng thái đều bắt buộc
-> nêu lý do và ghi vào nhật ký — không có sửa ngầm sau khi đã kê khai."
+> "Khoa duyệt trước, phòng kiểm tra sau, mỗi lần trả về đều bắt buộc nêu lý do và hồ sơ
+> mất dấu đã duyệt. Và khi phòng KH-CN cần sửa tay một trường dữ liệu — DOI sai, tên tạp
+> chí gõ nhầm — hệ thống không xoá xuất xứ cũ, chỉ thêm một lớp xuất xứ mới kèm lý do; theo
+> BR-23, phòng KH-CN chỉ sửa được chín trường mô tả, không đụng được tác giả, đơn vị hay
+> minh chứng."
 
-**Con số thật**: kỳ mẫu `2026-H2`, 3 hồ sơ kê khai, 1 Chờ bổ sung, 1 minh chứng.
+**Con số thật**: kỳ mẫu `2026-H2`; hồ sơ #2 Đạt yêu cầu (đủ bốn bước duyệt); hồ sơ #3 bị
+trả về Nháp, lý do "Thiếu minh chứng trang bìa tạp chí".
+
+**Ảnh**: `docs/images/cong-trinh.png`.
 
 ---
 
@@ -304,6 +328,23 @@ nhóm.
     `docs/ba/14-nfr.md`) — chọn mật khẩu cục bộ băm chuẩn PBKDF2 để có đăng nhập thật ngay,
     không thêm dependency, và không chặn tích hợp SSO trường thật ở lát cắt sau.
 
+13. **Ai được sửa dữ liệu, sửa xong có truy ngược được không?**
+    Chỉ vai `rd_officer` (phòng KH-CN) sửa trực tiếp được — và chỉ chín trường mô tả
+    (`cris/edit.py` — `EDITABLE`: tiêu đề, DOI, năm/số, tạp chí, tập, loại bài, khoá, tóm
+    tắt, từ khoá), không sửa được tác giả, đơn vị, minh chứng (BR-23). Mọi lần sửa bắt buộc
+    ghi lý do, lưu `field_provenance(set_kind='manual', set_by=...)` và
+    `audit_log('work.edit')` — trang chi tiết công trình đổi dòng "Nguồn" thành "Chỉnh tay
+    bởi … lúc …", giá trị gốc từ kho không bao giờ bị ghi đè.
+
+14. **Khoa và phòng tranh nhau thì sao?**
+    Không tranh chấp được vì mỗi bước chuyển trạng thái gắn cứng với một tập vai trò
+    (`cris/declare.py` — `_TRANSITIONS`): khoa chỉ đưa hồ sơ từ Chờ khoa duyệt sang Khoa đã
+    duyệt hoặc trả về Nháp; phòng chỉ quyết định từ Chờ phòng kiểm tra sang Đạt yêu cầu hoặc
+    trả về Nháp — sai vai trò bị chặn ngay ở tầng nghiệp vụ (403), không dựa vào quy ước
+    giao diện (NFR-03). Từ Khoa đã duyệt trở đi, mọi thay đổi đưa hồ sơ về lại Nháp và mất
+    dấu đã duyệt, nên không có tình huống khoa và phòng cùng giữ hai bản "đã duyệt" khác
+    nhau của cùng một hồ sơ.
+
 ---
 
 ## Chuẩn bị trước buổi demo
@@ -312,17 +353,20 @@ Checklist chạy theo thứ tự, trên máy sẽ dùng để trình diễn — 
 trước ngày 10/10, tốt nhất là ngắt mạng ở bước cuối để chắc chắn hệ thống chạy offline:
 
 - [ ] `docker compose up -d db` rồi `docker compose build app` — dựng xong không lỗi.
-- [ ] `docker compose run --rm app migrate` — áp đủ `0001`–`0009`.
+- [ ] `docker compose run --rm app migrate` — áp đủ `0001`–`0010`.
 - [ ] Có dữ liệu thật đã đồng bộ (đồng bộ trước, không đồng bộ trực tiếp lúc demo — mất
       khoảng 2 giờ); nếu dùng bản sao dữ liệu demo, đối chiếu số liệu trong kịch bản với
       số liệu bản sao trước khi trình diễn.
-- [ ] Tạo ít nhất một người dùng vai `rd_officer`:
-      `INSERT INTO app_user(email, display_name, roles) VALUES ('demo@ictu.edu.vn', 'Người trình diễn', ARRAY['rd_officer']);`
-- [ ] Đặt mật khẩu cho người dùng này **trước** buổi demo nếu định bật đăng nhập:
-      `CRIS_PASSWORD='...' python -m cris user set-password demo@ictu.edu.vn`. Ngay khi đã
-      đặt, **toàn hệ thống** chuyển sang bắt buộc đăng nhập — phải đăng nhập ở `/dang-nhap/`
-      **trước khi** demo các hàng đợi (phân đoạn 3, 4) và kê khai (phân đoạn 6), nếu không
-      mọi nút quyết định sẽ bị ẩn.
+- [ ] Tạo ba tài khoản demo cho phân đoạn 6 (kê khai hai cấp) — đơn vị `HIEUTRUONG` phải
+      tồn tại trước khi gán:
+      `python -m cris user create --email rd@ictu.edu.vn --name "Phòng KH-CN" --roles rd_officer`
+      `python -m cris user create --email khoa.cntt@ictu.edu.vn --name "Chuyên viên khoa CNTT" --roles faculty_officer --unit HIEUTRUONG`
+      `python -m cris user create --email truong.khoa@ictu.edu.vn --name "Trưởng khoa CNTT" --roles faculty_head --unit HIEUTRUONG`
+- [ ] Đặt mật khẩu cho **cả ba** tài khoản demo **trước** buổi demo nếu định bật đăng nhập:
+      `CRIS_PASSWORD='...' python -m cris user set-password <email>` cho từng tài khoản. Ngay
+      khi đã đặt, **toàn hệ thống** chuyển sang bắt buộc đăng nhập — mở sẵn ba tab ẩn danh,
+      mỗi tab đăng nhập một tài khoản ở `/dang-nhap/` **trước khi** demo các hàng đợi (phân
+      đoạn 3, 4) và kê khai hai cấp (phân đoạn 6), nếu không mọi nút quyết định sẽ bị ẩn.
 - [ ] Bật AI: `pip install -e ".[ai]"` (hoặc dùng ảnh có `--build-arg EXTRAS="[ai]"`),
       `python -m cris ai download` (tải một lần, kiểm SHA-256).
 - [ ] `export CRIS_AI_PROVIDER=local` rồi lần lượt: `python -m cris ai embed`,

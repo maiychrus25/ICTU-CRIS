@@ -208,6 +208,21 @@ python -m cris user list                            # id, email, vai trò, has_p
   xong vẫn ở chế độ mở.
 - `GET /api/about` trả thêm `auth_required: bool` để giao diện biết đăng nhập
   có bắt buộc không.
+- `python -m cris user create --email <email> --name "<tên>" --roles
+  faculty_officer,rd_officer [--unit <mã đơn vị>] [--password]` tạo tài
+  khoản mới (lát cắt H1); `--roles` phân tách bằng dấu phẩy. Vai trò cấp
+  khoa (`faculty_officer`, `faculty_head`) chỉ thấy/thao tác được hồ sơ của
+  `--unit` (NFR-02) — nên gán đơn vị ngay lúc tạo, hoặc gán sau bằng
+  `python -m cris user set-unit --email <email> --unit <mã đơn vị>`.
+- `python -m cris user create-lecturers [--unit <mã đơn vị>] [--dry-run]`
+  tạo tài khoản vai `lecturer` (chưa mật khẩu) cho mỗi `person` giảng viên
+  có email, khớp theo email nên chạy lại không tạo trùng (lát cắt H3);
+  `--dry-run` chỉ đếm, không ghi.
+- Ba vai trò dùng trong kịch bản demo (`docs/demo-kich-ban.md`): `rd_officer`
+  (phòng KH-CN, toàn trường — kiểm tra và chốt hồ sơ), `faculty_officer`
+  (chuyên viên khoa — kê khai và trình khoa duyệt), `faculty_head` (lãnh đạo
+  khoa — duyệt hoặc trả hồ sơ về khoa mình). `lecturer` (giảng viên tự kê
+  khai công trình của chính mình) dùng chung cơ chế đăng nhập cục bộ này.
 
 ## 7. Bật AI (Enabling the AI features)
 
@@ -282,3 +297,13 @@ khai), cùng máy phát triển:
 | `npx playwright test` (`frontend/e2e/`) | mock (`core-flows.spec.ts`, `NEXT_PUBLIC_MOCK`) **11** kịch bản; thật (`real-backend.spec.ts`, gọi API sống) **9** kịch bản |
 | `docker build -t ictu-cris:full --build-arg EXTRAS="[ai]" .` (Dockerfile đa tầng) sau khi thêm `frontend/` cho lát cắt G | dựng thành công, ảnh đa tầng không đổi cấu trúc |
 | `python -m cris migrate` trên DB đã có `0001`–`0008` | áp thêm `0009_auth.sql` (`app_user.password_hash`, bảng `session`) |
+
+Ngày 11/09/2026 tối (lát cắt H — duyệt hai cấp theo BA, chỉnh tay có xuất xứ, tìm kiếm
+không dấu, giảng viên tự kê khai), cùng máy phát triển:
+
+| Việc | Kết quả |
+|---|---|
+| `pytest -q -m "not slow"` sau H1–H3 | **292 passed**, 3 skipped (`slow` tự bỏ qua khi chưa có mô hình) |
+| `npx playwright test` (`frontend/e2e/`, cấu hình mặc định, dữ liệu mẫu) | mock (`core-flows.spec.ts`) **14** kịch bản |
+| `npx playwright test --config=playwright.real.config.ts` (ba project `desktop`/`tablet`/`mobile`) | thật: `real-backend.spec.ts` trên `desktop` **9** + `responsive-accessibility.real.spec.ts` trên `tablet`/`mobile` **2+2** — tổng **13** |
+| `python -m cris migrate` trên DB đã có `0001`–`0009` | áp thêm `0010_declaration_states.sql` (mở CHECK `declaration.state` đủ 8 trạng thái) |

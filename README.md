@@ -91,12 +91,12 @@ sẵn thành HTML/CSS/JS tĩnh (`next build`, `output: "export"`), FastAPI phụ
 bản xuất đó ở `/` cùng gốc với `/api/*`: **một ảnh Docker, một container, một
 cổng** cho cả API lẫn giao diện. **Tầng AI** (`cris/ai/`) cũng chỉ gọi vào tầng
 nghiệp vụ và chỉ ghi vào bảng `ai_*`. Lược đồ CSDL nằm ở `cris/migrations/0001`–
-`0009` (PostgreSQL 16, không ORM).
+`0010` (PostgreSQL 16, không ORM).
 
 | Thành phần | Công nghệ | Vai trò |
 |---|---|---|
 | Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3 | Không ORM — truy vấn SQL trực tiếp |
-| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0009` |
+| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0010` |
 | Đóng gói | sdist + wheel đính kèm mỗi Release (không gồm `frontend/`); ảnh `ghcr.io/maiychrus25/ictu-cris` là bản chạy đủ | Workflow `release.yml` kiểm phiên bản khớp tag; `docker.yml` đẩy ảnh theo semver |
 | Triển khai | `deploy/setup.sh` + `deploy/docker-compose.yml` | Một lệnh: DB, lược đồ, người dùng mặc định, giao diện; `--ai` tải mô hình |
 | API | FastAPI + `uvicorn` | Router `/api/*`, tài liệu OpenAPI tương tác ở `/docs` |
@@ -113,6 +113,9 @@ python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--
 python -m cris serve [--host] [--port]
 python -m cris ai download|embed|topics|suggest|screen|status      # cần CRIS_AI_PROVIDER=local
 python -m cris user set-password <email>|list                     # đăng nhập cục bộ (NFR-01)
+python -m cris user create --email --name --roles a,b [--unit CODE] [--password]
+python -m cris user set-unit --email --unit CODE
+python -m cris user create-lecturers [--unit CODE] [--dry-run]     # tài khoản lecturer (H3)
 ```
 
 ## ✨ Tính năng (Features)
@@ -123,10 +126,21 @@ python -m cris user set-password <email>|list                     # đăng nhậ
 - **Chủ đề** (`/chu-de/`) — 40 cụm AI theo từ khoá, xem chi tiết từng cụm và
   tra cứu công trình theo cụm (drill-down).
 - **Đồng bộ** (`/dong-bo/`) — lịch sử các lượt đồng bộ: thêm/đổi/mất.
-- **Kê khai vào kỳ báo cáo** — hồ sơ theo trạng thái Nháp/Chờ bổ sung/Rút,
-  đính kèm minh chứng, nhật ký từng lần chuyển trạng thái.
-- **Tra cứu & hồ sơ** — tìm công trình theo từ khoá/loại/năm/đơn vị/chủ đề, chi
-  tiết có xuất xứ từng trường, hồ sơ công bố giảng viên.
+- **Kê khai vào kỳ báo cáo — duyệt hai cấp theo BA** — hồ sơ đi qua Nháp →
+  Chờ khoa duyệt → Khoa đã duyệt → Chờ phòng kiểm tra → Đạt yêu cầu → Đã
+  chốt, mỗi cấp có thể trả hồ sơ về Nháp kèm lý do bắt buộc; vai trò cấp
+  khoa chỉ thấy và thao tác được hồ sơ của đơn vị mình (NFR-02, lọc ở tầng
+  SQL); giảng viên tự kê khai công trình của chính mình và trình khoa duyệt
+  (`/ke-khai-cua-toi/`).
+- **Chỉnh tay có xuất xứ** (BR-23) — phòng KH-CN sửa trực tiếp 9 trường của
+  một công trình (tiêu đề, DOI, năm/số, tạp chí, tập, loại bài, khoá, tóm
+  tắt, từ khoá) khi nguồn sai hoặc thiếu, luôn kèm lý do bắt buộc; **không**
+  sửa được tác giả, đơn vị, minh chứng. Mỗi lần sửa ghi `field_provenance`
+  (`set_kind='manual'`) — dòng "Nguồn" đổi thành "Chỉnh tay bởi … lúc …",
+  truy ngược được ai sửa và giá trị cũ.
+- **Tra cứu & hồ sơ** — tìm công trình theo từ khoá/loại/năm/đơn vị/chủ đề
+  (gõ không dấu vẫn ra kết quả đúng), chi tiết có xuất xứ từng trường, hồ sơ
+  công bố giảng viên.
 - **Hàng đợi người quyết** — xác nhận liên kết tác giả, gộp/giữ riêng nghi
   trùng, luôn có gợi ý AI kèm lý do, quyết định cuối luôn thuộc về người dùng.
 - **Tổng quan cho lãnh đạo** (`/tong-quan/`) — công trình theo năm × loại, theo
@@ -214,7 +228,13 @@ mạng công khai**.
       soát trùng đề tài theo khoá
 - [x] **0.3.0 đã phát hành (11/09)** — đăng nhập cục bộ và vai trò, tìm người,
       chủ đề, lịch sử đồng bộ, kê khai công trình vào kỳ
-- [ ] Còn lại: SSO trường thật, kê khai bởi chính giảng viên, xuất biểu mẫu Bộ
+- [ ] **0.4.0 đang phát triển (lát cắt H)** — duyệt hai cấp đúng theo BA
+      (`docs/ba/03-state.md`), phạm vi đơn vị (NFR-02), chỉnh tay có xuất xứ
+      (BR-23), tìm kiếm không dấu, giảng viên tự kê khai công trình của mình
+      (xem [docs/release-notes/v0.4.0.md](docs/release-notes/v0.4.0.md), dự
+      thảo)
+- [ ] Còn lại: SSO trường thật, biểu mẫu Bộ, đính kèm tệp minh chứng (hiện
+      chỉ URL/ghi chú)
 
 ## 📚 Tài liệu (Documentation)
 

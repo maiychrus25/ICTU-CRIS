@@ -22,6 +22,7 @@ với dữ liệu đổi theo mỗi lần đồng bộ). Đường dẫn UI th�
 /ky-bao-cao/                               Danh sách kỳ báo cáo
 /ky-bao-cao/chi-tiet/?id=                  Chi tiết kỳ: tiến độ theo đơn vị, hồ sơ kê khai
 /ke-khai/?id=                              Chi tiết hồ sơ kê khai: trạng thái, minh chứng
+/ke-khai-cua-toi/                          Giảng viên tự kê khai công trình của mình
 /nhat-ky/                                  Nhật ký thao tác
 /chat-luong-du-lieu/                       Báo cáo chất lượng dữ liệu
 /dang-nhap/                                Đăng nhập cục bộ
