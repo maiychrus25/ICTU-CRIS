@@ -48,7 +48,7 @@ test("tra cứu và mở bảng xuất xứ công trình", async ({ page }) => {
   await expect(page.getByRole("columnheader", { name: "Nguồn", exact: true })).toBeVisible();
 });
 
-test("bác bỏ liên kết tác giả bắt buộc lý do", async ({ page }) => {
+test("quyết định liên kết tác giả dùng lý do và bộ chọn người", async ({ page }) => {
   await page.goto("/doi-soat/tac-gia/");
   await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();
   await page.getByRole("button", { name: "Bác bỏ" }).click();
@@ -62,6 +62,41 @@ test("bác bỏ liên kết tác giả bắt buộc lý do", async ({ page }) =>
   await reason.fill("Không đúng giảng viên trong nguồn gốc.");
   await dialog.getByRole("button", { name: "Bác bỏ" }).click();
   await expect(page.getByText("Đã xử lý 1 liên kết tác giả.")).toBeVisible();
+
+  await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();
+  await page.getByRole("button", { name: "Chuyển cho người khác" }).click();
+  const reassignDialog = page.getByRole("dialog");
+  await reassignDialog.getByRole("combobox", { name: "Tìm người" }).fill("Nguyễn Văn");
+  await reassignDialog.getByRole("option", { name: /TS\. Nguyễn Văn A.*CNTT.*42 công trình/ }).click();
+  await reassignDialog.getByRole("button", { name: "Chuyển", exact: true }).click();
+  await expect(page.getByText("Đã xử lý 1 liên kết tác giả.").last()).toBeVisible();
+});
+
+test("chủ đề mở chi tiết rồi điền bộ lọc tra cứu", async ({ page }) => {
+  await page.goto("/chu-de/");
+  await expect(page.getByText(/Cụm chủ đề do AI gom từ từ khoá/)).toBeVisible();
+  await page.getByRole("link", { name: /Trí tuệ nhân tạo.*38 công trình/ }).click();
+
+  await expect(page).toHaveURL(/\/chu-de\/chi-tiet\/\?id=1$/);
+  await expect(page.getByRole("heading", { name: "Trí tuệ nhân tạo" })).toBeVisible();
+  await expect(page.getByRole("progressbar", { name: /học sâu/i })).toBeVisible();
+  await page.getByRole("link", { name: "Tra cứu theo chủ đề này" }).click();
+
+  await expect(page).toHaveURL(/\/tra-cuu\/\?topic=1$/);
+  await expect(page.getByRole("combobox", { name: "Chủ đề" })).toContainText("Trí tuệ nhân tạo");
+  await page.getByRole("combobox", { name: "Đơn vị" }).click();
+  await expect(page.getByRole("option", { name: "CNTT — Khoa Công nghệ thông tin" })).toBeVisible();
+});
+
+test("đồng bộ mở chi tiết lượt và hiển thị cảnh báo", async ({ page }) => {
+  await page.goto("/dong-bo/");
+  await expect(page.getByRole("heading", { name: "Lịch sử đồng bộ" })).toBeVisible();
+  await page.getByRole("row", { name: /Kho dữ liệu ICTU.*Toàn bộ dữ liệu/ }).click();
+
+  await expect(page).toHaveURL(/\/dong-bo\/chi-tiet\/\?id=18$/);
+  await expect(page.getByRole("heading", { name: "Chi tiết lượt đồng bộ #18" })).toBeVisible();
+  await expect(page.getByText("2 bản ghi thiếu mã đơn vị.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bản ghi thay đổi gần nhất" })).toBeVisible();
 });
 
 test("đối chiếu đề tài hiển thị note và ma trận khía cạnh", async ({ page }) => {

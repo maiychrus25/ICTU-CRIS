@@ -17,7 +17,7 @@ export const stateLabels: Record<string, string> = {
   ChuanBi: "Chuẩn bị", DangMo: "Đang mở", DaDongNop: "Đã đóng nộp", Huy: "Đã huỷ",
   Nhap: "Nháp", ChoBoSung: "Chờ bổ sung", Rut: "Đã rút",
   active: "Đang hoạt động", vanished: "Đã biến mất",
-  running: "Đang chạy", ok: "Thành công", warning: "Có cảnh báo", failed: "Thất bại",
+  running: "Đang chạy", ok: "Thành công", success: "Thành công", warning: "Có cảnh báo", failed: "Thất bại",
 };
 
 export const entityLabels: Record<string, string> = {
@@ -51,6 +51,11 @@ export const venueKindLabels: Record<string, string> = {
 export const sourceLabels: Record<string, string> = {
   repository: "kho dữ liệu ICTU", excel_faculty: "bảng tính khoa",
   sheet_registration: "phiếu đăng ký", manual: "nhập tay",
+};
+
+export const syncScopeLabels: Record<string, string> = {
+  "bai-bao": "Bài báo", "do-an": "Đồ án", "luan-van": "Luận văn", "luan-an": "Luận án",
+  "hoc-lieu-so": "Học liệu số", "giang-vien": "Giảng viên", all: "Toàn bộ dữ liệu",
 };
 
 export const aspectLabels: Record<string, string> = {

@@ -89,6 +89,13 @@ test("bốn tab hàng đợi tác giả chỉ được đọc", async ({ page })
       await expect(page.getByText("Tên đầy đủ, một ứng viên").first()).toHaveClass(/text-status-success/);
     }
   }
+
+  await page.getByRole("tab", { name: /^Chờ xác nhận/ }).click();
+  await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();
+  await page.getByRole("button", { name: "Chuyển cho người khác" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("combobox", { name: "Tìm người" }).fill("Nguyễn");
+  await expect(dialog.getByRole("option").first()).toContainText("công trình");
 });
 
 test("hàng đợi nghi trùng mở chi tiết nhưng không quyết định", async ({ page }) => {
@@ -140,6 +147,41 @@ test("rà soát khoá 21 và các trang quản trị chỉ được đọc", asy
     await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
     await assertHealthyPage(page);
   }
+});
+
+test("chủ đề thật mở chi tiết và điền bộ lọc tra cứu", async ({ page }) => {
+  await page.goto("/chu-de/");
+  await expect(page.getByText(/Cụm chủ đề do AI gom từ từ khoá/)).toBeVisible();
+  const topicLink = page.locator('main a[href^="/chu-de/chi-tiet/?id="]').first();
+  const topicName = (await topicLink.locator('[data-slot="card-title"]').textContent())?.trim();
+  const href = await topicLink.getAttribute("href");
+  expect(topicName).toBeTruthy();
+  expect(href).toMatch(/^\/chu-de\/chi-tiet\/\?id=\d+$/);
+  await topicLink.click();
+
+  await expect(page.getByRole("heading", { name: topicName! })).toBeVisible();
+  await expect(page.getByRole("progressbar").first()).toBeVisible();
+  await assertHealthyPage(page);
+  await page.getByRole("link", { name: "Tra cứu theo chủ đề này" }).click();
+  await expect(page).toHaveURL(/\/tra-cuu\/\?topic=\d+$/);
+  await expect(page.getByRole("combobox", { name: "Chủ đề" })).toContainText(topicName!);
+  await page.getByRole("combobox", { name: "Đơn vị" }).click();
+  await page.getByRole("option").nth(1).click();
+  const worksRequest = page.waitForRequest((request) => new URL(request.url()).searchParams.has("unit"));
+  await page.getByRole("button", { name: "Tra cứu", exact: true }).click();
+  expect(new URL((await worksRequest).url()).searchParams.get("unit")).toMatch(/^\d+$/);
+});
+
+test("lịch sử đồng bộ thật mở chi tiết lượt", async ({ page }) => {
+  await page.goto("/dong-bo/");
+  await expect(page.locator("tbody tr").first()).toBeVisible();
+  await assertHealthyPage(page);
+  await page.locator("tbody tr").first().click();
+
+  await expect(page).toHaveURL(/\/dong-bo\/chi-tiet\/\?id=\d+$/);
+  await expect(page.getByRole("heading", { name: /Chi tiết lượt đồng bộ #\d+/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bản ghi thay đổi gần nhất" })).toBeVisible();
+  await assertHealthyPage(page);
 });
 
 test("focus nhìn thấy và nhãn biểu đồ đủ tương phản ở chế độ tối", async ({ page }) => {

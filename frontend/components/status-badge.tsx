@@ -22,6 +22,11 @@ const states = {
   DangMo: { icon: CheckCircle2, className: "border-status-success/25 bg-status-success/10 text-status-success" },
   DaDongNop: { icon: LockKeyhole, className: "border-primary/25 bg-primary/10 text-primary" },
   Huy: { icon: Ban, className: "border-status-danger/25 bg-status-danger/10 text-status-danger" },
+  running: { icon: Clock3, className: "border-status-warning/30 bg-status-warning/10 text-status-warning" },
+  ok: { icon: CheckCircle2, className: "border-status-success/25 bg-status-success/10 text-status-success" },
+  success: { icon: CheckCircle2, className: "border-status-success/25 bg-status-success/10 text-status-success" },
+  warning: { icon: CircleDashed, className: "border-status-warning/30 bg-status-warning/10 text-status-warning" },
+  failed: { icon: XCircle, className: "border-status-danger/25 bg-status-danger/10 text-status-danger" },
 } as const;
 
 export function StatusBadge({ value, kind = "state" }: { value: string; kind?: "state" | "docType" }) {

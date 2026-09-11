@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { PageHeader } from "@/components/page-header";
+import { PersonCombobox } from "@/components/person-combobox";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export default function AuthorQueuePage() {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [reassignOpen, setReassignOpen] = useState(false);
   const [reason, setReason] = useState("");
-  const [personId, setPersonId] = useState("");
+  const [personId, setPersonId] = useState<number | null>(null);
   const queue = useAuthorQueue(state, q, page);
   const pendingCount = useAuthorQueue("ChoXacNhan", "", 1);
   const automaticCount = useAuthorQueue("DaNoiTuDong", "", 1);
@@ -70,7 +71,7 @@ export default function AuthorQueuePage() {
       toast.success(`Đã xử lý ${result.processed.length} liên kết tác giả.`);
       setSelection({});
       setReason("");
-      setPersonId("");
+      setPersonId(null);
       setRejectOpen(false);
       setReassignOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["author-queue"] });
@@ -103,7 +104,7 @@ export default function AuthorQueuePage() {
       </Dialog>
 
       <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
-        <DialogContent><form onSubmit={(event) => { event.preventDefault(); void submitDecision({ link_ids: selectedIds, decision: "reassign", person_id: Number(personId), reason: reason.trim() || undefined }); }}><DialogHeader><DialogTitle>Chuyển cho người khác</DialogTitle><DialogDescription>Nhập mã giảng viên sẽ nhận các liên kết đã chọn.</DialogDescription></DialogHeader><div className="space-y-3 py-4"><div><label htmlFor="person-id" className="mb-1.5 block font-medium">Mã giảng viên <span className="text-status-danger">*</span></label><Input id="person-id" type="number" min="1" required value={personId} onChange={(event) => setPersonId(event.target.value)} /></div><div><label htmlFor="reassign-reason" className="mb-1.5 block font-medium">Lý do (tuỳ chọn)</label><Textarea id="reassign-reason" value={reason} onChange={(event) => setReason(event.target.value)} /></div></div><DialogFooter><Button type="button" variant="outline" onClick={() => setReassignOpen(false)}>Huỷ</Button><Button type="submit" disabled={decide.isPending}>Chuyển</Button></DialogFooter></form></DialogContent>
+        <DialogContent><form onSubmit={(event) => { event.preventDefault(); if (personId !== null) void submitDecision({ link_ids: selectedIds, decision: "reassign", person_id: personId, reason: reason.trim() || undefined }); }}><DialogHeader><DialogTitle>Chuyển cho người khác</DialogTitle><DialogDescription>Tìm và chọn người sẽ nhận các liên kết đã chọn.</DialogDescription></DialogHeader><div className="space-y-3 py-4"><div><label htmlFor="reassign-person" className="mb-1.5 block font-medium">Người nhận <span className="text-status-danger">*</span></label><PersonCombobox id="reassign-person" onValueChange={setPersonId} /></div><div><label htmlFor="reassign-reason" className="mb-1.5 block font-medium">Lý do (tuỳ chọn)</label><Textarea id="reassign-reason" value={reason} onChange={(event) => setReason(event.target.value)} /></div></div><DialogFooter><Button type="button" variant="outline" onClick={() => setReassignOpen(false)}>Huỷ</Button><Button type="submit" disabled={decide.isPending || personId === null}>Chuyển</Button></DialogFooter></form></DialogContent>
       </Dialog>
     </>
   );

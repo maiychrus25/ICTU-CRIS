@@ -5,7 +5,7 @@
 
 import {
   BarChart3, BookOpenCheck, CalendarRange, CopyCheck, Info, LayoutDashboard, Menu, Moon,
-  Scale, ScrollText, Search, Sun, UserRoundCheck,
+  RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRoundCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,22 +19,28 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { href: "/tong-quan/", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/tra-cuu/", label: "Tra cứu", icon: Search },
+  { href: "/chu-de/", label: "Chủ đề", icon: Tags },
   { href: "/doi-chieu/", label: "Đối chiếu đề tài", icon: Scale },
   { href: "/doi-soat/tac-gia/", label: "Hàng đợi tác giả", icon: UserRoundCheck },
   { href: "/doi-soat/trung-lap/", label: "Hàng đợi nghi trùng", icon: CopyCheck },
   { href: "/ky-bao-cao/", label: "Kỳ báo cáo", icon: CalendarRange },
   { href: "/chat-luong-du-lieu/", label: "Chất lượng dữ liệu", icon: BarChart3 },
+  { href: "/dong-bo/", label: "Đồng bộ", icon: RefreshCw },
   { href: "/nhat-ky/", label: "Nhật ký", icon: ScrollText },
   { href: "/ve/", label: "Về hệ thống", icon: Info },
 ];
 
 const routeTitles = [
+  ["/dong-bo/chi-tiet", "Chi tiết lượt đồng bộ"],
+  ["/chu-de/chi-tiet", "Chi tiết chủ đề"],
   ["/ky-bao-cao/chi-tiet", "Chi tiết kỳ báo cáo"],
   ["/doi-chieu/ra-soat", "Rà soát theo khoá"],
   ["/doi-soat/trung-lap/chi-tiet", "Chi tiết nhóm nghi trùng"],
   ["/doi-soat/trung-lap", "Hàng đợi nghi trùng"],
   ["/doi-soat/tac-gia", "Hàng đợi tác giả"],
   ["/chat-luong-du-lieu", "Chất lượng dữ liệu"],
+  ["/dong-bo", "Đồng bộ"],
+  ["/chu-de", "Chủ đề"],
   ["/ky-bao-cao", "Kỳ báo cáo"],
   ["/nhat-ky", "Nhật ký"],
   ["/tong-quan", "Tổng quan"],

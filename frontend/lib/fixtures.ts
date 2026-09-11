@@ -3,8 +3,8 @@
 
 import type {
   AboutOut, AuditList, AuthorQueueList, CompareOut, DupGroupDetail, DupGroupList, HealthOut,
-  PeriodOut, PeriodProgress, PersonProfile, QualityOut, StatsOut, Topic, WorkDetail, WorkList, WorkSummary,
-  ScreenCohortSummary, ScreenList,
+  PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail,
+  SyncRunList, Topic, TopicDetail, WorkDetail, WorkList, WorkSummary, ScreenCohortSummary, ScreenList,
 } from "@/lib/types";
 
 export const workItems: WorkSummary[] = [
@@ -47,11 +47,19 @@ export const workDetailsFixture: Record<number, WorkDetail> = Object.fromEntries
 }])) as Record<number, WorkDetail>;
 
 export const topicsFixture: Topic[] = [
-  { id: 1, label: "Trí tuệ nhân tạo", size: 38 },
-  { id: 2, label: "Hệ thống thông tin", size: 27 },
-  { id: 3, label: "An toàn thông tin", size: 19 },
-  { id: 4, label: "Internet vạn vật", size: 16 },
+  { id: 1, label: "Trí tuệ nhân tạo", size: 38, keywords: ["học sâu", "nhận dạng", "thị giác máy tính", "mạng nơ-ron", "xử lý ảnh", "dự báo", "phân loại", "dữ liệu"], built_at: "2026-09-10T02:00:00Z" },
+  { id: 2, label: "Hệ thống thông tin", size: 27, keywords: ["quản lý", "website", "cơ sở dữ liệu", "thông tin", "phần mềm", "dịch vụ", "quy trình", "người dùng"], built_at: "2026-09-10T02:00:00Z" },
+  { id: 3, label: "An toàn thông tin", size: 19, keywords: ["bảo mật", "xâm nhập", "mã hoá", "mạng", "phát hiện", "tấn công", "dữ liệu", "an toàn"], built_at: "2026-09-10T02:00:00Z" },
+  { id: 4, label: "Internet vạn vật", size: 16, keywords: ["IoT", "cảm biến", "thiết bị", "không dây", "giám sát", "điều khiển", "nhúng", "tự động"], built_at: "2026-09-10T02:00:00Z" },
 ];
+
+export const topicDetailsFixture: Record<number, TopicDetail> = Object.fromEntries(topicsFixture.map((topic) => [topic.id, {
+  id: topic.id,
+  label: topic.label,
+  size: topic.size,
+  keywords: topic.keywords.map((keyword, index) => ({ keyword, weight: Number((1 - index * 0.09).toFixed(2)) })),
+  works: topic.id === 1 ? workItems.filter((work) => [2, 3, 4, 9].includes(work.id)) : workItems.slice(0, Math.min(topic.size, 5)),
+}])) as Record<number, TopicDetail>;
 
 export const personFixture: PersonProfile = {
   id: 1, display_name: "TS. Nguyễn Văn A", degree: "Tiến sĩ", email: "nguyenvana@ictu.edu.vn",
@@ -61,6 +69,12 @@ export const personFixture: PersonProfile = {
   pending_count: 2,
   last_sync: { id: 18, source: "Kho dữ liệu ICTU", scope: "Hồ sơ giảng viên", status: "success", started_at: "2026-09-10T01:00:00Z", finished_at: "2026-09-10T01:04:12Z" },
 };
+
+export const personsFixture: PersonSearchRow[] = [
+  { id: 1, display_name: "TS. Nguyễn Văn A", degree: "Tiến sĩ", unit_code: "CNTT", kind: "giang_vien", works: 42 },
+  { id: 2, display_name: "TS. Nguyễn Văn An", degree: "Tiến sĩ", unit_code: "KHMT", kind: "giang_vien", works: 31 },
+  { id: 3, display_name: "ThS. Trần Thị Bình", degree: "Thạc sĩ", unit_code: "HTTT", kind: "giang_vien", works: 24 },
+];
 
 export const authorQueueFixture: AuthorQueueList = {
   state: "ChoXacNhan", page: { page: 1, per_page: 50, total: 6 },
@@ -210,5 +224,24 @@ export const periodProgressFixture: Record<number, PeriodProgress> = {
   ] },
   403: { period_id: 403, state: "ChuanBi", due_at: "2027-01-31T16:59:59Z", days_remaining: 142, units: [] },
 };
+
+export const syncRunsFixture: SyncRunList = {
+  page: { page: 1, per_page: 20, total: 2 },
+  items: [
+    { id: 18, source: "Kho dữ liệu ICTU", scope: "Toàn bộ dữ liệu", status: "warning", started_at: "2026-09-10T01:00:00Z", finished_at: "2026-09-10T01:04:12Z", duration_s: 252, added: 47, changed: 12, vanished: 2, errors: [], warnings: ["2 bản ghi thiếu mã đơn vị."] },
+    { id: 17, source: "Kho dữ liệu ICTU", scope: "Bài báo", status: "ok", started_at: "2026-09-03T01:00:00Z", finished_at: "2026-09-03T01:02:08Z", duration_s: 128, added: 8, changed: 5, vanished: 0, errors: [], warnings: [] },
+  ],
+};
+
+export const syncRunDetailsFixture: Record<number, SyncRunDetail> = Object.fromEntries(syncRunsFixture.items.map((run) => [run.id, {
+  ...run,
+  expected_count: { bai_bao: 326, do_an: 704 },
+  fetched_count: { bai_bao: 326, do_an: 702 },
+  triggered_by: null,
+  records: [
+    { id: 901, source_key: "repository:cong-trinh:1", doc_type: "do_an", version: 3, fetched_at: run.finished_at },
+    { id: 902, source_key: "repository:cong-trinh:2", doc_type: "bai_bao", version: 2, fetched_at: run.finished_at },
+  ],
+}])) as Record<number, SyncRunDetail>;
 
 export const healthFixture: HealthOut = { status: "ok" };

@@ -31,7 +31,12 @@ export interface PersonProfile {
   by_type: Record<string, number>; by_year: Record<string, number>; publications: PersonPublication[];
   pending_count: number; last_sync: LastSync | null;
 }
-export interface Topic { id: number; label: string; size: number }
+export interface PersonSearchRow {
+  id: number; display_name: string; degree: string | null; unit_code: string | null; kind: string; works: number;
+}
+export interface Topic { id: number; label: string; size: number; keywords: string[]; built_at: string | null }
+export interface TopicKeyword { keyword: string; weight: number }
+export interface TopicDetail { id: number; label: string; size: number; keywords: TopicKeyword[]; works: WorkSummary[] }
 export interface AuthorQueueRow {
   link_id: number; raw_name: string; work_id: number; work_title: string | null;
   candidate_person_id: number; candidate_name: string; confidence: string; degree_conflict: boolean;
@@ -123,6 +128,16 @@ export interface PeriodUnitProgress {
 }
 export interface PeriodProgress {
   period_id: number; state: string; due_at: string | null; days_remaining: number | null; units: PeriodUnitProgress[];
+}
+export interface SyncRunSummary {
+  id: number; source: string; scope: string; status: string; started_at: string; finished_at: string | null;
+  duration_s: number | null; added: number; changed: number; vanished: number; errors: unknown[]; warnings: unknown[];
+}
+export interface SyncRunList { items: SyncRunSummary[]; page: PageInfo }
+export interface SourceRecordRow { id: number; source_key: string; doc_type: string; version: number; fetched_at: string | null }
+export interface SyncRunDetail extends SyncRunSummary {
+  expected_count: Record<string, unknown> | null; fetched_count: Record<string, unknown> | null;
+  triggered_by: number | null; records: SourceRecordRow[];
 }
 export interface HealthOut { status: "ok" }
 export interface WorkFilters { q?: string; doc_type?: string; year?: number; unit?: string; topic?: number; page?: number }

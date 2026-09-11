@@ -9,7 +9,9 @@ import type { AuditFilters, CompareIn, DecideAuthorsIn, DecideDupIn, PeriodOpenI
 export const useWorks = (filters: WorkFilters) => useQuery({ queryKey: ["works", filters], queryFn: () => api.getWorks(filters) });
 export const useWork = (id: number | null) => useQuery({ queryKey: ["work", id], queryFn: () => api.getWork(id!), enabled: id !== null });
 export const usePerson = (id: number | null) => useQuery({ queryKey: ["person", id], queryFn: () => api.getPerson(id!), enabled: id !== null });
+export const usePersonSearch = (q: string) => useQuery({ queryKey: ["person-search", q], queryFn: () => api.searchPersons(q), enabled: q.length > 0 });
 export const useTopics = () => useQuery({ queryKey: ["topics"], queryFn: api.getTopics });
+export const useTopic = (id: number | null) => useQuery({ queryKey: ["topic", id], queryFn: () => api.getTopic(id!), enabled: id !== null });
 export const useAuthorQueue = (state: string, q: string, page: number) => useQuery({ queryKey: ["author-queue", state, q, page], queryFn: () => api.getAuthorQueue(state, q, page) });
 export const useDecideAuthors = () => useMutation({ mutationFn: (input: DecideAuthorsIn) => api.decideAuthors(input) });
 export const useDuplicateGroups = (state: string, page: number) => useQuery({ queryKey: ["duplicate-groups", state, page], queryFn: () => api.getDuplicateGroups(state, page) });
@@ -28,4 +30,6 @@ export const usePeriodProgress = (id: number | null) => useQuery({ queryKey: ["p
 export const useOpenPeriod = () => useMutation({ mutationFn: (input: PeriodOpenIn) => api.openPeriod(input) });
 export const useClosePeriod = (id: number) => useMutation({ mutationFn: () => api.closePeriod(id) });
 export const useCancelPeriod = (id: number) => useMutation({ mutationFn: () => api.cancelPeriod(id) });
+export const useSyncRuns = (page: number) => useQuery({ queryKey: ["sync-runs", page], queryFn: () => api.getSyncRuns(page) });
+export const useSyncRun = (id: number | null) => useQuery({ queryKey: ["sync-run", id], queryFn: () => api.getSyncRun(id!), enabled: id !== null });
 export const useHealth = () => useQuery({ queryKey: ["health"], queryFn: api.getHealth });

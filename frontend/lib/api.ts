@@ -4,12 +4,14 @@
 import {
   aboutFixture, auditFixture, authorQueueFixture, compareFixture, duplicateDetailFixture, duplicateGroupsFixture,
   healthFixture, periodProgressFixture, periodsFixture, personFixture, qualityFixture, statsFixture,
-  screenCohortsFixture, screenFixture, topicsFixture, workDetailsFixture, worksFixture,
+  personsFixture, screenCohortsFixture, screenFixture, syncRunDetailsFixture, syncRunsFixture,
+  topicDetailsFixture, topicsFixture, workDetailsFixture, worksFixture,
 } from "@/lib/fixtures";
 import type {
   AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DecideAuthorsIn, DecideDupIn,
   DecideResult, DupGroupDetail, DupGroupList, HealthOut, PeriodOpenIn, PeriodOut, PeriodProgress,
-  PersonProfile, QualityOut, StatsOut, Topic, WorkDetail, WorkFilters, WorkList,
+  PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
+  WorkDetail, WorkFilters, WorkList,
   ScreenCohortSummary, ScreenFilters, ScreenList,
 } from "@/lib/types";
 
@@ -38,11 +40,18 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const q = url.searchParams.get("q")?.toLocaleLowerCase("vi") ?? "";
     const docType = url.searchParams.get("doc_type");
     const year = url.searchParams.get("year");
-    const items = worksFixture.items.filter((work) => (!q || work.title?.toLocaleLowerCase("vi").includes(q)) && (!docType || work.doc_type === docType) && (!year || work.year === Number(year)));
+    const topic = Number(url.searchParams.get("topic")) || null;
+    const topicWorkIds = topic ? new Set(topicDetailsFixture[topic]?.works.map((work) => work.id) ?? []) : null;
+    const items = worksFixture.items.filter((work) => (!q || work.title?.toLocaleLowerCase("vi").includes(q)) && (!docType || work.doc_type === docType) && (!year || work.year === Number(year)) && (!topicWorkIds || topicWorkIds.has(work.id)));
     data = { items, page: { ...worksFixture.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
   } else if (/^\/api\/works\/\d+$/.test(url.pathname)) data = workDetailsFixture[id];
   else if (/^\/api\/persons\/\d+$/.test(url.pathname)) data = id === personFixture.id ? personFixture : undefined;
+  else if (url.pathname === "/api/persons") {
+    const q = url.searchParams.get("q")?.toLocaleLowerCase("vi") ?? "";
+    data = personsFixture.filter((person) => person.display_name.toLocaleLowerCase("vi").includes(q));
+  }
   else if (url.pathname === "/api/topics") data = topicsFixture;
+  else if (/^\/api\/topics\/\d+$/.test(url.pathname)) data = topicDetailsFixture[id];
   else if (url.pathname === "/api/queue/authors" && !init?.method) {
     const state = url.searchParams.get("state") ?? "ChoXacNhan";
     const q = url.searchParams.get("q")?.toLocaleLowerCase("vi") ?? "";
@@ -88,6 +97,8 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const period = periodsFixture.find((item) => item.id === periodId);
     data = period ? { ...period, state: url.pathname.endsWith("/close") ? "DaDongNop" : "Huy" } : undefined;
   }
+  else if (url.pathname === "/api/sync/runs") data = { ...syncRunsFixture, page: { ...syncRunsFixture.page, page: Number(url.searchParams.get("page") ?? 1) } };
+  else if (/^\/api\/sync\/runs\/\d+$/.test(url.pathname)) data = syncRunDetailsFixture[id];
   else if (url.pathname === "/api/health") data = healthFixture;
 
   if (data === undefined) throw new ApiError(404, "Không tìm thấy dữ liệu yêu cầu.");
@@ -111,7 +122,9 @@ export const api = {
   getWorks: (filters: WorkFilters = {}) => apiRequest<WorkList>(`/api/works${queryString({ q: filters.q, doc_type: filters.doc_type, year: filters.year, unit: filters.unit, topic: filters.topic, page: filters.page })}`),
   getWork: (id: number) => apiRequest<WorkDetail>(`/api/works/${id}`),
   getPerson: (id: number) => apiRequest<PersonProfile>(`/api/persons/${id}`),
+  searchPersons: (q: string, limit = 20) => apiRequest<PersonSearchRow[]>(`/api/persons${queryString({ q, limit })}`),
   getTopics: () => apiRequest<Topic[]>("/api/topics"),
+  getTopic: (id: number) => apiRequest<TopicDetail>(`/api/topics/${id}`),
   getAuthorQueue: (state = "ChoXacNhan", q = "", page = 1) => apiRequest<AuthorQueueList>(`/api/queue/authors${queryString({ state, q, page })}`),
   decideAuthors: (input: DecideAuthorsIn) => apiRequest<DecideResult>("/api/queue/authors/decide", { method: "POST", body: JSON.stringify(input) }),
   getDuplicateGroups: (state = "NghiTrung", page = 1) => apiRequest<DupGroupList>(`/api/queue/duplicates${queryString({ state, page })}`),
@@ -130,5 +143,7 @@ export const api = {
   openPeriod: (input: PeriodOpenIn) => apiRequest<PeriodOut>("/api/periods", { method: "POST", body: JSON.stringify(input) }),
   closePeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/close`, { method: "POST" }),
   cancelPeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/cancel`, { method: "POST" }),
+  getSyncRuns: (page = 1) => apiRequest<SyncRunList>(`/api/sync/runs${queryString({ page })}`),
+  getSyncRun: (id: number) => apiRequest<SyncRunDetail>(`/api/sync/runs/${id}`),
   getHealth: () => apiRequest<HealthOut>("/api/health"),
 };
