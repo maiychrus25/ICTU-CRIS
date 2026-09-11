@@ -29,6 +29,7 @@ class WorkSummary(BaseModel):
     state: str
     needs_review: bool = False
     score: float | None = None    # cosine 0..1, chỉ có ở mode=semantic
+    keywords: list[str] = Field(default_factory=list)   # tách keywords_raw, tối đa 6 đầu tiên
 
 
 class WorkList(BaseModel):
@@ -70,6 +71,36 @@ class WorkDetail(BaseModel):
     has_manual: bool
     fields: list[FieldRow]
     mentions: list[MentionRow]
+    pdf_url: str | None = None     # đầu tiên trong detail.pdf của bản ghi nguồn hiện hành
+    source_url: str | None = None  # detail.url hoặc archive.url
+    keywords: list[str] = Field(default_factory=list)   # tách keywords_raw theo [,;], không trùng
+
+
+# ---------- bộ lọc/thống kê công trình (K1) ----------
+class FacetValue(BaseModel):
+    value: str
+    label: str
+    n: int
+
+
+class FacetYear(BaseModel):
+    value: int
+    n: int
+
+
+class FacetUnit(BaseModel):
+    value: int
+    code: str
+    name: str
+    n: int
+
+
+class WorksFacetsOut(BaseModel):
+    pub_types: list[FacetValue]
+    quartiles: list[FacetValue]
+    cohorts: list[FacetValue]
+    years: list[FacetYear]
+    units: list[FacetUnit]
 
 
 class FieldEditIn(BaseModel):
@@ -114,6 +145,9 @@ class PersonProfile(BaseModel):
     publications: list[PersonPublication]
     pending_count: int
     last_sync: LastSync | None
+    rank: str | None = None            # học hàm (PGS/GS), cột person.rank
+    scholar_url: str | None = None
+    citation_stats: dict[str, Any] | None = None   # chưa tính — luôn null
 
 
 class PersonSearchRow(BaseModel):
@@ -786,3 +820,18 @@ class SyncRunDetail(SyncRunSummary):
     fetched_count: dict[str, Any] | None = None
     triggered_by: int | None = None
     records: list[SourceRecordRow]
+
+
+# ---------- mới cập nhật từ kho (K1) ----------
+class RecentAddedRow(WorkSummary):
+    first_seen_at: datetime
+
+
+class RecentChangedRow(WorkSummary):
+    version: int
+
+
+class RecentOut(BaseModel):
+    added: list[RecentAddedRow]
+    changed: list[RecentChangedRow]
+    run: LastSync | None
