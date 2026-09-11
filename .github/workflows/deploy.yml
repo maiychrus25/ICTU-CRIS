@@ -78,6 +78,18 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           printf '%s\n' "${{ secrets.PROD_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+      - name: Kiểm tra secrets trước khi kết nối
+        run: |
+          if ! ssh-keygen -y -f ~/.ssh/id_ed25519 >/dev/null 2>&1; then
+            echo "::error::PROD_SSH_KEY không phải khoá riêng hợp lệ — dán nguyên nội dung tệp khoá riêng (bắt đầu bằng '-----BEGIN OPENSSH PRIVATE KEY-----'), không phải tệp .pub"
+            exit 1
+          fi
+          if [ ! -s ~/.ssh/known_hosts ] || ! grep -q "${{ secrets.PROD_HOST }}" ~/.ssh/known_hosts; then
+            echo "::warning::PROD_KNOWN_HOSTS trống hoặc không chứa PROD_HOST — lấy host key trực tiếp bằng ssh-keyscan (kém an toàn hơn, chỉ để không chặn)"
+            ssh-keyscan -T 10 "${{ secrets.PROD_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          fi
+          ssh -o BatchMode=yes -o ConnectTimeout=20 "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" 'echo "ssh OK: $(id -un)@$(hostname)"' \
+            || { echo "::error::không SSH được tới ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} — kiểm PROD_USER/PROD_HOST, khoá công khai trong authorized_keys, tường lửa cổng 22"; exit 1; }
       - name: Chạy deploy/upgrade.sh trên máy chủ thật
         run: |
           ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
