@@ -212,7 +212,7 @@ mạng công khai**.
 - [x] Tích hợp AI: đối chiếu đề tài, gợi ý hàng đợi, trục chủ đề — mô hình cục bộ, không cần khoá API ([docs/ai.md](docs/ai.md))
 - [x] **0.2.0 đã phát hành (11/09)** — API JSON, giao diện Next.js, kỳ báo cáo, rà
       soát trùng đề tài theo khoá
-- [ ] **Đang phát triển (0.3.0, lát cắt G)** — đăng nhập cục bộ, tìm người,
+- [x] **0.3.0 đã phát hành (11/09)** — đăng nhập cục bộ và vai trò, tìm người,
       chủ đề, lịch sử đồng bộ, kê khai công trình vào kỳ
 - [ ] Còn lại: SSO trường thật, kê khai bởi chính giảng viên, xuất biểu mẫu Bộ
 
@@ -223,7 +223,7 @@ mạng công khai**.
 | 🎯 | [docs/BRD.md](docs/BRD.md) | Yêu cầu nghiệp vụ: 6 vấn đề đo được, YN-01..10, ràng buộc cuộc thi |
 | 📐 | [docs/SRS.md](docs/SRS.md) | Đặc tả phần mềm: FR theo giai đoạn, tích hợp AI, ma trận truy vết YN → FR → UC → US |
 | 🤖 | [docs/ai.md](docs/ai.md) | AI làm gì và không làm gì, ba nhà cung cấp, mô hình, thuật toán, giới hạn |
-| 🏷️ | [docs/release-notes/v0.2.0.md](docs/release-notes/v0.2.0.md) | Ghi chú phát hành bản hiện tại (v0.1.0: [đây](docs/release-notes/v0.1.0.md)) |
+| 🏷️ | [docs/release-notes/v0.3.0.md](docs/release-notes/v0.3.0.md) | Ghi chú phát hành bản hiện tại (cũ hơn: [v0.2.0](docs/release-notes/v0.2.0.md), [v0.1.0](docs/release-notes/v0.1.0.md)) |
 | 📋 | [docs/ba/00-README.md](docs/ba/00-README.md) | Bộ tài liệu phân tích nghiệp vụ (BA) — 18 tệp |
 | 🗄️ | [docs/ba/17-mo-hinh-du-lieu.md](docs/ba/17-mo-hinh-du-lieu.md) | Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 |
 | 🗺️ | [docs/superpowers/plans/](docs/superpowers/plans/) | Kế hoạch triển khai từng lát cắt: S + N, hồ sơ nguồn mở, giao diện hàng đợi, K, AI |

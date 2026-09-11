@@ -3,7 +3,7 @@
 #
 # Triển khai một máy: PostgreSQL + ICTU-CRIS (web). Cấu hình qua deploy/.env
 # (tạo bằng deploy/setup.sh). Ảnh app dựng từ mã nguồn ở thư mục gốc, hoặc thay
-# `build` bằng `image: ghcr.io/maiychrus25/ictu-cris:0.2.0` để dùng ảnh phát hành.
+# `build` bằng `image: ghcr.io/maiychrus25/ictu-cris:0.3.0` để dùng ảnh phát hành.
 services:
   db:
     image: postgres:16
