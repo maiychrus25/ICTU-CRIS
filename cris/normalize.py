@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import json
 import re
+
 from cris import audit
 from cris import rules as RU
 from cris.db import tx
@@ -55,19 +56,35 @@ def extract_fields(rec, rules):
         student = _first(meta, fm["student"])
         if student:
             mentions += [{"role": "student", "raw_name": n} for n in RU.split_names(student, nb)[0]]
-        for m in arc.get("mentors") or []:
-            mentions += [{"role": "mentor", "raw_name": n} for n in RU.split_names(m.get("name"), nb)[0]]
+        arc_mentors = arc.get("mentors") or []
+        if arc_mentors:
+            for m in arc_mentors:
+                mentions += [{"role": "mentor", "raw_name": n} for n in RU.split_names(m.get("name"), nb)[0]]
+        else:
+            # nguồn không dựng được archive.mentors (thẻ lv-mentor-link) khi trang chỉ
+            # có GVHD giữ chỗ (vd ICTU_TEACHER, xem docs/ai.md mục 6) — dùng meta.GVHD
+            # làm dự phòng, cùng cách đọc meta["Sinh viên"] cho vai student ở trên.
+            # split_names tự tách nhiều người (vd "Phạm Thanh Giang, Trần Duy Minh") và
+            # trả nguyên trạng token giữ chỗ (vd "ICTU_TEACHER") thành một lượt tên.
+            gvhd = _first(meta, fm["mentor"])
+            if gvhd:
+                mentions += [{"role": "mentor", "raw_name": n} for n in RU.split_names(gvhd, nb)[0]]
     f["mentions"] = mentions
     f["authors_truncated"] = truncated
     return f
 
-def _pending(cur):
-    cur.execute("""
+def _pending(cur, force=False, doc_types=None):
+    types = list(doc_types) if doc_types else list(WORK_TYPES)
+    # force=True (lệnh `normalize --redo`): bỏ điều kiện "chưa có work", chuẩn hoá lại
+    # toàn bộ bản ghi sống thay vì chỉ phần đang chờ — normalize_record vẫn khớp lại
+    # work đã có theo (source, source_key) nên không tạo work trùng.
+    exists_clause = "" if force else "AND NOT EXISTS (SELECT 1 FROM work w WHERE w.primary_source_record_id = s.id)"
+    cur.execute(f"""
         SELECT s.* FROM source_record s
         WHERE s.status='active' AND s.doc_type = ANY(%s)
           AND s.version = (SELECT max(version) FROM source_record x WHERE x.source=s.source AND x.source_key=s.source_key)
-          AND NOT EXISTS (SELECT 1 FROM work w WHERE w.primary_source_record_id = s.id)
-        ORDER BY s.id""", (list(WORK_TYPES),))
+          {exists_clause}
+        ORDER BY s.id""", (types,))
     return cur.fetchall()
 
 def normalize_record(conn, rec, rules, actor_id=None):
@@ -150,13 +167,21 @@ def normalize_record(conn, rec, rules, actor_id=None):
                               before={"work_id": work_id, "name_key": orphan["name_key"]})
     return work_id, bool(existing)
 
-def normalize_pending(conn, actor_id=None):
+def normalize_pending(conn, actor_id=None, force=False, doc_type=None):
+    """Chuẩn hoá bản ghi nguồn thành `work`. Mặc định (`force=False`) chỉ xử lý phần
+    đang chờ (`doc_type` cho hay chưa có `work` nào) — hành vi cũ, không đổi. `force=True`
+    (CLI `normalize --redo`) chuẩn hoá lại toàn bộ bản ghi sống kể cả đã có `work`, dùng
+    khi bộ luật hay `cris/normalize.py` đổi và cần áp lại trên dữ liệu cũ; trường đã
+    `manual`/`merge` vẫn được bảo vệ như thường (xem `normalize_record`). `doc_type` lọc
+    còn một loại (vd `"do_an"`) thay vì toàn bộ `WORK_TYPES`."""
     rules = RU.load_active(conn)
     out = {"created": 0, "updated": 0, "skipped": 0}
+    types = [doc_type] if doc_type else list(WORK_TYPES)
     with tx(conn), conn.cursor() as cur:
-        pending = _pending(cur)
-        cur.execute("SELECT count(*) AS n FROM source_record s WHERE s.status='active' AND s.doc_type = ANY(%s) AND EXISTS (SELECT 1 FROM work w WHERE w.primary_source_record_id=s.id)", (list(WORK_TYPES),))
-        out["skipped"] = cur.fetchone()["n"]
+        pending = _pending(cur, force=force, doc_types=types)
+        if not force:
+            cur.execute("SELECT count(*) AS n FROM source_record s WHERE s.status='active' AND s.doc_type = ANY(%s) AND EXISTS (SELECT 1 FROM work w WHERE w.primary_source_record_id=s.id)", (types,))
+            out["skipped"] = cur.fetchone()["n"]
         for rec in pending:
             _, updated = normalize_record(conn, rec, rules, actor_id)
             out["updated" if updated else "created"] += 1

@@ -7,6 +7,18 @@
 
 ### Added
 
+- Lượt tên vai `mentor` giữ chỗ từ `meta.GVHD` (lát cắt I4): `cris/normalize.py`
+  (`extract_fields`) nay đọc `archive.meta["GVHD"]` khi `archive.mentors` rỗng — nguồn
+  không dựng được thẻ `lv-mentor-link` khi trang chỉ ghi người hướng dẫn giữ chỗ — và tạo
+  một lượt tên vai `mentor` (`ICTU_TEACHER` → `is_placeholder=true`; tên thật, có thể nhiều
+  người tách bằng `,`/`;` → `is_placeholder=false` từng người), đúng cách nó đã đọc
+  `meta["Sinh viên"]` cho vai `student`. CLI mới `python -m cris normalize --redo
+  [--doc-type do_an]` chuẩn hoá lại toàn bộ bản ghi sống (không chỉ phần đang chờ) để vá
+  hồi tố các `work` đã chuẩn hoá trước khi có nhánh này — trường `manual`/`merge` vẫn được
+  bảo vệ như thường. Chạy trên DB thật: 4.621 lượt tên giữ chỗ mới (khớp số liệu README
+  "Ba số liệu"), `python -m cris ai mentors` (lát cắt I3) từ `scanned=0 suggested=0` lên
+  `scanned=4621 suggested=1381` — xem `docs/ai.md` mục 6.
+
 - CI/CD triển khai máy chủ thật (lát cắt I1): `.github/workflows/deploy.yml`
   chạy khi một GitHub Release được công bố (hoặc chạy tay, input `tag` bắt
   buộc) — job `wait-image` chờ ảnh `ghcr.io/maiychrus25/ictu-cris:<phiên

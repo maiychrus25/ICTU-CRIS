@@ -1,8 +1,11 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
 import json
+
 import pytest
+
 from cris import dedup, normalize, rules, sync
+
 
 def q(conn, sql, *args):
     with conn.cursor() as cur:
@@ -85,6 +88,59 @@ def test_placeholder_and_truncation_flags(conn, seeded):
     normalize.normalize_pending(conn)
     ms = q(conn, "SELECT is_truncated FROM author_mention WHERE work_id=(SELECT id FROM work WHERE title='T')")
     assert all(m["is_truncated"] for m in ms)
+
+def test_gvhd_meta_placeholder_becomes_one_mentor_mention(conn, seeded):
+    # archive.mentors rỗng (nguồn không dựng được thẻ lv-mentor-link khi trang chỉ có
+    # GVHD giữ chỗ) — dự phòng đọc meta.GVHD, đúng đo trên DB thật (docs/ai.md mục 6).
+    raw = {"archive": {"url": "https://r/do-an/gvhd1/", "title": "Đề tài GVHD giữ chỗ",
+                       "meta": {"Sinh viên": "Nguyễn Văn C", "Khóa": "K19", "GVHD": "ICTU_TEACHER"},
+                       "abstract": None, "keywords": None}}
+    load(conn, "do_an", raw, "https://r/do-an/gvhd1/")
+    normalize.normalize_pending(conn)
+    ms = q(conn, """SELECT position, raw_name, is_placeholder FROM author_mention
+                    WHERE role='mentor' AND work_id=(SELECT id FROM work WHERE title='Đề tài GVHD giữ chỗ')""")
+    assert len(ms) == 1
+    assert ms[0]["raw_name"] == "ICTU_TEACHER" and ms[0]["position"] == 1 and ms[0]["is_placeholder"] is True
+
+def test_gvhd_meta_real_names_split_into_mentor_mentions(conn, seeded):
+    raw = {"archive": {"url": "https://r/do-an/gvhd2/", "title": "Đề tài GVHD tên thật",
+                       "meta": {"Sinh viên": "Trần Thị D", "Khóa": "K19",
+                                "GVHD": "TS. Nguyễn Văn A; ThS. Trần B"},
+                       "abstract": None, "keywords": None}}
+    load(conn, "do_an", raw, "https://r/do-an/gvhd2/")
+    normalize.normalize_pending(conn)
+    ms = q(conn, """SELECT position, raw_name, is_placeholder, degree_raw FROM author_mention
+                    WHERE role='mentor' AND work_id=(SELECT id FROM work WHERE title='Đề tài GVHD tên thật')
+                    ORDER BY position""")
+    assert [m["raw_name"] for m in ms] == ["TS. Nguyễn Văn A", "ThS. Trần B"]
+    assert all(m["is_placeholder"] is False for m in ms)
+    assert ms[0]["degree_raw"] == "TS" and ms[1]["degree_raw"] == "ThS"
+
+def test_archive_mentors_present_ignores_meta_gvhd(conn, seeded):
+    raw = {"archive": {"url": "https://r/do-an/gvhd3/", "title": "Đề tài đã có mentors",
+                       "meta": {"Sinh viên": "Lê Văn E", "Khóa": "K19", "GVHD": "ICTU_TEACHER"},
+                       "mentors": [{"name": "TS. Phạm Văn F", "url": "https://r/giang-vien/f/"}],
+                       "abstract": None, "keywords": None}}
+    load(conn, "do_an", raw, "https://r/do-an/gvhd3/")
+    normalize.normalize_pending(conn)
+    ms = q(conn, """SELECT raw_name, is_placeholder FROM author_mention
+                    WHERE role='mentor' AND work_id=(SELECT id FROM work WHERE title='Đề tài đã có mentors')""")
+    assert [m["raw_name"] for m in ms] == ["TS. Phạm Văn F"]
+    assert ms[0]["is_placeholder"] is False
+
+def test_normalize_redo_force_reprocesses_without_duplicating_mentions(conn, seeded):
+    raw = {"archive": {"url": "https://r/do-an/gvhd4/", "title": "Đề tài redo",
+                       "meta": {"Sinh viên": "Vũ Thị G", "Khóa": "K19", "GVHD": "ICTU_TEACHER"},
+                       "abstract": None, "keywords": None}}
+    load(conn, "do_an", raw, "https://r/do-an/gvhd4/")
+    out0 = normalize.normalize_pending(conn)
+    assert out0["created"] == 1
+    work_id = q(conn, "SELECT id FROM work WHERE title='Đề tài redo'")[0]["id"]
+    out1 = normalize.normalize_pending(conn, force=True, doc_type="do_an")
+    out2 = normalize.normalize_pending(conn, force=True, doc_type="do_an")
+    assert out1["updated"] == 1 and out2["updated"] == 1
+    ms = q(conn, "SELECT id FROM author_mention WHERE work_id=%s AND role='mentor' AND position > 0", work_id)
+    assert len(ms) == 1
 
 def test_unknown_pub_type_sets_needs_review_not_guess(conn, seeded):
     raw = json.loads(json.dumps(BAI_BAO)); raw["archive"]["pub_type"] = "Chưa xác định"; raw["archive"]["url"] = "https://r/bai-bao/e/"

@@ -15,7 +15,11 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("migrate"); sub.add_parser("seed")
     s = sub.add_parser("sync"); s.add_argument("paths", nargs="*", default=list(R.DOC_TYPES)); s.add_argument("--no-details", action="store_true")
-    sub.add_parser("people"); sub.add_parser("normalize"); sub.add_parser("link"); sub.add_parser("dedup")
+    sub.add_parser("people")
+    np = sub.add_parser("normalize")
+    np.add_argument("--redo", action="store_true", help="chuẩn hoá lại toàn bộ bản ghi sống, không chỉ phần đang chờ")
+    np.add_argument("--doc-type", choices=list(normalize.WORK_TYPES), help="chỉ chuẩn hoá một loại (mặc định: tất cả)")
+    sub.add_parser("link"); sub.add_parser("dedup")
     qp = sub.add_parser("quality"); qp.add_argument("--json", action="store_true")
     ai = sub.add_parser("ai", help="vector ngữ nghĩa và gợi ý (cần CRIS_AI_PROVIDER)")
     ais = ai.add_subparsers(dest="ai_cmd", required=True)
@@ -68,7 +72,7 @@ def main(argv=None):
     elif a.cmd == "people":
         print(people.import_people(conn))
     elif a.cmd == "normalize":
-        print(normalize.normalize_pending(conn))
+        print(normalize.normalize_pending(conn, force=a.redo, doc_type=a.doc_type))
     elif a.cmd == "link":
         print(link.link_pending(conn))
     elif a.cmd == "dedup":

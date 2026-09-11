@@ -189,32 +189,47 @@ chưa). `POST /api/ai/mentors/{work_id}/accept {person_id}` (vai trò `rd_office
 `GET /api/queue/authors` như mọi liên kết khác; **quyết định cuối vẫn ở hàng đợi tác giả**
 (`cris.link.decide_link`, BR-18) — route chấp nhận gợi ý không bao giờ tự xác nhận.
 
-**Thử trên dữ liệu thật (11/09/2026, DB thật, 7.618 công trình đã `ai embed`, mô hình
-`local`)**: `python -m cris ai mentors` trả `scanned=0 suggested=0` trong ~2,6 giây. Nguyên
-nhân: đúng như số liệu README, 4.621/5.375 (86%) đồ án có `raw.archive.meta.GVHD =
-'ICTU_TEACHER'` — nhưng `cris/source/repository.py` (`parse_card`) chỉ dựng danh sách
-`archive.mentors` từ thẻ `<a class="lv-mentor-link">` trên trang; trang có GVHD giữ chỗ
-**không có** thẻ này nên `mentors=[]`, và `cris/normalize.py` (`extract_fields`) chỉ tạo
-lượt tên vai `mentor` từ `archive.mentors` — không có nhánh dự phòng đọc `meta.GVHD` như
-cách nó đọc `meta["Sinh viên"]` cho vai `student`. Kết quả đo trực tiếp trên DB: 0/945 lượt
-tên vai `mentor` có `is_placeholder=true` (toàn bộ 945 lượt tên đều là tên thật); 4.655/5.375
-đồ án **không có lượt tên vai mentor nào cả** (không phải giữ chỗ — không tồn tại). Vì vậy
-tập đích mà `suggest_mentors` tìm (`is_placeholder=true`) đang rỗng trên dữ liệu thật, dù
-thuật toán đúng theo đặc tả và đã kiểm bằng 13 test `FakeProvider` (`tests/test_ai_mentor.py`)
-dựng lượt tên giữ chỗ trực tiếp bằng SQL — cùng cách `tests/test_ai_screen.py` không cần
-chạy `cris sync`/`cris normalize` thật để kiểm thuật toán.
+**`cris/normalize.py` đã có nhánh dự phòng đọc `meta.GVHD`** (11/09/2026, lát cắt I4): khi
+`archive.mentors` rỗng — nguồn không dựng được thẻ `<a class="lv-mentor-link">` khi trang chỉ
+có GVHD giữ chỗ — `extract_fields` đọc `meta["GVHD"]` (nhãn đầu của `field_map["mentor"]`,
+`cris/rules.py`) và tạo lượt tên vai `mentor`, đúng cách nó đã đọc `meta["Sinh viên"]` cho vai
+`student`. Giá trị giữ chỗ (`ICTU_TEACHER`, đã có sẵn trong `RULES_V1.name_norm.placeholders`
+— không cần bump `rule_set` version) trở thành một lượt tên `is_placeholder=true`; giá trị tên
+thật (có thể nhiều người, `split_names` tách theo `,`/`;` như `archive.mentors`) trở thành các
+lượt tên `is_placeholder=false`. Chạy lại toàn bộ đồ án đã đồng bộ trước đó cần `python -m cris
+normalize --redo --doc-type do_an` (mới ở lát cắt này — `normalize_pending(force=True,
+doc_type=...)`, xem `cris/normalize.py`): các bản ghi `do_an` cũ đã có `work` không được
+`normalize_pending` mặc định xử lý lại (nó chỉ chạy phần đang chờ, `NOT EXISTS work`) nên cần
+cờ `--redo` để "vá" hồi tố các work đã chuẩn hoá từ trước khi có nhánh GVHD.
 
-**Việc cần làm tiếp** (ngoài phạm vi lát cắt này — `cris/normalize.py` thuộc tầng nghiệp vụ
-có sẵn, không sửa ở đây): thêm một lượt tên vai `mentor`, `is_placeholder=true`, khi
-`archive.mentors` rỗng nhưng `meta.GVHD` (hoặc các nhãn khác trong `field_map["mentor"]`,
-`cris/rules.py`) có giá trị — đúng cách `extract_fields` đã làm cho vai `student` từ
-`meta["Sinh viên"]`. Khi đó tập đích của `suggest_mentors` sẽ khớp đúng 4.621 đồ án
-`ICTU_TEACHER` mà README nói tới, không cần đổi gì ở `cris/ai/mentor.py`.
+**Đo trên dữ liệu thật (11/09/2026, DB thật, sau `normalize --redo --doc-type do_an`, ~41,5
+giây cho 5.375 đồ án, rồi `python -m cris ai mentors` với mô hình `local`)**:
+`{'created': 0, 'updated': 5375, 'skipped': 0}` từ `normalize --redo`, tạo đúng **4.621** lượt
+tên vai `mentor` giữ chỗ (khớp số liệu README "Ba số liệu") — không đồ án `do_an` nào còn
+thiếu lượt tên vai `mentor` sau khi chạy (trước đó 4.655/5.375 không có lượt tên mentor nào).
+`python -m cris ai mentors` (mặc định `k=5, min_votes=2, min_score=0.70`) trả `scanned=4621
+suggested=1381` trong ~12 giây — **29,9%** đồ án đích có ít nhất một ứng viên qua ngưỡng, nằm
+trong khoảng hợp lý (không dưới 5%, không trên 80%) nên **giữ nguyên ngưỡng mặc định**, không
+cần hiệu chỉnh. Phân vị `score` của ứng viên hàng đầu mỗi đồ án (1.381 đồ án có gợi ý): p10 ≈
+1,23, p50 ≈ 1,44, p90 ≈ 1,66 — đều cách xa `min_score=0,70` (biên an toàn, không sát ngưỡng).
+Phân vị `votes`: p10 = p50 = p90 = 2 (1.304/1.381 ứng viên hàng đầu dừng đúng ở `min_votes=2`,
+77 đạt 3 — tối đa có thể với `k=5` khi láng giềng rải cho nhiều người); `min_votes=2` vừa đủ
+chặt để không cho gợi ý chỉ dựa trên một láng giềng, không quá chặt tới mức bỏ sót phần lớn.
 
-**Ngưỡng**: giữ mặc định của đặc tả (`k=5`, `min_votes=2`, `min_score=0.70`) — **chưa hiệu
-chỉnh trên phân bố điểm thật** (khác `SCREEN_THRESHOLDS` của mục 5, vốn đo trên 529 đồ án
-thật) vì không có đồ án đích nào để đo phân vị (xem phát hiện ở trên). Hiệu chỉnh lại khi
-`cris/normalize.py` được sửa để có lượt tên giữ chỗ thật.
+Năm ví dụ (điểm cao nhất, cùng một giảng viên vì đề tài "kiểm thử tự động bằng Selenium" phổ
+biến ở một khoá — đúng cảnh báo trong docstring `suggest_mentors` về "một đề tài phổ biến"):
+
+| Đồ án đích | Ứng viên | votes | score | Đồ án dẫn chứng |
+|---|---|---|---|---|
+| Thực nghiệm kiểm thử Website với công cụ kiểm thử tự động Selenium | Nguyễn Lan Oanh | 3 | 2,606 | Tự động hóa kiểm thử website đặt lịch spa sử dụng Selenium với AI hỗ trợ thiết kế testcase |
+| Nghiên cứu kiểm thử tự động với Senlenium, TestNG... | Nguyễn Lan Oanh | 3 | 2,561 | Nghiên cứu, triển khai kiểm thử tự động sử dụng Selenium và AI hỗ trợ thiết kế test case cho hệ thống website quản lý đào tạo trung tâm Tiếng Anh |
+| Kiểm thử tự động ứng dụng Web sử dụng công cụ Selenium | Nguyễn Lan Oanh | 3 | 2,554 | Tự động hóa kiểm thử website đặt lịch spa sử dụng Selenium với AI hỗ trợ thiết kế testcase |
+| Kiểm thử ứng dụng trên nền Web bằng công cụ Selenium | Nguyễn Lan Oanh | 3 | 2,550 | Nghiên cứu và triển khai kiểm thử tự động website bán đồ cho thú cưng sử dụng Selenium kết hợp ứng dụng trí tuệ nhân tạo trong việc thiết kế test case |
+| Xây dựng các bộ test dựa trên phần mềm Selenium ứng dụng trên kiểm thử Web | Nguyễn Lan Oanh | 3 | 2,542 | Tự động hóa kiểm thử website đặt lịch spa sử dụng Selenium với AI hỗ trợ thiết kế testcase |
+
+`GET /api/ai/mentors?page=1` trả 50 dòng ở trang đầu (không rỗng); `GET /api/quality` báo
+`mentions_placeholder` tăng lên 4.923 (gồm cả vai `student` giữ chỗ có từ trước và 4.621 lượt
+tên vai `mentor` mới).
 
 ## 7. Giới hạn — nói trước để không ai hiểu nhầm
 
