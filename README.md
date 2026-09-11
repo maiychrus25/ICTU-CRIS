@@ -155,6 +155,12 @@ python -m cris user create-lecturers [--unit CODE] [--dry-run]     # tài khoả
   của một khoá với toàn bộ khoá trước, gắn cờ theo mức "cao/vừa/thấp"; ngưỡng
   hiệu chuẩn 0,90/0,80 trên phân bố điểm thật (47/529 đồ án khoá 21 được gắn
   cờ). AI chỉ gợi ý, người quyết đi tiếp ở `/doi-chieu/`.
+- **Gợi ý người hướng dẫn** (`/doi-soat/huong-dan/`) — với đồ án đang ghi
+  người hướng dẫn là `ICTU_TEACHER` (4.621/5.375, xem "Ba số liệu" bên dưới),
+  tìm đồ án cùng đề tài đã có người hướng dẫn thật, xếp hạng ứng viên theo
+  số phiếu + tổng cosine kèm đồ án dẫn chứng; chuyên viên đưa ứng viên vào
+  hàng đợi xác nhận (`ChoXacNhan`) — quyết định cuối vẫn ở hàng đợi tác giả
+  (BR-18), không tự nối bao giờ.
 - **Chất lượng dữ liệu** (`/chat-luong-du-lieu/`) — báo cáo độ phủ liên kết,
   cảnh báo dữ liệu thiếu/nghi vấn.
 
@@ -207,6 +213,7 @@ pip install -e ".[ai]" && python -m cris ai download   # một lần, 135 MB
 export CRIS_AI_PROVIDER=local
 python -m cris ai embed && python -m cris ai topics && python -m cris ai suggest
 python -m cris ai screen --cohort K18                   # rà soát trùng đề tài đồ án khoá K18
+python -m cris ai mentors                               # gợi ý người hướng dẫn cho đồ án ICTU_TEACHER
 python -m cris serve                                    # http://127.0.0.1:8000
 ```
 

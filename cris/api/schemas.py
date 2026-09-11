@@ -565,6 +565,53 @@ class ScreenCohortSummary(BaseModel):
     flagged: int
 
 
+# ---------- gợi ý người hướng dẫn (ICTU_TEACHER) ----------
+class MentorEvidence(BaseModel):
+    work_id: int
+    title: str | None
+    score: float
+
+
+class MentorCandidate(BaseModel):
+    person_id: int
+    display_name: str
+    degree: str | None
+    votes: int
+    score: float
+    evidence: list[MentorEvidence]
+
+
+class MentorPendingLink(BaseModel):
+    link_id: int
+    person_id: int
+    state: str
+
+
+class MentorItem(BaseModel):
+    work_id: int
+    title: str | None
+    cohort: str | None
+    mention_id: int
+    candidates: list[MentorCandidate]
+    pending_link: MentorPendingLink | None = None
+
+
+class MentorList(BaseModel):
+    items: list[MentorItem]
+    page: Page
+
+
+class AcceptMentorIn(BaseModel):
+    person_id: int
+
+
+class AcceptMentorResult(BaseModel):
+    ok: bool
+    link_id: int
+    person_id: int
+    state: str
+
+
 # ---------- lịch sử đồng bộ ----------
 class SyncRunSummary(BaseModel):
     id: int

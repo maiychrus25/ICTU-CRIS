@@ -17,6 +17,7 @@ AI trong ICTU-CRIS **gợi ý**; **người quyết** (BR-18). Ba chỗ có AI, 
 | **Gợi ý hàng đợi nghi trùng** `/doi-soat/trung-lap` | 43 nhóm đồ án trùng tiêu đề, 34 là đồ án nhóm hợp lệ | Hiện tương đồng tóm tắt giữa các thành viên như một thông tin thêm | Gợi ý mặc định "Giữ riêng" cho nhóm khác sinh viên **không đổi**; người quyết gộp hay giữ |
 | **Trục chủ đề** `/tra-cuu?topic=` | 10.951 từ khoá không kiểm soát | Gom từ khoá thành cụm, nhãn cụm là từ khoá phổ biến nhất | Dùng làm bộ lọc; không thay từ khoá gốc |
 | **Rà soát trùng đề tài theo khoá** `/doi-chieu/ra-soat` | `dang_ky_do_an` không có ở nguồn nên không rà được lúc đăng ký; đề tài đồ án lặp lại qua các năm là nỗi đau của giảng viên hướng dẫn | Với đồ án của một khoá, tìm láng giềng ngữ nghĩa ở các khoá khác, chia mức `cao`/`vua`/`thap` theo cosine toàn văn bản | Chuyên viên/giảng viên xem bảng, tự quyết định có phải trùng hay không — không có hành động gộp/xoá nào tự động |
+| **Gợi ý người hướng dẫn** `/doi-soat/huong-dan` | 4.621/5.375 đồ án (86%, xem README mục "Ba số liệu") ghi người hướng dẫn là `ICTU_TEACHER` — tên giữ chỗ, không phải giảng viên thật | Với đồ án giữ chỗ, tìm đồ án cùng đề tài đã có người hướng dẫn thật liên kết, xếp hạng ứng viên theo số phiếu + tổng cosine | Chuyên viên đọc bằng chứng (đồ án dẫn chứng) rồi bấm "đưa vào hàng đợi xác nhận" — chỉ tạo `author_link` **đang chờ**, quyết định vẫn ở hàng đợi tác giả |
 
 AI **không** làm: kết luận đạo văn, khẳng định tính mới, tự gộp bản ghi, tự nối tác giả,
 tự đổi bất kỳ trường dữ liệu nghiệp vụ nào. Mã trong `cris/ai/` chỉ ghi vào bảng
@@ -43,6 +44,7 @@ python -m cris ai embed         # vector cho toàn bộ công trình
 python -m cris ai topics        # trục chủ đề (mặc định 40 cụm, --k để đổi)
 python -m cris ai suggest       # gợi ý cho hai hàng đợi
 python -m cris ai screen --cohort K18   # rà soát trùng đề tài của khoá K18 với các khoá khác
+python -m cris ai mentors       # gợi ý người hướng dẫn cho đồ án đang ghi ICTU_TEACHER
 python -m cris ai status        # provider, mô hình, số vector đã có
 ```
 
@@ -98,6 +100,12 @@ bằng đo được.
   `max_score`, điểm cosine toàn văn bản của láng giềng cao nhất; ba khía cạnh còn lại của
   từng láng giềng luôn là `khong_du_du_lieu` vì không có mô tả khía cạnh riêng để so — chỉ
   có tiêu đề/tóm tắt/từ khoá của chính công trình.
+- **Gợi ý người hướng dẫn**: với mỗi đồ án có lượt tên vai `mentor` giữ chỗ và chưa có liên
+  kết nào, lấy `k` đồ án láng giềng gần nhất (cosine) trong tập đồ án đã có người hướng dẫn
+  **thật** đã liên kết; gộp láng giềng theo `person_id`, `votes` = số láng giềng, `score` =
+  **tổng** (không phải trung bình) cosine của các láng giềng đó — nhiều láng giềng gần hơn
+  một láng giềng giống hệt. Ứng viên qua ngưỡng khi `votes ≥ min_votes` **và**
+  `score ≥ min_score`; xem mục 6 cho số đo trên dữ liệu thật.
 
 ## 5. Rà soát trùng đề tài theo khoá
 
@@ -140,14 +148,75 @@ Android" ~ "Xây dựng ứng dụng học lập trình thông minh tích hợp 
 ~ chính đề tài đó lặp lại nguyên văn (0,9510). Chọn `HIGH = 0.90` (gắn cờ 47/529 = 8,9%,
 trong khoảng mục tiêu 5–15%), `MID = 0.80` (ranh dưới của lớp "cùng vốn từ chung ngành").
 
-**Giới hạn**: chỉ so trên tóm tắt (như mọi chức năng AI khác trong dự án — xem mục 6 bên
+**Giới hạn**: chỉ so trên tóm tắt (như mọi chức năng AI khác trong dự án — xem mục 7 bên
 dưới); chỉ khía cạnh `bai_toan` của mỗi láng giềng có mức tính được (theo cosine toàn văn
 bản), ba khía cạnh còn lại luôn `khong_du_du_lieu` vì không có mô tả khía cạnh riêng để
 tách; ngưỡng hiệu chỉnh trên một cohort/một mô hình — đổi cohort hay mô hình khác có thể
 cần đo lại; **AI gợi ý, người quyết** — không có hành động gộp, xoá hay đổi trạng thái nào
 chạy tự động từ kết quả rà soát, kể cả khi mức là `cao`.
 
-## 6. Giới hạn — nói trước để không ai hiểu nhầm
+## 6. Gợi ý người hướng dẫn (ICTU_TEACHER)
+
+`/doi-soat/huong-dan` (`cris/ai/mentor.py`, `python -m cris ai mentors`,
+`GET /api/ai/mentors`, `POST /api/ai/mentors/{work_id}/accept`).
+
+**Mục đích**: 4.621/5.375 đồ án (86%, xem README mục "Ba số liệu") ghi người hướng dẫn là
+`ICTU_TEACHER` — một tên giữ chỗ do nguồn không có liên kết tới trang giảng viên, không
+phải một giảng viên thật. **Giả định** của tính năng (chỉ là gợi ý thống kê, ghi rõ trong
+docstring `suggest_mentors`): đồ án cùng đề tài thường có cùng giảng viên hướng dẫn, vì một
+giảng viên thường nhận nhiều đồ án cùng hướng qua các khoá/nhóm sinh viên — có thể sai (một
+đề tài phổ biến có thể do nhiều giảng viên khác nhau hướng dẫn), nên đây chỉ đưa vào hàng
+đợi, không bao giờ tự xác nhận.
+
+**Cách chạy**:
+
+```bash
+python -m cris ai embed                                  # cần vector trước
+python -m cris ai mentors                                # --k/--min-votes/--min-score để đổi
+python -m cris ai mentors --k 5 --min-votes 2 --min-score 0.70   # giá trị mặc định
+```
+
+Ghi `ai_suggestion(kind='mentor', target_id=<work_id>, payload={mention_id,
+candidates: [{person_id, display_name, degree, votes, score, evidence:
+[{work_id, title, score}]}]})`, UPSERT theo `UNIQUE(kind, target_id, model)`; đồ án không
+còn ứng viên nào qua ngưỡng ở lần chạy sau thì gợi ý cũ bị xoá (không để lại gợi ý lỗi
+thời). `GET /api/ai/mentors?unit=&min_votes=&page=` đọc lại gợi ý đã ghi, kèm `pending_link`
+(liên kết đang chờ/đã có cho lượt tên đó, nếu có — để giao diện biết đã đưa vào hàng đợi
+chưa). `POST /api/ai/mentors/{work_id}/accept {person_id}` (vai trò `rd_officer`) tạo
+`author_link` trạng thái **`ChoXacNhan`** (đang chờ, chưa xác nhận) cho lượt tên giữ chỗ,
+`confidence='ai_mentor'`, `basis={ai:true, votes, score}`, qua `cris.link.add_candidate` —
+409 nếu lượt tên đã có liên kết đang chờ/đã xác nhận. Liên kết này hiện ra ở
+`GET /api/queue/authors` như mọi liên kết khác; **quyết định cuối vẫn ở hàng đợi tác giả**
+(`cris.link.decide_link`, BR-18) — route chấp nhận gợi ý không bao giờ tự xác nhận.
+
+**Thử trên dữ liệu thật (11/09/2026, DB thật, 7.618 công trình đã `ai embed`, mô hình
+`local`)**: `python -m cris ai mentors` trả `scanned=0 suggested=0` trong ~2,6 giây. Nguyên
+nhân: đúng như số liệu README, 4.621/5.375 (86%) đồ án có `raw.archive.meta.GVHD =
+'ICTU_TEACHER'` — nhưng `cris/source/repository.py` (`parse_card`) chỉ dựng danh sách
+`archive.mentors` từ thẻ `<a class="lv-mentor-link">` trên trang; trang có GVHD giữ chỗ
+**không có** thẻ này nên `mentors=[]`, và `cris/normalize.py` (`extract_fields`) chỉ tạo
+lượt tên vai `mentor` từ `archive.mentors` — không có nhánh dự phòng đọc `meta.GVHD` như
+cách nó đọc `meta["Sinh viên"]` cho vai `student`. Kết quả đo trực tiếp trên DB: 0/945 lượt
+tên vai `mentor` có `is_placeholder=true` (toàn bộ 945 lượt tên đều là tên thật); 4.655/5.375
+đồ án **không có lượt tên vai mentor nào cả** (không phải giữ chỗ — không tồn tại). Vì vậy
+tập đích mà `suggest_mentors` tìm (`is_placeholder=true`) đang rỗng trên dữ liệu thật, dù
+thuật toán đúng theo đặc tả và đã kiểm bằng 13 test `FakeProvider` (`tests/test_ai_mentor.py`)
+dựng lượt tên giữ chỗ trực tiếp bằng SQL — cùng cách `tests/test_ai_screen.py` không cần
+chạy `cris sync`/`cris normalize` thật để kiểm thuật toán.
+
+**Việc cần làm tiếp** (ngoài phạm vi lát cắt này — `cris/normalize.py` thuộc tầng nghiệp vụ
+có sẵn, không sửa ở đây): thêm một lượt tên vai `mentor`, `is_placeholder=true`, khi
+`archive.mentors` rỗng nhưng `meta.GVHD` (hoặc các nhãn khác trong `field_map["mentor"]`,
+`cris/rules.py`) có giá trị — đúng cách `extract_fields` đã làm cho vai `student` từ
+`meta["Sinh viên"]`. Khi đó tập đích của `suggest_mentors` sẽ khớp đúng 4.621 đồ án
+`ICTU_TEACHER` mà README nói tới, không cần đổi gì ở `cris/ai/mentor.py`.
+
+**Ngưỡng**: giữ mặc định của đặc tả (`k=5`, `min_votes=2`, `min_score=0.70`) — **chưa hiệu
+chỉnh trên phân bố điểm thật** (khác `SCREEN_THRESHOLDS` của mục 5, vốn đo trên 529 đồ án
+thật) vì không có đồ án đích nào để đo phân vị (xem phát hiện ở trên). Hiệu chỉnh lại khi
+`cris/normalize.py` được sửa để có lượt tên giữ chỗ thật.
+
+## 7. Giới hạn — nói trước để không ai hiểu nhầm
 
 1. **Chỉ so trên tóm tắt.** Kho không có toàn văn: 39/40 PDF là tóm tắt một trang do máy
    sinh. Mọi kết quả đối chiếu đều ghi dòng *"So trên tiêu đề, tóm tắt và từ khoá — không
@@ -162,23 +231,25 @@ chạy tự động từ kết quả rà soát, kể cả khi mức là `cao`.
 6. **Gợi ý tác giả chỉ có khi người đó đã có công trình xác nhận** — đúng là điểm yếu ở
    giai đoạn đầu, khi liên kết còn thưa; nó tốt dần theo số quyết định của người dùng.
 
-## 7. Kiểm thử
+## 8. Kiểm thử
 
 - Test đơn vị dùng provider `fake` (xác định, không tải gì): đối chiếu, khía cạnh, đường
   lui, gom cụm, gợi ý, rà soát trùng đề tài theo khoá, rào chắn "AI không đổi dữ liệu
-  nghiệp vụ" (`tests/test_ai_screen.py`).
+  nghiệp vụ" (`tests/test_ai_screen.py`); gợi ý người hướng dẫn — dựng lượt tên vai `mentor`
+  giữ chỗ/đã liên kết trực tiếp bằng SQL, không cần `cris sync`/`normalize` thật
+  (`tests/test_ai_mentor.py`).
 - Test mô hình thật `tests/test_ai_local_slow.py`, đánh dấu `slow`: 384 chiều, cùng chủ
   đề gần hơn khác chủ đề, xuyên ngôn ngữ Việt–Anh, 64 đoạn dưới 30 giây. Tự bỏ qua khi
   chưa tải mô hình; CI chạy `-m "not slow"`.
 - Chạy: `pytest -q` (nhanh) · `pytest -m slow` (cần mô hình).
 
-## 8. Bảng dữ liệu AI
+## 9. Bảng dữ liệu AI
 
 | Bảng | Nội dung |
 |---|---|
 | `ai_embedding` | `work_id`, `model`, `dim`, `vector`, `text_hash`, `built_at` — một dòng cho mỗi (công trình, mô hình) |
 | `ai_topic`, `ai_topic_keyword` | cụm chủ đề và từ khoá thuộc cụm, kèm trọng số tần suất |
-| `ai_suggestion` | gợi ý cho hàng đợi: `kind` (`author_link` / `duplicate` / `topic_overlap`), `target_id`, `payload` |
+| `ai_suggestion` | gợi ý cho hàng đợi: `kind` (`author_link` / `duplicate` / `topic_overlap` / `mentor`), `target_id`, `payload` |
 | `ai_query` | lịch sử đối chiếu đề tài: đầu vào, kết quả, provider, người chạy — để xem lại và gửi giảng viên |
 
 Xoá toàn bộ dấu vết AI mà không ảnh hưởng nghiệp vụ: `TRUNCATE ai_query, ai_suggestion,

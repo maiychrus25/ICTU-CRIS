@@ -39,6 +39,30 @@
   (`ENV CRIS_DATA_DIR=/data`) — triển khai thật cần thêm volume `cris_data:/data`
   vào `deploy/docker-compose.yml`.
 
+- Gợi ý người hướng dẫn cho đồ án `ICTU_TEACHER` (lát cắt I3, FR-AI):
+  `cris/ai/mentor.py` — `suggest_mentors(conn, provider, *, k=5, min_votes=2,
+  min_score=0.70)`: với mỗi đồ án có lượt tên vai `mentor` giữ chỗ và chưa có
+  liên kết, lấy `k` đồ án láng giềng gần nhất (cosine) trong tập đồ án đã có
+  người hướng dẫn thật đã liên kết, gộp theo `person_id` (`votes` = số láng
+  giềng, `score` = tổng cosine), ghi `ai_suggestion(kind='mentor', ...)` —
+  UPSERT, xoá gợi ý cũ khi không còn ứng viên qua ngưỡng. Migration
+  `0012_ai_mentor.sql` mở CHECK `ai_suggestion.kind` thêm `mentor` và
+  `author_link.confidence` thêm `ai_mentor`. `cris/link.py` thêm
+  `add_candidate(conn, mention_id, person_id, confidence, basis)` (dùng
+  `_insert` sẵn có) để xếp một ứng viên vào hàng đợi tác giả từ nguồn ngoài
+  so tên. API `GET /api/ai/mentors?unit=&min_votes=&page=`,
+  `POST /api/ai/mentors/{work_id}/accept {person_id}` (vai trò `rd_officer`)
+  tạo `author_link` **`ChoXacNhan`** (đang chờ, không tự xác nhận — BR-18),
+  409 nếu lượt tên đã có liên kết đang chờ/đã xác nhận; `ACTION_LABELS` thêm
+  `link.ai_candidate`. CLI `python -m cris ai mentors [--k --min-votes
+  --min-score]`. Thử trên DB thật: `scanned=0 suggested=0` — nguồn
+  (`cris/source/repository.py`) chỉ dựng `archive.mentors` từ thẻ liên kết
+  giảng viên trên trang, trang giữ chỗ `ICTU_TEACHER` không có thẻ này nên
+  không có lượt tên vai `mentor` nào được tạo (giữ chỗ hay không) cho 4.655/
+  5.375 đồ án; thuật toán đã kiểm đủ bằng `FakeProvider` (13 test,
+  `tests/test_ai_mentor.py`, dựng lượt tên giữ chỗ trực tiếp bằng SQL) —
+  chi tiết và việc cần làm tiếp ở [docs/ai.md](docs/ai.md) mục 6.
+
 ### Fixed
 
 - `python -m cris ai download` nay tải vào `CRIS_AI_MODEL_DIR` (nếu đặt) như provider

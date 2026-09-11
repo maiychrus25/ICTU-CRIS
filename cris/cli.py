@@ -27,6 +27,10 @@ def main(argv=None):
     sc.add_argument("--cohort", required=True); sc.add_argument("--k", type=int, default=3)
     sc.add_argument("--high", type=float, default=None, help="ngưỡng mức 'cao' (mặc định SCREEN_THRESHOLDS[0]=0.90)")
     sc.add_argument("--mid", type=float, default=None, help="ngưỡng mức 'vua' (mặc định SCREEN_THRESHOLDS[1]=0.80)")
+    mt = ais.add_parser("mentors", help="gợi ý người hướng dẫn thật cho đồ án đang ghi ICTU_TEACHER")
+    mt.add_argument("--k", type=int, default=5, help="số đồ án láng giềng tìm mỗi đích (mặc định 5)")
+    mt.add_argument("--min-votes", type=int, default=2, help="số láng giềng tối thiểu cùng một người (mặc định 2)")
+    mt.add_argument("--min-score", type=float, default=0.70, help="tổng cosine tối thiểu (mặc định 0.70)")
     sv = sub.add_parser("serve"); sv.add_argument("--host", default="127.0.0.1"); sv.add_argument("--port", type=int, default=8000)
     u = sub.add_parser("user", help="đăng nhập cục bộ (NFR-01)")
     us = u.add_subparsers(dest="user_cmd", required=True)
@@ -100,6 +104,10 @@ def main(argv=None):
                 mid = a.mid if a.mid is not None else ai_screen.SCREEN_THRESHOLDS[1]
                 r = ai_screen.screen_cohort(conn, prov, cohort=a.cohort, k=a.k, thresholds=(high, mid))
                 print(f"screened={r['screened']} flagged={r['flagged']}")
+            elif a.ai_cmd == "mentors":
+                from cris.ai import mentor as ai_mentor
+                r = ai_mentor.suggest_mentors(conn, prov, k=a.k, min_votes=a.min_votes, min_score=a.min_score)
+                print(f"scanned={r['scanned']} suggested={r['suggested']}")
     elif a.cmd == "quality":
         r = quality.report(conn)
         print(json.dumps(r, ensure_ascii=False, indent=None if a.json else 2))

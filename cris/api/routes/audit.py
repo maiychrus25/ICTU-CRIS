@@ -39,6 +39,7 @@ ACTION_LABELS = {
     "source_record.new_version": "Nguồn có phiên bản mới",
     "mention.orphaned": "Lượt tên mất nguồn",
     "work.edit": "Chỉnh tay trường dữ liệu",
+    "link.ai_candidate": "AI đề xuất ứng viên hướng dẫn",
 }
 
 

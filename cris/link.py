@@ -1,6 +1,7 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
 import json
+
 from cris import audit
 from cris.db import tx
 
@@ -15,8 +16,8 @@ def candidates(conn, m):
         full = cur.fetchall()
         if full:
             conf = "ten_day_du_duy_nhat" if len(full) == 1 else "ten_day_du_nhieu_ung_vien"
-            return [dict(person_id=p["id"], confidence=conf, degree_conflict=_conflict(m["degree_raw"], p["degree_raw"]),
-                         basis={"name_key": m["name_key"], "unit_id": p["unit_id"], "email": p["email"]}) for p in full]
+            return [{"person_id": p["id"], "confidence": conf, "degree_conflict": _conflict(m["degree_raw"], p["degree_raw"]),
+                         "basis": {"name_key": m["name_key"], "unit_id": p["unit_id"], "email": p["email"]}} for p in full]
         toks = set(m["name_key"].split())
         if len(toks) < 2:
             return []
@@ -25,8 +26,8 @@ def candidates(conn, m):
         for p in cur.fetchall():
             for k in p["name_keys"]:
                 if toks <= set(k.split()) or (len(toks) >= 3 and set(k.split()) <= toks):
-                    out.append(dict(person_id=p["id"], confidence="ten_mot_phan", degree_conflict=_conflict(m["degree_raw"], p["degree_raw"]),
-                                    basis={"partial_of": k, "unit_id": p["unit_id"], "email": p["email"]}))
+                    out.append({"person_id": p["id"], "confidence": "ten_mot_phan", "degree_conflict": _conflict(m["degree_raw"], p["degree_raw"]),
+                                    "basis": {"partial_of": k, "unit_id": p["unit_id"], "email": p["email"]}})
                     break
         return out
 
@@ -36,6 +37,39 @@ def _insert(cur, m_id, c, state):
                 (m_id, c["person_id"], c["confidence"], json.dumps(c["basis"], ensure_ascii=False), state, c["degree_conflict"]))
     return cur.rowcount
 
+def add_candidate(conn, mention_id, person_id, confidence, basis):
+    """Xếp một ứng viên vào hàng đợi tác giả cho một lượt tên, trạng thái
+    `ChoXacNhan` — nguồn ứng viên ngoài `link_pending` (so tên); dùng cho
+    `cris/ai/mentor.py` để đưa ứng viên AI gợi ý vào đúng luồng có sẵn thay vì
+    tự nối tác giả. Quyết định cuối vẫn ở hàng đợi tác giả, qua `decide_link`
+    (BR-18) — hàm này chỉ xếp hàng, không bao giờ tự xác nhận hay tự nối.
+
+    Ném `ValueError` nếu lượt tên đã có liên kết sống hoặc đang chờ
+    (`DaNoiTuDong`/`DaXacNhan`/`ChoXacNhan`) — gọi từ API cần bắt lỗi này và
+    trả 409 (đã đưa vào hàng đợi rồi, không xếp chồng ứng viên khác lên).
+    Nếu cặp (lượt tên, ứng viên) này từng bị bác bỏ (`DaBacBo`) trước đó, mở
+    lại thành `ChoXacNhan` với `confidence`/`basis` mới thay vì bị `ON
+    CONFLICT DO NOTHING` bỏ qua âm thầm.
+
+    Trả `id` của `author_link`."""
+    with tx(conn), conn.cursor() as cur:
+        cur.execute(
+            "SELECT id FROM author_link WHERE mention_id=%s AND state IN ('ChoXacNhan','DaNoiTuDong','DaXacNhan')",
+            (mention_id,))
+        if cur.fetchone():
+            raise ValueError(f"lượt tên #{mention_id} đã có liên kết đang chờ hoặc đã xác nhận")
+        c = {"person_id": person_id, "confidence": confidence, "degree_conflict": False, "basis": basis}
+        if _insert(cur, mention_id, c, "ChoXacNhan") == 0:
+            # đã có dòng (mention_id, person_id) từ trước, hẳn là DaBacBo — mở lại
+            cur.execute(
+                "UPDATE author_link SET state='ChoXacNhan', confidence=%s, basis=%s, degree_conflict=false, "
+                "decided_by=NULL, decided_at=NULL, reason=NULL WHERE mention_id=%s AND person_id=%s RETURNING id",
+                (confidence, json.dumps(basis, ensure_ascii=False), mention_id, person_id))
+        else:
+            cur.execute("SELECT id FROM author_link WHERE mention_id=%s AND person_id=%s", (mention_id, person_id))
+        return cur.fetchone()["id"]
+
+
 def link_by_orcid(conn, mention_id, orcid):
     with tx(conn), conn.cursor() as cur:
         cur.execute("SELECT id, orcid_verified FROM person WHERE orcid=%s AND active", (orcid,))
@@ -43,7 +77,7 @@ def link_by_orcid(conn, mention_id, orcid):
         if not p:
             return False
         state = "DaNoiTuDong" if p["orcid_verified"] else "ChoXacNhan"
-        return _insert(cur, mention_id, dict(person_id=p["id"], confidence="orcid", degree_conflict=False, basis={"orcid": orcid}), state) == 1
+        return _insert(cur, mention_id, {"person_id": p["id"], "confidence": "orcid", "degree_conflict": False, "basis": {"orcid": orcid}}, state) == 1
 
 def link_pending(conn):
     out = {"auto": 0, "queued": 0, "none": 0}
