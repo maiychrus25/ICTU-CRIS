@@ -1,0 +1,89 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+# Deploy — khi một GitHub Release được công bố (hoặc chạy tay với một tag), chờ
+# ảnh "-ai" tương ứng có mặt trên GHCR (docker.yml dựng ảnh chạy song song khi
+# tag được đẩy) rồi SSH vào máy chủ thật chạy deploy/upgrade.sh <tag> — script
+# đó tự sao lưu CSDL, migrate, đổi ảnh, kiểm tra /api/health, và tự khôi phục
+# nếu health check thất bại. Không dùng action SSH bên thứ ba — chỉ ssh thuần.
+#
+# Secrets cần tạo trước (Settings → Environments → production, hoặc repo
+# secrets): PROD_HOST, PROD_USER, PROD_SSH_KEY (khoá riêng ed25519 của user
+# `deploy` trên máy chủ), PROD_KNOWN_HOSTS (host key của máy chủ, dạng
+# `ssh-keyscan`). Xem docs/deploy-prod.md.
+name: Deploy
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag đã phát hành cần triển khai (ví dụ v0.3.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  wait-image:
+    name: Chờ ảnh -ai trên GHCR
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Xác định tag cần triển khai
+        id: tag
+        run: |
+          TAG="${{ github.event.inputs.tag || github.event.release.tag_name }}"
+          if [ -z "$TAG" ]; then
+            echo "::error::không xác định được tag (release.tag_name hoặc workflow_dispatch.tag)"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - name: Chờ ảnh ghcr.io/maiychrus25/ictu-cris:<phiên bản>-ai (tối đa 15 phút)
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          VER="${TAG#v}"
+          IMG="ghcr.io/maiychrus25/ictu-cris:${VER}-ai"
+          echo "chờ ${IMG} (docker.yml dựng ảnh này song song khi tag được đẩy) ..."
+          for i in $(seq 1 30); do
+            if docker manifest inspect "$IMG" >/dev/null 2>&1; then
+              echo "có ảnh sau $(( (i - 1) * 30 ))s"
+              exit 0
+            fi
+            echo "  chưa có (lần $i/30) — chờ 30s"
+            sleep 30
+          done
+          echo "::error::không thấy ${IMG} trên GHCR sau 15 phút"
+          exit 1
+
+  deploy:
+    name: Triển khai lên máy chủ thật
+    needs: wait-image
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency: deploy-prod
+    env:
+      TAG: ${{ needs.wait-image.outputs.tag }}
+    steps:
+      - name: Cài khoá SSH và known_hosts
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.PROD_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Chạy deploy/upgrade.sh trên máy chủ thật
+        run: |
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
+            "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" \
+            "bash /opt/ictu-cris/deploy/upgrade.sh '${TAG}'"
+      - name: Kiểm tra nhanh (smoke test)
+        run: |
+          curl -fsS https://cris.ahvlabs.com/api/health
+          echo
+          curl -fsS https://cris.ahvlabs.com/api/about \
+            | python3 -c 'import json, sys; d = json.load(sys.stdin); print("works:", d.get("works"))'

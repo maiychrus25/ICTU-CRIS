@@ -214,6 +214,15 @@ Cần ít nhất một người dùng vai `rd_officer` trong `app_user`; chưa c
 `503` kèm câu SQL để tạo. Bản này chưa có đăng nhập thật — **không triển khai lên
 mạng công khai**.
 
+## 🛰️ Triển khai máy chủ thật (Production deploy)
+
+Bản chạy thật tại `https://cris.ahvlabs.com`: mỗi GitHub Release tự lên máy chủ qua
+`.github/workflows/deploy.yml`, có sao lưu CSDL trước khi đổi và tự khôi phục nếu
+`/api/health` không trả 200. Nâng cấp bằng tay cùng một script:
+`ssh deploy@<host> 'bash /opt/ictu-cris/deploy/upgrade.sh vX.Y.Z'`. Chi tiết kiến
+trúc máy chủ, secrets GitHub cần tạo, quy trình phát hành và quay lui — xem
+[docs/deploy-prod.md](docs/deploy-prod.md).
+
 ## 📌 Trạng thái & Lộ trình (Status & Roadmap)
 
 - [x] Khảo sát kho nguồn và bộ BA 18 tệp
@@ -244,6 +253,7 @@ mạng công khai**.
 | 📐 | [docs/SRS.md](docs/SRS.md) | Đặc tả phần mềm: FR theo giai đoạn, tích hợp AI, ma trận truy vết YN → FR → UC → US |
 | 🤖 | [docs/ai.md](docs/ai.md) | AI làm gì và không làm gì, ba nhà cung cấp, mô hình, thuật toán, giới hạn |
 | 🏷️ | [docs/release-notes/v0.3.0.md](docs/release-notes/v0.3.0.md) | Ghi chú phát hành bản hiện tại (cũ hơn: [v0.2.0](docs/release-notes/v0.2.0.md), [v0.1.0](docs/release-notes/v0.1.0.md)) |
+| 🛰️ | [docs/deploy-prod.md](docs/deploy-prod.md) | Triển khai máy chủ thật: kiến trúc, secrets, quy trình phát hành, quay lui |
 | 📋 | [docs/ba/00-README.md](docs/ba/00-README.md) | Bộ tài liệu phân tích nghiệp vụ (BA) — 18 tệp |
 | 🗄️ | [docs/ba/17-mo-hinh-du-lieu.md](docs/ba/17-mo-hinh-du-lieu.md) | Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 |
 | 🗺️ | [docs/superpowers/plans/](docs/superpowers/plans/) | Kế hoạch triển khai từng lát cắt: S + N, hồ sơ nguồn mở, giao diện hàng đợi, K, AI |

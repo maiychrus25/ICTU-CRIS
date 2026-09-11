@@ -21,6 +21,7 @@ docs/THONG BAO*.pdf
 
 # cấu hình triển khai thật
 deploy/.env
+deploy/docker-compose.override.yml
 dist/
 
 # Giao diện Next.js (frontend/) — phụ thuộc và sản phẩm dựng, không đưa vào repo

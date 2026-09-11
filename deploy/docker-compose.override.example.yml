@@ -1,0 +1,32 @@
+# Copyright (c) 2026 ICTU-CRIS contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+# Mẫu ghi đè cho máy chủ thật — đặc thù từng máy nên KHÔNG commit bản thật
+# (xem .gitignore: deploy/docker-compose.override.yml). Sao chép thành
+# deploy/docker-compose.override.yml rồi sửa `image:` cho khớp phiên bản đang
+# chạy; deploy/upgrade.sh tự tạo tệp này từ mẫu nếu chưa có, và từ đó tự sửa
+# dòng `image:` mỗi lần nâng cấp (giữ bản trước ở `.prev` để quay lui).
+#
+# - `build: !reset null` tắt hẳn việc dựng ảnh tại chỗ khi `docker compose up`
+#   — máy chủ thật chỉ chạy ảnh đã kéo từ GHCR hoặc dựng sẵn bằng upgrade.sh,
+#   không dựng lại mỗi lần khởi động.
+# - `ports: !override` thay hẳn danh sách cổng của deploy/docker-compose.yml
+#   bằng cổng chỉ mở trên 127.0.0.1 — nginx (ngoài compose) mới là nơi nhận
+#   traffic từ Internet qua 80/443 rồi proxy vào đây.
+services:
+  app:
+    image: ictu-cris:0.0.0-ai
+    build: !reset null
+    ports: !override
+      - "127.0.0.1:8000:8000"
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+  db:
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"

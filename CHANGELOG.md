@@ -5,6 +5,23 @@
 
 ## [Unreleased]
 
+### Added
+
+- CI/CD triển khai máy chủ thật (lát cắt I1): `.github/workflows/deploy.yml`
+  chạy khi một GitHub Release được công bố (hoặc chạy tay, input `tag` bắt
+  buộc) — job `wait-image` chờ ảnh `ghcr.io/maiychrus25/ictu-cris:<phiên
+  bản>-ai` có trên GHCR (`docker manifest inspect`, tối đa 15 phút vì
+  `docker.yml` dựng ảnh song song), job `deploy` (`environment: production`,
+  `concurrency: deploy-prod`) SSH thuần (không action bên thứ ba) chạy
+  `deploy/upgrade.sh <tag>` trên máy chủ rồi smoke test `/api/health` +
+  `/api/about`. `deploy/upgrade.sh` (chạy được cả bằng tay): sao lưu CSDL
+  (`pg_dump -Fc`) trước khi đổi gì, kéo hoặc dựng ảnh `-ai`, sửa
+  `deploy/docker-compose.override.yml` trỏ ảnh mới (giữ bản cũ ở `.prev`),
+  `migrate` rồi khởi động lại, chờ `/api/health`; thất bại thì tự khôi phục
+  ảnh cũ và thoát mã lỗi. Mẫu
+  `deploy/docker-compose.override.example.yml` (tệp thật đặc thù máy chủ,
+  không commit). Tài liệu mới [docs/deploy-prod.md](docs/deploy-prod.md).
+
 ### Fixed
 
 - `python -m cris ai download` nay tải vào `CRIS_AI_MODEL_DIR` (nếu đặt) như provider

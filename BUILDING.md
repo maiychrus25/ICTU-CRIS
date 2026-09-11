@@ -307,3 +307,12 @@ không dấu, giảng viên tự kê khai), cùng máy phát triển:
 | `npx playwright test` (`frontend/e2e/`, cấu hình mặc định, dữ liệu mẫu) | mock (`core-flows.spec.ts`) **14** kịch bản |
 | `npx playwright test --config=playwright.real.config.ts` (ba project `desktop`/`tablet`/`mobile`) | thật: `real-backend.spec.ts` trên `desktop` **9** + `responsive-accessibility.real.spec.ts` trên `tablet`/`mobile` **2+2** — tổng **13** |
 | `python -m cris migrate` trên DB đã có `0001`–`0009` | áp thêm `0010_declaration_states.sql` (mở CHECK `declaration.state` đủ 8 trạng thái) |
+
+## 10. Triển khai máy chủ thật (Production deploy)
+
+`deploy/setup.sh` ở trên là cài **một máy** bằng tay. Máy chủ thật
+(`https://cris.ahvlabs.com`) nâng cấp tự động mỗi khi có GitHub Release, qua
+`deploy/upgrade.sh` (sao lưu CSDL, kéo/dựng ảnh `-ai`, migrate, kiểm tra
+`/api/health`, tự khôi phục nếu lỗi) và `.github/workflows/deploy.yml`. Kiến
+trúc, secrets cần tạo, quy trình phát hành và quay lui — xem
+[docs/deploy-prod.md](docs/deploy-prod.md).
