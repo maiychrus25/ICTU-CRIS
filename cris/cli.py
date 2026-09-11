@@ -39,6 +39,7 @@ def main(argv=None):
     ex.add_argument("title")
     ex.add_argument("--description", default="")
     ex.add_argument("--k", type=int, default=10)
+    ais.add_parser("map", help="dựng bản đồ tri thức 2 chiều (PCA) — J2")
     sv = sub.add_parser("serve"); sv.add_argument("--host", default="127.0.0.1"); sv.add_argument("--port", type=int, default=8000)
     u = sub.add_parser("user", help="đăng nhập cục bộ (NFR-01)")
     us = u.add_subparsers(dest="user_cmd", required=True)
@@ -126,6 +127,10 @@ def main(argv=None):
                     for row in r["results"]:
                         print(f"{row['score']:8.3f}  {row['works_matched']:8d}  "
                               f"{row['display_name']} ({row['degree'] or '—'}, {row['unit_code'] or '—'})")
+            elif a.ai_cmd == "map":
+                from cris.ai import map as ai_map
+                r = ai_map.build_map(conn, prov)
+                print(f"points={r['points']} topics={r['topics']} seconds={r['seconds']}")
     elif a.cmd == "quality":
         r = quality.report(conn)
         print(json.dumps(r, ensure_ascii=False, indent=None if a.json else 2))

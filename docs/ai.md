@@ -21,12 +21,13 @@ AI trong ICTU-CRIS **gợi ý**; **người quyết** (BR-18). Ba chỗ có AI, 
 | **Tìm kiếm ngữ nghĩa** `/tra-cuu?mode=semantic` | Tra cứu từ khoá vô dụng với 703 đồ án cùng mở đầu "Xây dựng website" (cùng vấn đề đối chiếu đề tài) | Tìm công trình gần nghĩa với câu đã gõ (không cần trùng từ), giữ mọi bộ lọc khác (loại, năm, đơn vị, chủ đề) | Người đọc kết quả kèm điểm cosine; rơi về tìm từ khoá khi AI chưa bật |
 | **Tìm chuyên gia** (tab của Đối chiếu đề tài) | Đơn vị/phòng ban cần tìm giảng viên phù hợp phản biện, hội đồng, hợp tác — không có công cụ tra theo chuyên môn thật (chỉ có tra theo tên) | Gợi ý giảng viên gần chuyên môn với một đề tài, dựa trên công trình đã liên kết, kèm bằng chứng 3 công trình mỗi người | Người đọc bằng chứng, tự liên hệ — không có hành động tự động nào |
 | **Cổng kiểm tra đề tài** `/kiem-tra-de-tai/` (công khai) | Sinh viên đăng ký đề tài không có cách nào tự kiểm tra trùng lặp trước khi nộp | Cho sinh viên tự nhập đề tài dự kiến, xem đề tài tương tự các khoá trước + giảng viên gần chuyên môn | Sinh viên tự cân nhắc trước khi đăng ký chính thức; không lưu lại lượt tra cứu |
+| **Bản đồ tri thức, xu hướng, đồng tác giả** `/ban-do/` | Không có cách nào nhìn toàn cảnh hướng nghiên cứu và mạng lưới hợp tác của đơn vị | Chiếu 2 chiều (PCA) vector ngữ nghĩa mọi công trình lên canvas tô theo chủ đề/đơn vị/năm/loại, đếm xu hướng chủ đề theo khoá/năm, dựng đồ thị đồng tác giả | Người dùng tự đọc bản đồ để định hướng — không phải một phép đo chính xác, chỉ 2/384 chiều |
 
 AI **không** làm: kết luận đạo văn, khẳng định tính mới, tự gộp bản ghi, tự nối tác giả,
 tự đổi bất kỳ trường dữ liệu nghiệp vụ nào. Mã trong `cris/ai/` chỉ ghi vào bảng
-`ai_embedding`, `ai_topic`, `ai_topic_keyword`, `ai_suggestion`, `ai_query` — có test rào
-chắn đếm số dòng `work`, `author_link`, `duplicate_group`, `field_provenance` trước và sau
-mỗi thao tác AI.
+`ai_embedding`, `ai_topic`, `ai_topic_keyword`, `ai_suggestion`, `ai_query`, `ai_map` — có
+test rào chắn đếm số dòng `work`, `author_link`, `duplicate_group`, `field_provenance`
+trước và sau mỗi thao tác AI.
 
 ## 2. Bật, tắt, và ba nhà cung cấp
 
@@ -336,7 +337,75 @@ cách `cris/api/routes/auth.py` giới hạn đăng nhập sai — đủ cho m�
 lấy từ `X-Forwarded-For` đầu chuỗi nếu chạy sau proxy ngược, ngược lại IP kết nối trực
 tiếp), vượt quá trả `429` kèm `detail` tiếng Việt.
 
-## 10. Giới hạn — nói trước để không ai hiểu nhầm
+## 10. Bản đồ tri thức, xu hướng chủ đề, đồng tác giả (J2)
+
+`GET /api/ai/map`, `GET /api/ai/trends`, `GET /api/ai/coauthors` (`cris/ai/map.py`,
+`cris/ai/trends.py`, `cris/ai/coauthors.py`; CLI `python -m cris ai map`).
+
+**Bản đồ tri thức** — chiếu 2 chiều PCA (SVD, `numpy.linalg.svd(..., full_matrices=False)`)
+của toàn bộ vector ngữ nghĩa: trừ trung bình từng cột, lấy 2 thành phần đầu, chuẩn hoá mỗi
+trục về [-1, 1] (chia cho trị tuyệt đối lớn nhất trên trục đó — giữ gốc toạ độ ở trung tâm
+dữ liệu, đúng ý nghĩa "đã trừ trung bình" thay vì kéo giãn hết cỡ min..max). Mỗi điểm mang
+`topic_id` (cụm có tổng weight từ khoá lớn nhất khớp bộ `ai_topic` mới nhất — tính **hàng
+loạt bằng một truy vấn SQL gộp**, không gọi `topic_of_work` riêng cho từng công trình —
+7.618 vòng lặp round-trip DB sẽ quá chậm), `unit_id` (đơn vị đầu tiên theo `v_work_unit`),
+`year`, `doc_type`, `title` (cắt 120 ký tự). Tâm mỗi cụm (`cx`, `cy`) là trung bình toạ độ
+các điểm cùng `topic_id`.
+
+Ghi vào `ai_map` (migration `0015_ai_map.sql`) — giữ đúng 1 dòng mới nhất mỗi `model` (xoá
+dòng cũ của model đó trước khi ghi dòng mới, cùng cách `ai_topic` được xây lại trong
+`cris.ai.topics.build_topics`). `GET /api/ai/map?color=topic|unit|year|doc_type` đọc dòng
+mới nhất (mọi model), 404 `"Chưa dựng bản đồ — chạy python -m cris ai map"` khi chưa từng
+chạy; `color` chỉ để giao diện chọn tiêu chí tô màu — chọn giá trị nào cũng trả đủ mọi
+trường, không lọc gì ở máy chủ. Kèm `units: [{id, code, name}]` — mọi đơn vị **active** có
+ít nhất một điểm trên bản đồ, tính lại mỗi lần gọi (không cache trong `ai_map`) để giao diện
+hiện tên đơn vị thay vì id, và để đổi trạng thái active/tên đơn vị không cần dựng lại bản đồ.
+
+Cách chạy:
+
+```bash
+python -m cris ai embed   # cần vector trước
+python -m cris ai topics  # cần cụm chủ đề trước — bỏ qua thì mọi topic_id đều null
+python -m cris ai map     # in points=N topics=k seconds=...
+```
+
+**Giới hạn**: 2 chiều mất phần lớn thông tin của vector 384 chiều gốc — chỉ để định hướng
+"vùng nào gần vùng nào" trên bản đồ, **không** dùng để so khoảng cách tuyệt đối hay suy luận
+mức độ tương đồng chính xác giữa hai công trình (dùng đối chiếu đề tài hoặc tìm kiếm ngữ
+nghĩa — mục 7 — cho việc đó); công trình chưa `ai embed` hoặc không khớp từ khoá cụm nào
+không có mặt / không có `topic_id` trên bản đồ.
+
+**Xu hướng chủ đề** — `GET /api/ai/trends?by=cohort|year`: đếm công trình sống
+(`merged_into_id IS NULL`) theo (cụm, khoá|năm), cùng cách khớp từ khoá ↔ cụm ở trên, tính
+trực tiếp mỗi lần gọi (không cache như `ai_map`). Giữ 12 cụm lớn nhất (theo tổng số công
+trình mọi khoá/năm cộng lại), phần còn lại gộp vào một chuỗi `"khác"` (`topic_id=null`).
+`share` = số công trình cụm đó / tổng số công trình đã khớp **một cụm bất kỳ** của khoá|năm
+đó (công trình không khớp từ khoá cụm nào không tính vào mẫu số) — nên tổng `share` của mọi
+chuỗi tại một khoá|năm cộng ≈ 1. `keys` sắp tăng dần theo số: khoá dạng `"K17"` lấy phần số
+(17) để so, không so chuỗi — tránh `"K17"` đứng trước `"K9"` như thứ tự chuỗi thường.
+
+**Đồng tác giả** — `GET /api/ai/coauthors?min_works=2`: cặp giảng viên cùng đứng tên ít
+nhất một công trình đã liên kết (`v_person_publications` — mọi trạng thái trừ `DaBacBo`,
+cùng cách tìm chuyên gia ở mục 8 coi là "công trình của người này"), `weight` = số công
+trình chung. Nút là người có ≥ `min_works` công trình liên kết; cắt còn tối đa 300 nút, ưu
+tiên người có nhiều công trình nhất; cạnh chỉ giữ giữa hai nút còn lại sau khi cắt.
+
+**Đo trên dữ liệu thật**: *chưa đo được trong phiên viết mã này — sandbox của agent không
+được phép ghi vào DB `cris` dùng chung với container demo `cris-web` (`migrate`/`ai map`
+đều bị chặn ở lớp quyền). Chạy các lệnh sau (đã `pip install -e ".[ai]"` và có
+`CRIS_AI_MODEL_DIR`) để có số N/k/giây và kích thước JSON thật, rồi cập nhật đoạn này*:
+
+```bash
+docker run --rm --network host -e DATABASE_URL=postgresql://cris:cris@localhost:5432/cris \
+  -v "$PWD/cris":/app/cris:ro ictu-cris:full migrate
+docker run --rm --network host -e DATABASE_URL=postgresql://cris:cris@localhost:5432/cris \
+  -e CRIS_AI_PROVIDER=local -e CRIS_AI_MODEL_DIR=/models \
+  -v "$PWD/cris":/app/cris:ro -v <model_dir>:/models:ro ictu-cris:full python -m cris ai map
+curl -s http://127.0.0.1:8010/api/ai/map | wc -c   # kích thước JSON — mục tiêu < 1,5 MB;
+  # nếu lớn hơn, giảm TITLE_MAX trong cris/ai/map.py xuống 80 và làm tròn toạ độ 3 chữ số
+```
+
+## 11. Giới hạn — nói trước để không ai hiểu nhầm
 
 1. **Chỉ so trên tóm tắt.** Kho không có toàn văn: 39/40 PDF là tóm tắt một trang do máy
    sinh. Mọi kết quả đối chiếu đều ghi dòng *"So trên tiêu đề, tóm tắt và từ khoá — không
@@ -351,7 +420,7 @@ tiếp), vượt quá trả `429` kèm `detail` tiếng Việt.
 6. **Gợi ý tác giả chỉ có khi người đó đã có công trình xác nhận** — đúng là điểm yếu ở
    giai đoạn đầu, khi liên kết còn thưa; nó tốt dần theo số quyết định của người dùng.
 
-## 11. Kiểm thử
+## 12. Kiểm thử
 
 - Test đơn vị dùng provider `fake` (xác định, không tải gì): đối chiếu, khía cạnh, đường
   lui, gom cụm, gợi ý, rà soát trùng đề tài theo khoá, rào chắn "AI không đổi dữ liệu
@@ -360,13 +429,18 @@ tiếp), vượt quá trả `429` kèm `detail` tiếng Việt.
   (`tests/test_ai_mentor.py`); tìm kiếm ngữ nghĩa, tìm chuyên gia (lọc học vị/đơn vị/loại
   trừ, bằng chứng ≤ 3, lưu `ai_query(kind='experts')` + đọc lại), cổng công khai kiểm tra
   đề tài (không cần cookie, không lưu `ai_query`, rate-limit 20/5 phút, không lộ email)
-  (`tests/test_ai_search_expert.py`).
+  (`tests/test_ai_search_expert.py`); bản đồ tri thức (điểm/toạ độ trong [-1,1], `topic_id`
+  khớp cụm biết trước — ghi thẳng `ai_topic`/`ai_topic_keyword` thay vì phụ thuộc kết quả
+  k-means ngẫu nhiên của `FakeProvider`, tâm cụm = trung bình toạ độ, chạy lại thay 1 dòng,
+  404 khi chưa dựng, `units` chỉ gồm đơn vị active), xu hướng theo khoá/năm (`share` cộng
+  ≈ 1, sắp khoá theo số, gộp `"khác"`), đồng tác giả (`weight`, lọc `min_works`, cắt
+  `max_nodes`) (`tests/test_ai_map.py`).
 - Test mô hình thật `tests/test_ai_local_slow.py`, đánh dấu `slow`: 384 chiều, cùng chủ
   đề gần hơn khác chủ đề, xuyên ngôn ngữ Việt–Anh, 64 đoạn dưới 30 giây. Tự bỏ qua khi
   chưa tải mô hình; CI chạy `-m "not slow"`.
 - Chạy: `pytest -q` (nhanh) · `pytest -m slow` (cần mô hình).
 
-## 12. Bảng dữ liệu AI
+## 13. Bảng dữ liệu AI
 
 | Bảng | Nội dung |
 |---|---|
@@ -374,6 +448,8 @@ tiếp), vượt quá trả `429` kèm `detail` tiếng Việt.
 | `ai_topic`, `ai_topic_keyword` | cụm chủ đề và từ khoá thuộc cụm, kèm trọng số tần suất |
 | `ai_suggestion` | gợi ý cho hàng đợi: `kind` (`author_link` / `duplicate` / `topic_overlap` / `mentor`), `target_id`, `payload` |
 | `ai_query` | lịch sử đối chiếu đề tài (`kind='compare'`, mặc định) và tìm chuyên gia (`kind='experts'`, migration `0014_ai_query_kind.sql`): đầu vào, kết quả, provider, người chạy — để xem lại và gửi giảng viên. Cổng công khai `check-topic` (mục 9) không ghi bảng này |
+| `ai_map` | bản đồ tri thức (mục 10, migration `0015_ai_map.sql`): `model`, `method='pca'`, `points` (jsonb), `topics` (jsonb), `built_at` — đúng 1 dòng mới nhất mỗi `model` |
 
 Xoá toàn bộ dấu vết AI mà không ảnh hưởng nghiệp vụ: `TRUNCATE ai_query, ai_suggestion,
-ai_topic_keyword, ai_topic, ai_embedding`. Không bảng nghiệp vụ nào tham chiếu tới chúng.
+ai_topic_keyword, ai_topic, ai_embedding, ai_map`. Không bảng nghiệp vụ nào tham chiếu tới
+chúng.

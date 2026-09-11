@@ -19,6 +19,17 @@
   gần chuyên môn), rate-limit 20 lượt/5 phút/IP, không lưu lịch sử tra cứu, không lộ email/
   điện thoại giảng viên. CLI `python -m cris ai experts "<đề tài>" [--k 10]`. Đo trên DB
   thật bằng `scripts/eval_experts.py` — số liệu ở `docs/ai.md`.
+- Bản đồ tri thức, xu hướng chủ đề, đồ thị đồng tác giả (lát cắt J2): `GET /api/ai/map`
+  chiếu 2 chiều PCA (SVD, numpy) của toàn bộ vector ngữ nghĩa (`cris/ai/map.py`,
+  `build_map`) — mỗi điểm kèm `topic_id` (khớp cụm từ khoá mới nhất bằng một truy vấn SQL
+  gộp cho toàn bộ kho, không lặp theo từng công trình), `unit_id`, năm, loại, tiêu đề cắt
+  120 ký tự; tâm cụm là trung bình toạ độ; kèm `units` (đơn vị active có điểm, để hiện tên);
+  cache trong `ai_map` (migration `0015_ai_map.sql`, giữ 1 dòng mới nhất mỗi mô hình), 404
+  khi chưa dựng. CLI `python -m cris ai map`. `GET /api/ai/trends?by=cohort|year` đếm công
+  trình sống theo (cụm, khoá|năm) (`cris/ai/trends.py`), 12 cụm lớn nhất + gộp "khác",
+  `share` cộng ≈ 1 mỗi khoá/năm. `GET /api/ai/coauthors?min_works=` đồ thị giảng viên cùng
+  đứng tên công trình đã liên kết (`cris/ai/coauthors.py`), `weight` = số công trình chung,
+  cắt tối đa 300 nút theo số công trình.
 
 ### Fixed
 
