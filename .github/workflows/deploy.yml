@@ -57,8 +57,10 @@ jobs:
             echo "  chưa có (lần $i/30) — chờ 30s"
             sleep 30
           done
-          echo "::error::không thấy ${IMG} trên GHCR sau 15 phút"
-          exit 1
+          # Không chặn: upgrade.sh trên máy chủ tự dựng ảnh từ mã nguồn khi GHCR
+          # chưa có (ví dụ tag phát hành trước khi docker.yml có biến thể -ai).
+          echo "::warning::không thấy ${IMG} trên GHCR sau 15 phút — máy chủ sẽ tự dựng ảnh"
+          exit 0
 
   deploy:
     name: Triển khai lên máy chủ thật
