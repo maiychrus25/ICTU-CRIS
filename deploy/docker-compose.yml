@@ -3,7 +3,7 @@
 #
 # Triển khai một máy: PostgreSQL + ICTU-CRIS (web). Cấu hình qua deploy/.env
 # (tạo bằng deploy/setup.sh). Ảnh app dựng từ mã nguồn ở thư mục gốc, hoặc thay
-# `build` bằng `image: ghcr.io/maiychrus25/ictu-cris:0.3.0` để dùng ảnh phát hành
+# `build` bằng `image: ghcr.io/maiychrus25/ictu-cris:0.4.0` để dùng ảnh phát hành
 # (hậu tố `-ai`, ví dụ `:0.3.0-ai`, đã cài sẵn thư viện AI cho CRIS_AI_PROVIDER=local).
 services:
   db:

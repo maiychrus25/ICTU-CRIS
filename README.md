@@ -260,13 +260,13 @@ trúc máy chủ, secrets GitHub cần tạo, quy trình phát hành và quay lu
       soát trùng đề tài theo khoá
 - [x] **0.3.0 đã phát hành (11/09)** — đăng nhập cục bộ và vai trò, tìm người,
       chủ đề, lịch sử đồng bộ, kê khai công trình vào kỳ
-- [ ] **0.4.0 đang phát triển (lát cắt H + I)** — duyệt hai cấp đúng theo BA
+- [x] **0.4.0 đã phát hành (11/09, lát cắt H + I)** — duyệt hai cấp đúng theo BA
       (`docs/ba/03-state.md`), phạm vi đơn vị (NFR-02), chỉnh tay có xuất xứ
       (BR-23), tìm kiếm không dấu, giảng viên tự kê khai công trình của mình
       (H); minh chứng dạng tệp thật, AI gợi ý người hướng dẫn cho đồ án
       `ICTU_TEACHER`, hướng dẫn sử dụng trong ứng dụng, CI/CD triển khai máy
       chủ thật với sao lưu và quay lui (I) (xem
-      [docs/release-notes/v0.4.0.md](docs/release-notes/v0.4.0.md), dự thảo)
+      [docs/release-notes/v0.4.0.md](docs/release-notes/v0.4.0.md))
 - [ ] Còn lại: SSO trường thật, biểu mẫu Bộ
 
 ## 📚 Tài liệu (Documentation)
@@ -276,7 +276,7 @@ trúc máy chủ, secrets GitHub cần tạo, quy trình phát hành và quay lu
 | 🎯 | [docs/BRD.md](docs/BRD.md) | Yêu cầu nghiệp vụ: 6 vấn đề đo được, YN-01..10, ràng buộc cuộc thi |
 | 📐 | [docs/SRS.md](docs/SRS.md) | Đặc tả phần mềm: FR theo giai đoạn, tích hợp AI, ma trận truy vết YN → FR → UC → US |
 | 🤖 | [docs/ai.md](docs/ai.md) | AI làm gì và không làm gì, ba nhà cung cấp, mô hình, thuật toán, giới hạn |
-| 🏷️ | [docs/release-notes/v0.3.0.md](docs/release-notes/v0.3.0.md) | Ghi chú phát hành bản hiện tại (cũ hơn: [v0.2.0](docs/release-notes/v0.2.0.md), [v0.1.0](docs/release-notes/v0.1.0.md)) |
+| 🏷️ | [docs/release-notes/v0.4.0.md](docs/release-notes/v0.4.0.md) | Ghi chú phát hành bản hiện tại (cũ hơn: [v0.3.0](docs/release-notes/v0.3.0.md), [v0.2.0](docs/release-notes/v0.2.0.md), [v0.1.0](docs/release-notes/v0.1.0.md)) |
 | 🛰️ | [docs/deploy-prod.md](docs/deploy-prod.md) | Triển khai máy chủ thật: kiến trúc, secrets, quy trình phát hành, quay lui |
 | 📋 | [docs/ba/00-README.md](docs/ba/00-README.md) | Bộ tài liệu phân tích nghiệp vụ (BA) — 18 tệp |
 | 🗄️ | [docs/ba/17-mo-hinh-du-lieu.md](docs/ba/17-mo-hinh-du-lieu.md) | Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 |
