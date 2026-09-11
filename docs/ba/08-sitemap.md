@@ -7,15 +7,22 @@ Giao diện làm lại bằng Next.js xuất tĩnh (xem
 [2026-09-11-mo-rong-sau-ui.md](../superpowers/plans/2026-09-11-mo-rong-sau-ui.md)) dùng
 đường dẫn phẳng, trang chi tiết nhận id qua **query string** (không phải route động
 `[id]` — lý do: xuất tĩnh `next export` phải liệt kê trước mọi id lúc build, không hợp
-với dữ liệu đổi theo mỗi lần đồng bộ). Đường dẫn UI thật đang chạy:
+với dữ liệu đổi theo mỗi lần đồng bộ). Cập nhật 12/09/2026 (lát cắt J + K, xem
+[2026-09-12-lat-cat-j-k.md](../superpowers/plans/2026-09-12-lat-cat-j-k.md)): thêm năm
+đường dẫn — bản đồ tri thức, tìm chuyên gia, cổng kiểm tra đề tài công khai, lý lịch khoa
+học, cảnh báo bất thường dữ liệu. Đường dẫn UI thật đang chạy:
 
 ```
 /tong-quan/                                Tổng quan cho lãnh đạo
 /tra-cuu/                                  Tìm công trình
 /cong-trinh/?id=                           Chi tiết công trình (xuất xứ từng trường)
 /giang-vien/?id=                           Hồ sơ công bố của giảng viên
+/giang-vien/ly-lich/?id=                   Lý lịch khoa học in được (A4)
 /doi-chieu/                                Đối chiếu đề tài dự kiến (bốn khía cạnh)
 /doi-chieu/ra-soat/                        Rà soát trùng đề tài theo khoá
+/doi-chieu/chuyen-gia/                     Tìm chuyên gia / gợi ý phản biện (tab thứ ba)
+/kiem-tra-de-tai/                          Cổng kiểm tra đề tài — công khai, không đăng nhập
+/ban-do/                                   Bản đồ tri thức (PCA) + xu hướng chủ đề + đồng tác giả
 /doi-soat/tac-gia/                         Hàng đợi xác nhận liên kết tác giả
 /doi-soat/trung-lap/                       Hàng đợi nghi trùng
 /doi-soat/trung-lap/chi-tiet/?id=          Chi tiết nhóm nghi trùng (so cạnh nhau)
@@ -27,6 +34,7 @@ với dữ liệu đổi theo mỗi lần đồng bộ). Đường dẫn UI th�
 /ke-khai-cua-toi/                          Giảng viên tự kê khai công trình của mình
 /nhat-ky/                                  Nhật ký thao tác
 /chat-luong-du-lieu/                       Báo cáo chất lượng dữ liệu
+/chat-luong-du-lieu/canh-bao/              Cảnh báo bất thường dữ liệu (tab trong trang trên)
 /dang-nhap/                                Đăng nhập cục bộ
 /chu-de/                                   Lưới 40 cụm chủ đề AI
 /chu-de/chi-tiet/?id=                      Chi tiết cụm: từ khoá, công trình khớp
