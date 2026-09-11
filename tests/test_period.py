@@ -127,7 +127,7 @@ class TestProgress:
         assert len(progress["units"]) == 2
         for u in progress["units"]:
             assert u["total"] == 0
-            assert u["counts"] == {"Nhap": 0, "ChoBoSung": 0, "Rut": 0}
+            assert u["counts"] == {s: 0 for s in period.DECLARATION_STATES}
 
     def test_period_progress_unknown_period_raises(self, conn):
         with pytest.raises(ValueError):
