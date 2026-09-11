@@ -7,6 +7,13 @@
 
 ## [0.4.0] - 2026-09-11
 
+### Fixed (đơn vị)
+
+- `jobTitle` ở kho nguồn là chức vụ, không phải đơn vị: hiệu trưởng/hiệu phó nay thuộc
+  đơn vị thật **Ban Giám hiệu** (`BGH`), "Trưởng khoa" không còn bị nhập thành đơn vị;
+  migration `0013_units_from_positions.sql` gom dữ liệu đã có, giữ id để hồ sơ kê khai
+  và tài khoản không đổi (`cris/people.py`).
+
 ### Added
 
 - Lượt tên vai `mentor` giữ chỗ từ `meta.GVHD` (lát cắt I4): `cris/normalize.py`

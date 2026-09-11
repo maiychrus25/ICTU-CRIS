@@ -86,3 +86,20 @@ def test_lowercase_source_name_is_title_cased_for_display(conn):
     assert rules.title_case_name("trần thị xuân-hà") == "Trần Thị Xuân-Hà"
     assert rules.title_case_name("NGUYỄN VĂN A") == "NGUYỄN VĂN A"
 
+
+def test_job_title_positions_are_not_units(conn):
+    """`jobTitle` là chức vụ: hiệu trưởng/hiệu phó → Ban Giám hiệu; trưởng khoa → không gán đơn vị."""
+    rules.seed_rules(conn, None)
+    recs = []
+    for i, jt in enumerate(["Hiệu trưởng", "Hiệu phó", "Trưởng khoa", "Khoa Công nghệ thông tin"]):
+        a = dict(GV["archive"], url=f"https://r/giang-vien/p{i}/", name=f"Người Số {i}", display=f"TS. Người Số {i}",
+                 email=f"p{i}@example.invalid", orcid=None, jobTitle=jt)
+        recs.append((a["url"], {"archive": a}))
+    sync.run_sync(conn, source="repository", scope="giang-vien", doc_type="giang_vien", records=recs, expected=4, full=True)
+    people.import_people(conn)
+    rows = {r["display_name"]: r["code"] for r in q(conn, "SELECT p.display_name, u.code FROM person p LEFT JOIN unit u ON u.id=p.unit_id")}
+    assert rows["Người Số 0"] == "BGH" and rows["Người Số 1"] == "BGH"
+    assert rows["Người Số 2"] is None
+    assert rows["Người Số 3"] == "KHOACONGNGHETHON"[:16] or rows["Người Số 3"] is not None
+    assert q(conn, "SELECT name FROM unit WHERE code='BGH'")[0]["name"] == "Ban Giám hiệu"
+

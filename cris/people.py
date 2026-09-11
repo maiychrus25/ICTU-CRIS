@@ -7,6 +7,38 @@ import psycopg
 from cris import rules as RU
 from cris.db import tx
 
+# `jobTitle` ở kho nguồn là CHỨC VỤ, không phải đơn vị. Ban Giám hiệu là đơn vị thật
+# của hiệu trưởng/hiệu phó; các chức vụ cấp khoa/phòng không cho biết khoa nào → không gán.
+POSITION_UNITS = {
+    "hiệu trưởng": ("BGH", "Ban Giám hiệu"),
+    "phó hiệu trưởng": ("BGH", "Ban Giám hiệu"),
+    "hiệu phó": ("BGH", "Ban Giám hiệu"),
+}
+POSITION_ONLY = {"trưởng khoa", "phó trưởng khoa", "phó khoa", "trưởng phòng", "phó trưởng phòng",
+                 "trưởng bộ môn", "phó trưởng bộ môn", "giảng viên", "giảng viên chính", "trợ giảng"}
+
+
+def unit_from_job_title(conn, job_title):
+    """Đơn vị suy từ `jobTitle` của nguồn: chức vụ Ban Giám hiệu → đơn vị BGH (tạo/tra theo mã);
+    chức vụ cấp khoa/phòng → None (không biết khoa); còn lại coi là tên đơn vị như trước."""
+    key = " ".join((job_title or "").split()).lower()
+    if not key:
+        return None
+    if key in POSITION_UNITS:
+        code, name = POSITION_UNITS[key]
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM unit WHERE code=%s", (code,))
+            row = cur.fetchone()
+            if row:
+                return row["id"]
+            cur.execute("INSERT INTO unit(code, name, aliases) VALUES (%s,%s,%s) RETURNING id",
+                        (code, name, [k.title() for k, v in POSITION_UNITS.items() if v[0] == code]))
+            return cur.fetchone()["id"]
+    if key in POSITION_ONLY:
+        return None
+    return ensure_unit(conn, job_title)
+
+
 def ensure_unit(conn, name):
     name = (name or "").strip()
     if not name:
@@ -56,7 +88,7 @@ def import_people(conn):
                             display = display[len(matched):].strip()
                             break
                     display = RU.title_case_name(display)
-                    unit_id = ensure_unit(conn, a.get("jobTitle"))
+                    unit_id = unit_from_job_title(conn, a.get("jobTitle"))
                     vals = dict(display_name=display, name_norm=nn, degree_raw=a.get("degree") or deg,
                                 email=a.get("email"), orcid=(rec["raw"].get("detail") or {}).get("orcid") or a.get("orcid"), unit_id=unit_id,
                                 phone=a.get("phone"), dob=_dob(a.get("dob")))
