@@ -76,7 +76,10 @@ def main(argv=None):
         from cris.ai import provider as ai_provider
         if a.ai_cmd == "download":
             from cris.ai.local import ensure_model
-            print(ensure_model(log=lambda m: print(m, file=sys.stderr)))
+            # Cùng thư mục với provider local (CRIS_AI_MODEL_DIR), để tải một lần rồi dùng
+            # được ngay trong container/volume thay vì rơi vào cache riêng của người dùng.
+            print(ensure_model(model_dir=os.environ.get("CRIS_AI_MODEL_DIR") or None,
+                               log=lambda m: print(m, file=sys.stderr)))
         else:
             prov = ai_provider.get_provider()
             if a.ai_cmd == "status":

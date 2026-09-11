@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `python -m cris ai download` nay tải vào `CRIS_AI_MODEL_DIR` (nếu đặt) như provider
+  `local`, thay vì luôn vào cache người dùng — trong container `docker compose run --rm
+  app ai download` từng bị mất tệp khi container bị xoá (phát hiện khi triển khai thật).
+- `docker.yml` publish thêm biến thể ảnh `:<version>-ai` (extra `[ai]` cài sẵn).
+
 ### Added
 
 - Chỉnh tay có xuất xứ (lát cắt H2, BR-23): `cris/edit.py` — `EDITABLE`
