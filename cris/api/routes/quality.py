@@ -28,6 +28,7 @@ METRICS = [
     ("works_with_link", "Công trình có ít nhất một tác giả đã liên kết", "/doi-soat/tac-gia"),
     ("works_without_unit", "Công trình chưa xác định được đơn vị", "/doi-soat/tac-gia"),
     ("dup_groups_open", "Nhóm nghi trùng đang chờ xử lý", "/doi-soat/trung-lap"),
+    ("anomalies_open", "Cảnh báo bất thường đang mở", "/chat-luong-du-lieu/canh-bao"),
 ]
 
 LIMITS = [
@@ -44,6 +45,11 @@ LIMITS = [
 @router.get("/quality", response_model=QualityOut)
 def quality_report(conn: Conn):
     r = quality.report(conn)
+    # `anomalies_open` (K2): đếm trực tiếp `quality_flag`, không qua `quality.report`
+    # (tầng nghiệp vụ có sẵn, không sửa) — bảng mới ở migration `0017_quality_flag.sql`.
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) AS n FROM quality_flag WHERE state='open'")
+        r["anomalies_open"] = cur.fetchone()["n"]
     metrics = [QualityMetric(key=k, label=label, value=r.get(k), queue_url=url) for k, label, url in METRICS]
     return QualityOut(metrics=metrics, works_by_type=r.get("works_by_type", {}),
                       works_with_link_pct=r.get("works_with_link_pct", 0.0), last_sync=r.get("last_sync"))

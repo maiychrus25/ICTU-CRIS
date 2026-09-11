@@ -40,6 +40,7 @@ ACTION_LABELS = {
     "mention.orphaned": "Lượt tên mất nguồn",
     "work.edit": "Chỉnh tay trường dữ liệu",
     "link.ai_candidate": "AI đề xuất ứng viên hướng dẫn",
+    "quality.dismiss": "Bỏ qua cảnh báo chất lượng",
 }
 
 

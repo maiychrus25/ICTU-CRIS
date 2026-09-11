@@ -105,6 +105,7 @@ Mã `FR-<giai đoạn>-<số>` trùng với mã chức năng trong [ba/04-functi
 | FR-N-14 | Gom cụm từ khoá thành trục chủ đề | ⏳ → FR-AI-05 |
 | FR-N-15 | Báo cáo chất lượng dữ liệu: độ phủ, số chờ nối, số chưa có đơn vị, số nghi trùng mở, lần đồng bộ gần nhất | ✅ |
 | FR-N-16 | Mọi trường sau chuẩn hoá có dòng `field_provenance` (giá trị gốc, giá trị dùng, `set_kind`, ai, khi nào); chuẩn hoá lại giữ giá trị sửa tay | ✅ |
+| FR-N-17 | Cảnh báo bất thường dữ liệu (K2, màn SC-10 mở rộng): `python -m cris quality scan` (`cris/anomaly.py`) quét sáu loại — Scopus/ISI không DOI, năm ngoài khoảng hợp lý, luận văn/đồ án trùng tiêu đề với bài báo, hai giảng viên cùng ORCID, DOI sai định dạng, bài báo không tóm tắt — ghi/đóng `quality_flag`, quét idempotent, không đụng cờ đã bỏ qua; `GET /api/quality/anomalies`, `POST .../{id}/dismiss` (lý do bắt buộc, ghi `audit_log`). Đo trên DB thật (7.618 công trình, 400 giảng viên, 12/09/2026): `scopus_no_doi` 64, `thesis_title_equals_article` 2, `missing_abstract_article` 1.697; `year_out_of_range`/`orcid_duplicate`/`doi_invalid` đều 0 (ORCID trùng vốn bị chặn bởi `UNIQUE(orcid)` từ lúc nhập, không phải cờ bỏ sót) | ✅ |
 
 ### 3.3 Giao diện hàng đợi và tra cứu (FR-Q, FR-T)
 
