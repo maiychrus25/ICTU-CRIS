@@ -116,6 +116,42 @@ def auth_required(conn):
         return cur.fetchone() is not None
 
 
+def create_lecturers(conn, unit_code=None, dry_run=False):
+    """`python -m cris user create-lecturers` (H3): với mỗi `person`
+    `kind='lecturer'` có `email` mà chưa có `app_user` cùng email, tạo tài
+    khoản `roles=['lecturer']` không mật khẩu, `person_id`/`unit_id` map sẵn
+    từ `person`. `unit_code` lọc theo `person.unit_id` (mã `unit.code`).
+    `dry_run` chỉ đếm, không ghi gì vào CSDL. Idempotent — chạy lại không tạo
+    trùng (khớp theo `email`). Trả `{"created": n, "skipped": n}`."""
+    where = ["p.kind='lecturer'", "p.email IS NOT NULL"]
+    params = []
+    if unit_code:
+        where.append("u.code=%s")
+        params.append(unit_code)
+    with conn.cursor() as cur:
+        cur.execute(
+            f"SELECT p.id, p.email, p.display_name, p.unit_id FROM person p "
+            f"LEFT JOIN unit u ON u.id = p.unit_id WHERE {' AND '.join(where)} ORDER BY p.id",
+            params)
+        persons = cur.fetchall()
+    created, skipped = 0, 0
+    for p in persons:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM app_user WHERE email=%s", (p["email"],))
+            exists = cur.fetchone() is not None
+        if exists:
+            skipped += 1
+            continue
+        if not dry_run:
+            with tx(conn), conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO app_user(email, display_name, roles, person_id, unit_id) "
+                    "VALUES (%s,%s,%s,%s,%s)",
+                    (p["email"], p["display_name"], ["lecturer"], p["id"], p["unit_id"]))
+        created += 1
+    return {"created": created, "skipped": skipped}
+
+
 def list_users(conn):
     with conn.cursor() as cur:
         cur.execute(

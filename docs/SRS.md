@@ -146,7 +146,7 @@ Nguyên tắc: AI **chỉ ghi vào bảng gợi ý của nó** (`ai_embedding`, 
 | FR-K-06 | Kiểm tra hai mức theo `docs/ba/03-state.md` §3.2: `Nhap → ChoKhoaDuyet → KhoaDaDuyet → ChoPhongKiemTra → DatYeuCau`, mỗi bước gắn vai trò (`faculty_officer`/`faculty_head`/`rd_officer`) và có thể trả về `Nhap` kèm lý do bắt buộc; nhánh chuẩn bị cũ `ChoBoSung`/`Rut` giữ nguyên | ✅ |
 | FR-K-07 | Phạm vi đơn vị (NFR-02): vai trò cấp khoa chỉ kê khai/xem/chuyển trạng thái hồ sơ của đơn vị mình, lọc ở tầng SQL — `cris.declare.set_state`/`add_declaration`/`list_declarations` (`actor_roles`, `actor_unit_id`), API qua `cris.api.deps.current_user` | ✅ |
 | FR-K-08 | Chốt kỳ báo cáo (`finalize_period`, `POST /api/periods/{id}/finalize`, vai trò `rd_officer`): kỳ phải `DaDongNop`, mọi hồ sơ `DatYeuCau` → `DaChot`, hồ sơ chưa đạt liệt kê trong `skipped` | ✅ |
-| FR-K-09 | Gợi ý theo khoa, giao diện lập hồ sơ | ⏳ ngoài bản dự thi |
+| FR-K-09 | Giảng viên tự kê khai (H3, API): vai trò `lecturer` kê khai công trình của chính mình (`v_person_publications` của `app_user.person_id`) vào đơn vị mình, trình khoa duyệt/rút hồ sơ do mình tạo — `GET/POST /api/me/works`, `/api/me/declarations`; CLI `user create-lecturers` tạo tài khoản từ `person`. Giao diện lập hồ sơ (`/ke-khai-cua-toi/`) | 🔶 API xong, giao diện ⏳ ngoài bản dự thi |
 
 ### 3.6 Dòng lệnh (FR-C)
 

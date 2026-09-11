@@ -299,6 +299,7 @@ class UserOut(BaseModel):
     roles: list[str] = Field(default_factory=list)
     unit_id: int | None = None
     unit_code: str | None = None
+    person_id: int | None = None
 
 
 class MeOut(BaseModel):
@@ -448,6 +449,29 @@ class DeclarationList(BaseModel):
 class DeclarationCreateIn(BaseModel):
     work_id: int
     unit_id: int
+    note: str | None = None
+
+
+# ---------- công trình/hồ sơ của tôi (H3, giảng viên tự kê khai) ----------
+class MyWorkRow(BaseModel):
+    work_id: int
+    title: str | None
+    doc_type: str
+    doc_type_label: str
+    year: int | None = None
+    doi: str | None = None
+    link_state: str
+    declared_in: list[int] = Field(default_factory=list)
+
+
+class MyWorkList(BaseModel):
+    items: list[MyWorkRow]
+    page: Page
+
+
+class MyDeclarationCreateIn(BaseModel):
+    period_id: int
+    work_id: int
     note: str | None = None
 
 

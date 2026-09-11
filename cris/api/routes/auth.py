@@ -46,7 +46,8 @@ def _user_out(conn, row) -> UserOut:
             u = cur.fetchone()
         unit_code = u["code"] if u else None
     return UserOut(id=row["id"], email=row["email"], display_name=row["display_name"],
-                   roles=row["roles"] or [], unit_id=row["unit_id"], unit_code=unit_code)
+                   roles=row["roles"] or [], unit_id=row["unit_id"], unit_code=unit_code,
+                   person_id=row["person_id"])
 
 
 @router.post("/login", response_model=UserOut)

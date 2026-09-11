@@ -46,6 +46,19 @@
   `declaration.ChoKhoaDuyet`, `declaration.KhoaDaDuyet`,
   `declaration.ChoPhongKiemTra`, `declaration.DatYeuCau`, `declaration.DaChot`,
   `period.finalize`.
+- Giảng viên tự kê khai (lát cắt H3): vai trò `lecturer` được kê khai hồ sơ
+  cho công trình của chính mình (`v_person_publications` của
+  `app_user.person_id`, trạng thái liên kết `DaNoiTuDong`/`DaXacNhan`) vào
+  đơn vị của mình (`app_user.unit_id`, hoặc `person.unit_id` nếu `NULL`), và
+  chuyển `Nhap → ChoKhoaDuyet`/`Nhap`, `ChoBoSung → Rut` hồ sơ do chính mình
+  tạo (`cris/declare.py` — `_assert_owner`, `_assert_own_work`,
+  `list_my_declarations`). CLI `python -m cris user create-lecturers [--unit
+  CODE] [--dry-run]` tạo tài khoản `lecturer` không mật khẩu từ mỗi `person`
+  giảng viên có email, khớp với `app_user` cùng email để idempotent
+  (`cris.auth.create_lecturers`). API `GET /api/me/works` (công trình của tôi,
+  kèm cờ `declared_in`), `GET /api/me/declarations`, `POST /api/me/declarations
+  {period_id, work_id, note?}`; `GET /api/auth/me` trả thêm `person_id`.
+  `GET /api/me/works` với tài khoản chưa gắn hồ sơ giảng viên → 409.
 
 ### Changed
 

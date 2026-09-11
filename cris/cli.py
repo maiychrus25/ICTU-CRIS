@@ -42,6 +42,9 @@ def main(argv=None):
     su = us.add_parser("set-unit", help="gán/đổi đơn vị của một tài khoản")
     su.add_argument("--email", required=True)
     su.add_argument("--unit", required=True, help="mã đơn vị (unit.code)")
+    cl = us.add_parser("create-lecturers", help="tạo tài khoản lecturer từ person.kind='lecturer' có email (lát cắt H3)")
+    cl.add_argument("--unit", help="mã đơn vị (unit.code), lọc theo person.unit_id")
+    cl.add_argument("--dry-run", action="store_true", help="chỉ đếm, không ghi")
     a = ap.parse_args(argv)
     if a.cmd == "serve":
         import uvicorn
@@ -146,6 +149,10 @@ def main(argv=None):
                 sys.exit(1)
             conn.commit()
             print(f"đã gán #{urow2['id']} ({a.email}) vào đơn vị {a.unit}")
+        elif a.user_cmd == "create-lecturers":
+            result = auth.create_lecturers(conn, unit_code=a.unit, dry_run=a.dry_run)
+            verb = "sẽ tạo" if a.dry_run else "đã tạo"
+            print(f"{verb} {result['created']} tài khoản lecturer, bỏ qua {result['skipped']} (đã có tài khoản)")
     conn.close()
 
 if __name__ == "__main__":

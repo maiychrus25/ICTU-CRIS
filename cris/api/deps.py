@@ -74,20 +74,22 @@ Actor = Annotated[int, Depends(get_actor_id)]
 
 def current_user(conn: Conn, request: Request,
                   x_cris_user: Annotated[str | None, Header(alias="X-CRIS-User")] = None) -> dict:
-    """Người thao tác đầy đủ: `{id, roles, unit_id, unit_code}`.
+    """Người thao tác đầy đủ: `{id, roles, unit_id, unit_code, person_id}`.
 
     Chọn actor theo đúng quy tắc `get_actor_id` (chế độ mở vẫn dùng được
     header `X-CRIS-User` để thử vai). Trả thêm `roles`/`unit_id`/`unit_code`
-    để tầng nghiệp vụ (`cris.declare`) kiểm vai trò và phạm vi đơn vị (NFR-02).
+    để tầng nghiệp vụ (`cris.declare`) kiểm vai trò và phạm vi đơn vị (NFR-02);
+    `person_id` (H3) để giảng viên tự kê khai kiểm sở hữu công trình của mình.
     """
     actor_id = _resolve_actor_id(conn, request, x_cris_user)
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT u.id, u.roles, u.unit_id, un.code AS unit_code "
+            "SELECT u.id, u.roles, u.unit_id, u.person_id, un.code AS unit_code "
             "FROM app_user u LEFT JOIN unit un ON un.id = u.unit_id WHERE u.id=%s",
             (actor_id,))
         row = cur.fetchone()
-    return {"id": row["id"], "roles": row["roles"] or [], "unit_id": row["unit_id"], "unit_code": row["unit_code"]}
+    return {"id": row["id"], "roles": row["roles"] or [], "unit_id": row["unit_id"],
+            "unit_code": row["unit_code"], "person_id": row["person_id"]}
 
 
 CurrentUser = Annotated[dict, Depends(current_user)]

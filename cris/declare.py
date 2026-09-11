@@ -13,6 +13,14 @@ Phân quyền (NFR-02, NFR-03): mỗi bước chuyển gắn với một tập v
 đơn vị (với vai trò cấp khoa) → `PermissionError` (tầng API map 403). Không
 truyền hai tham số này (mặc định `None`) giữ hành vi cũ, không kiểm gì — dùng
 cho lời gọi nội bộ/kiểm thử không cần kiểm quyền.
+
+Giảng viên tự kê khai (H3): vai trò `lecturer` được kê khai (`add_declaration`,
+kèm `actor_person_id` để kiểm công trình là của chính mình qua
+`v_person_publications`) và chuyển `Nhap → ChoKhoaDuyet`, `Nhap/ChoBoSung →
+Rut` (`set_state`) — nhưng chỉ với hồ sơ do chính mình tạo (`created_by =
+actor_id`); khác người tạo → `PermissionError` (`_assert_owner`). Khi actor có
+thêm vai trò `faculty_officer`/`rd_officer` thì không bị ràng buộc sở hữu này
+(giữ hành vi rộng hơn của các vai trò đó).
 """
 from cris import audit
 from cris.db import tx
@@ -22,7 +30,7 @@ EVIDENCE_KINDS = ("link", "file", "note")
 # (from_state, to_state) hợp lệ kèm vai trò được phép và lý do có bắt buộc
 # không — đúng bảng chuyển trạng thái của lát cắt H1 (docs/ba/03-state.md).
 _TRANSITIONS = {
-    ("Nhap", "ChoKhoaDuyet"): {"roles": ("faculty_officer", "rd_officer"), "reason": False},
+    ("Nhap", "ChoKhoaDuyet"): {"roles": ("faculty_officer", "rd_officer", "lecturer"), "reason": False},
     ("ChoKhoaDuyet", "KhoaDaDuyet"): {"roles": ("faculty_head",), "reason": False},
     ("ChoKhoaDuyet", "Nhap"): {"roles": ("faculty_head",), "reason": True},
     ("KhoaDaDuyet", "ChoPhongKiemTra"): {"roles": ("faculty_head", "rd_officer"), "reason": False},
@@ -30,8 +38,8 @@ _TRANSITIONS = {
     ("ChoPhongKiemTra", "Nhap"): {"roles": ("rd_officer",), "reason": True},
     ("Nhap", "ChoBoSung"): {"roles": ("faculty_officer", "rd_officer"), "reason": True},
     ("ChoBoSung", "Nhap"): {"roles": ("faculty_officer", "rd_officer"), "reason": False},
-    ("Nhap", "Rut"): {"roles": ("faculty_officer", "rd_officer"), "reason": True},
-    ("ChoBoSung", "Rut"): {"roles": ("faculty_officer", "rd_officer"), "reason": True},
+    ("Nhap", "Rut"): {"roles": ("faculty_officer", "rd_officer", "lecturer"), "reason": True},
+    ("ChoBoSung", "Rut"): {"roles": ("faculty_officer", "rd_officer", "lecturer"), "reason": True},
 }
 
 # Các bước thuộc giai đoạn "chuẩn bị hồ sơ" (di sản từ trước H1): chỉ chạy
@@ -40,8 +48,13 @@ _TRANSITIONS = {
 # xét duyệt) — chỉ kỳ đã `Huy` mới chặn toàn bộ.
 _PRE_CLOSE_ONLY_TRANSITIONS = {("Nhap", "ChoBoSung"), ("ChoBoSung", "Nhap"), ("Nhap", "Rut"), ("ChoBoSung", "Rut")}
 
-# Vai trò được phép kê khai (tạo hồ sơ mới) — ma trận phân quyền K-01..04, K-07.
-ADD_DECLARATION_ROLES = ("faculty_officer", "rd_officer")
+# Vai trò được phép kê khai (tạo hồ sơ mới) — ma trận phân quyền K-01..04, K-07;
+# `lecturer` thêm ở H3 (chỉ công trình/đơn vị của chính mình, xem `_assert_own_work`).
+ADD_DECLARATION_ROLES = ("faculty_officer", "rd_officer", "lecturer")
+
+# Vai trò "rộng" không bị ràng buộc sở hữu hồ sơ/công trình — chỉ `lecturer`
+# đơn thuần (không kèm các vai trò này) mới bị `_assert_owner`/`_assert_own_work` kiểm.
+_UNSCOPED_ROLES = ("faculty_officer", "rd_officer")
 
 
 def _get_declaration(cur, declaration_id, lock=False):
@@ -67,21 +80,54 @@ def _check_unit_scope(actor_roles, actor_unit_id, unit_id):
         raise PermissionError("chỉ thao tác được hồ sơ của đơn vị mình")
 
 
+def _assert_owner(actor_roles, actor_id, created_by):
+    """Vai trò `lecturer` đơn thuần (không kèm `faculty_officer`/`rd_officer`,
+    xem `_UNSCOPED_ROLES`) chỉ thao tác được hồ sơ do chính mình tạo
+    (`created_by`) — `PermissionError` nếu khác. Không kiểm gì nếu
+    `actor_roles` là `None` (giữ hành vi cũ) hoặc không có vai trò `lecturer`."""
+    is_plain_lecturer = actor_roles and "lecturer" in actor_roles and not any(r in actor_roles for r in _UNSCOPED_ROLES)
+    if is_plain_lecturer and created_by != actor_id:
+        raise PermissionError("chỉ thao tác được hồ sơ do mình tạo")
+
+
+def _assert_own_work(conn, actor_roles, actor_person_id, work_id):
+    """Vai trò `lecturer` đơn thuần chỉ kê khai được công trình của chính
+    mình: cần có bản ghi `v_person_publications` còn sống (`DaNoiTuDong`/
+    `DaXacNhan`) nối `actor_person_id` với `work_id`. `PermissionError` nếu
+    không có `actor_person_id` (tài khoản chưa gắn hồ sơ giảng viên) hoặc công
+    trình không phải của mình."""
+    if not (actor_roles and "lecturer" in actor_roles and not any(r in actor_roles for r in _UNSCOPED_ROLES)):
+        return
+    if actor_person_id is None:
+        raise PermissionError("tài khoản chưa gắn với hồ sơ giảng viên")
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT 1 FROM v_person_publications WHERE person_id=%s AND work_id=%s "
+            "AND state IN ('DaNoiTuDong','DaXacNhan')",
+            (actor_person_id, work_id))
+        if cur.fetchone() is None:
+            raise PermissionError("chỉ kê khai được công trình của chính mình")
+
+
 def add_declaration(conn, *, period_id, work_id, unit_id, actor_id, note=None,
-                     actor_roles=None, actor_unit_id=None):
+                     actor_roles=None, actor_unit_id=None, actor_person_id=None):
     """Kê khai một công trình vào một kỳ cho một đơn vị.
 
     Kỳ phải đang `DangMo`; công trình phải còn sống (`merged_into_id IS
     NULL`, chưa bị gộp vào bản ghi khác); một (kỳ, công trình, đơn vị) chỉ kê
     khai một lần (UNIQUE). `actor_roles` khác `None` mà không có
-    `faculty_officer`/`rd_officer` → `PermissionError`; `actor_unit_id` khác
-    `None` và vai trò không có `rd_officer` mà `unit_id` khác đơn vị của actor
-    → `PermissionError` (NFR-02). Ghi `declaration_event(from_state=NULL,
-    to_state='Nhap')` và `audit_log('declaration.add')`. Trả về id hồ sơ.
+    `faculty_officer`/`rd_officer`/`lecturer` → `PermissionError`;
+    `actor_unit_id` khác `None` và vai trò không có `rd_officer` mà `unit_id`
+    khác đơn vị của actor → `PermissionError` (NFR-02). Vai trò `lecturer` đơn
+    thuần (H3) còn phải sở hữu công trình (`actor_person_id`, xem
+    `_assert_own_work`) → `PermissionError` nếu không. Ghi
+    `declaration_event(from_state=NULL, to_state='Nhap')` và
+    `audit_log('declaration.add')`. Trả về id hồ sơ.
     """
     if actor_roles is not None and not any(r in actor_roles for r in ADD_DECLARATION_ROLES):
         raise PermissionError(f"cần vai trò: {', '.join(ADD_DECLARATION_ROLES)}")
     _check_unit_scope(actor_roles, actor_unit_id, unit_id)
+    _assert_own_work(conn, actor_roles, actor_person_id, work_id)
 
     with tx(conn), conn.cursor() as cur:
         cur.execute("SELECT state FROM period WHERE id=%s", (period_id,))
@@ -125,7 +171,9 @@ def set_state(conn, declaration_id, to_state, actor_id, reason=None, *, actor_ro
     chuyển không nằm trong `_TRANSITIONS`, hoặc thiếu lý do bắt buộc.
     `actor_roles` khác `None` mà không khớp vai trò cho phép của bước chuyển
     → `PermissionError`; `actor_unit_id` khác `None`, vai trò không có
-    `rd_officer` và hồ sơ thuộc đơn vị khác → `PermissionError` (NFR-02).
+    `rd_officer` và hồ sơ thuộc đơn vị khác → `PermissionError` (NFR-02). Vai
+    trò `lecturer` đơn thuần (H3) chỉ chuyển được hồ sơ do chính mình tạo →
+    `PermissionError` nếu không (`_assert_owner`).
     Ghi `declaration_event` và `audit_log('declaration.<to_state>')`.
     """
     with tx(conn), conn.cursor() as cur:
@@ -145,6 +193,7 @@ def set_state(conn, declaration_id, to_state, actor_id, reason=None, *, actor_ro
         if actor_roles is not None and not any(r in actor_roles for r in transition["roles"]):
             raise PermissionError(f"cần vai trò: {', '.join(transition['roles'])}")
         _check_unit_scope(actor_roles, actor_unit_id, before["unit_id"])
+        _assert_owner(actor_roles, actor_id, before["created_by"])
         if transition["reason"] and not (reason or "").strip():
             raise ValueError(f"chuyển sang {to_state} bắt buộc phải nêu lý do")
 
@@ -240,6 +289,25 @@ def list_declarations(conn, period_id, unit_id=None, *, actor_roles=None, actor_
             WHERE {" AND ".join(where)}
             ORDER BY d.created_at DESC, d.id DESC
         """, params)
+        return cur.fetchall()
+
+
+def list_my_declarations(conn, actor_id):
+    """Hồ sơ kê khai do chính `actor_id` tạo (`created_by`, H3 — giảng viên tự
+    kê khai), mọi kỳ, mới nhất trước; cùng cột như `list_declarations`
+    (`work_title`, `doc_type`, `unit_code`, `evidence_count`,
+    `last_event_at`)."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT d.*, w.title AS work_title, w.doc_type AS doc_type, u.code AS unit_code,
+                   (SELECT count(*) FROM evidence e WHERE e.declaration_id = d.id) AS evidence_count,
+                   (SELECT max(ev.at) FROM declaration_event ev WHERE ev.declaration_id = d.id) AS last_event_at
+            FROM declaration d
+            JOIN work w ON w.id = d.work_id
+            JOIN unit u ON u.id = d.unit_id
+            WHERE d.created_by = %s
+            ORDER BY d.created_at DESC, d.id DESC
+        """, (actor_id,))
         return cur.fetchall()
 
 
