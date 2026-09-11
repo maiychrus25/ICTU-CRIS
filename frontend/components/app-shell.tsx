@@ -4,7 +4,7 @@
 "use client";
 
 import {
-  BarChart3, BookOpenCheck, CalendarRange, CopyCheck, FilePenLine, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
+  BarChart3, BookOpenCheck, CalendarRange, CircleHelp, CopyCheck, FilePenLine, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
   RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRound, UserRoundCheck,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -34,6 +34,7 @@ const navigation = [
   { href: "/dong-bo/", label: "Đồng bộ", icon: RefreshCw },
   { href: "/nhat-ky/", label: "Nhật ký", icon: ScrollText },
   { href: "/ve/", label: "Về hệ thống", icon: Info },
+  { href: "/huong-dan/", label: "Hướng dẫn", icon: CircleHelp },
 ];
 
 const routeTitles = [
@@ -57,6 +58,7 @@ const routeTitles = [
   ["/doi-chieu", "Đối chiếu đề tài"],
   ["/tra-cuu", "Tra cứu"],
   ["/dang-nhap", "Đăng nhập"],
+  ["/huong-dan", "Hướng dẫn sử dụng"],
   ["/ve", "Về hệ thống"],
 ] as const;
 

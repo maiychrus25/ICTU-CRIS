@@ -155,3 +155,24 @@
     color: var(--foreground) !important;
   }
 }
+
+@media print {
+  aside,
+  header,
+  .guide-toc {
+    display: none !important;
+  }
+
+  .lg\:pl-60 {
+    padding-left: 0 !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  figure {
+    break-inside: avoid;
+  }
+}
