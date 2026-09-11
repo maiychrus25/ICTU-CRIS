@@ -636,6 +636,75 @@ class ScreenCohortSummary(BaseModel):
     flagged: int
 
 
+# ---------- bản đồ tri thức, xu hướng chủ đề, đồ thị đồng tác giả (J2) ----------
+class MapPoint(BaseModel):
+    id: int
+    x: float
+    y: float
+    topic_id: int | None = None
+    unit_id: int | None = None
+    year: int | None = None
+    doc_type: str
+    title: str | None
+
+
+class MapTopic(BaseModel):
+    id: int
+    label: str
+    size: int
+    cx: float
+    cy: float
+
+
+class MapUnit(BaseModel):
+    id: int
+    code: str
+    name: str
+
+
+class MapOut(BaseModel):
+    points: list[MapPoint]
+    topics: list[MapTopic]
+    units: list[MapUnit]
+    built_at: datetime
+    method: str
+
+
+class TrendValue(BaseModel):
+    key: int | str
+    count: int
+    share: float
+
+
+class TrendSeries(BaseModel):
+    topic_id: int | None = None
+    label: str
+    values: list[TrendValue]
+
+
+class TrendsOut(BaseModel):
+    series: list[TrendSeries]
+    keys: list[int | str]
+
+
+class CoauthorNode(BaseModel):
+    person_id: int
+    display_name: str | None
+    unit_code: str | None = None
+    works: int
+
+
+class CoauthorEdge(BaseModel):
+    a: int
+    b: int
+    weight: int
+
+
+class CoauthorsOut(BaseModel):
+    nodes: list[CoauthorNode]
+    edges: list[CoauthorEdge]
+
+
 # ---------- gợi ý người hướng dẫn (ICTU_TEACHER) ----------
 class MentorEvidence(BaseModel):
     work_id: int
