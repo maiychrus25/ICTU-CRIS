@@ -1,6 +1,6 @@
 # Kịch bản trình diễn — chung kết 10/10/2026
 
-Thời lượng mục tiêu: **8–10 phút** trình diễn sống + phần hỏi đáp riêng (mục cuối). Chạy
+Thời lượng mục tiêu: **9–12 phút** trình diễn sống + phần hỏi đáp riêng (mục cuối). Chạy
 trên container đã dựng (`docker compose up`), dữ liệu thật đồng bộ từ
 `repository.ictu.edu.vn` (7.618 công trình, 410 giảng viên, 903 liên kết chờ xác nhận, 39
 nhóm nghi trùng, khoá 21: 529 đồ án đã rà, 47 gắn cờ). Ảnh tham chiếu: `docs/images/*.png`
@@ -82,11 +82,13 @@ biểu đồ, trả lời thẳng bằng câu này, không né tránh.
 
 ---
 
-## 3. Hàng đợi tác giả có gợi ý AI (90 giây)
+## 3. Hàng đợi tác giả có gợi ý AI + gợi ý người hướng dẫn (135 giây)
 
 > **Nhắc trước khi demo**: chạy trên bản sao DB dành riêng cho demo, hoặc nếu dùng DB
 > thật thì chỉ thao tác trên các hàng đã kiểm tra trước là an toàn để đổi trạng thái
 > (tránh xác nhận/bác bỏ nhầm một liên kết còn cần giữ nguyên cho lần demo sau).
+
+**Phần A — hàng đợi tác giả** (90 giây):
 
 **URL**: `/doi-soat/tac-gia/`
 
@@ -109,6 +111,26 @@ biểu đồ, trả lời thẳng bằng câu này, không né tránh.
 liên kết (78,8% tự động + 15,9% chờ xác nhận) so với 8% ở nguồn.
 
 **Ảnh**: `docs/images/hang-doi-tac-gia.png`
+
+**Phần B — Gợi ý người hướng dẫn (AI)** (`/doi-soat/huong-dan/`, 45 giây):
+
+1. Mở `/doi-soat/huong-dan/` — chỉ vào dòng đầu trang: **4.621/5.375 đồ án (86%)** đang
+   ghi người hướng dẫn là `ICTU_TEACHER`, AI gợi ý được cho **1.381** (29,9%).
+2. Tìm dòng đồ án về đề tài "kiểm thử tự động bằng Selenium" — chỉ vào ứng viên hàng đầu
+   **Nguyễn Lan Oanh** (3 phiếu, điểm 2,606) và đồ án dẫn chứng đã có liên kết thật.
+3. Bấm **"Đưa vào hàng đợi"** — toast báo đã tạo liên kết `ChoXacNhan`; nhấn mạnh: đây
+   **không** tự xác nhận, dòng này giờ hiện ra đúng ở hàng đợi tác giả vừa demo ở Phần A.
+
+**Câu nói then chốt**:
+> "AI không tự gán người hướng dẫn — nó chỉ tìm đồ án cùng đề tài đã có người hướng dẫn
+> thật, xếp hạng ứng viên kèm bằng chứng, rồi đưa vào đúng hàng đợi xác nhận mà chuyên
+> viên vừa dùng ở phần trên. Quyết định cuối cùng luôn ở đó, không có đường tắt nào khác."
+
+**Con số thật**: 4.621/5.375 đồ án ghi `ICTU_TEACHER`; AI gợi ý được cho 1.381 đồ án
+(29,9%) có ít nhất một ứng viên qua ngưỡng (`k=5, min_votes=2, min_score=0,70`); ứng viên
+Nguyễn Lan Oanh xuất hiện lặp lại ở nhiều đồ án đích vì đề tài Selenium phổ biến ở cùng
+một khoá — đúng cảnh báo "một đề tài phổ biến có thể do nhiều giảng viên khác nhau hướng
+dẫn" ghi trong docstring `suggest_mentors` (`docs/ai.md` mục 6).
 
 ---
 
@@ -178,7 +200,7 @@ nhóm.
 
 ---
 
-## 6. Kỳ báo cáo, kê khai hai cấp & chỉnh tay có xuất xứ (90–120 giây)
+## 6. Kỳ báo cáo, kê khai hai cấp, minh chứng tệp & chỉnh tay có xuất xứ (110–140 giây)
 
 **Chuẩn bị riêng cho phân đoạn này**: quy trình duyệt hai cấp đổi vai giữa chuyên viên
 khoa, lãnh đạo khoa và phòng KH-CN. **Trước** buổi demo: đặt mật khẩu cho ba tài khoản mẫu
@@ -208,6 +230,18 @@ của tab trước:
 2. Nhập DOI mới và lý do bắt buộc (ví dụ "DOI cũ trỏ sai bản in lại"), lưu.
 3. Chỉ vào dòng "Nguồn" vừa đổi thành **"Chỉnh tay bởi … lúc …"** kèm badge "Đã chỉnh
    tay" — cột "Giá trị gốc" vẫn giữ nguyên giá trị từ kho, không bị ghi đè.
+
+**Phần C — tải minh chứng dạng tệp** (20 giây, tab 2 — `faculty_officer`, tại
+`/ke-khai/?id=`):
+1. Ở hồ sơ kê khai, bấm "Thêm minh chứng" → kéo-thả hoặc chọn một tệp PDF từ máy.
+2. Sau khi tải xong, chỉ vào dòng minh chứng mới: tên tệp, kích thước, mã băm SHA-256
+   rút gọn, nút tải về.
+3. Bấm nút tải về để minh hoạ: trình duyệt nhận đúng tệp vừa tải lên.
+
+**Câu nói riêng cho Phần C**:
+> "Minh chứng giờ là một tệp thật lưu trên máy chủ, không còn chỉ là một đường link có
+> thể chết bất cứ lúc nào — băm SHA-256 đảm bảo tệp tải về đúng là tệp đã nộp, và chỉ
+> người trong đơn vị mới tải được về."
 
 **Câu nói then chốt**:
 > "Khoa duyệt trước, phòng kiểm tra sau, mỗi lần trả về đều bắt buộc nêu lý do và hồ sơ
@@ -336,7 +370,18 @@ trả về Nháp, lý do "Thiếu minh chứng trang bìa tạp chí".
     `audit_log('work.edit')` — trang chi tiết công trình đổi dòng "Nguồn" thành "Chỉnh tay
     bởi … lúc …", giá trị gốc từ kho không bao giờ bị ghi đè.
 
-14. **Khoa và phòng tranh nhau thì sao?**
+14. **Gợi ý người hướng dẫn dựa trên gì, sai thì sao?**
+    Dựa trên giả định thống kê (ghi rõ trong docstring `suggest_mentors`, `cris/ai/mentor.py`):
+    đồ án cùng đề tài thường do cùng một giảng viên hướng dẫn. Với mỗi đồ án đang ghi
+    `ICTU_TEACHER`, hệ thống tìm `k=5` đồ án gần nhất về nghĩa (cosine trên vector tiêu đề
+    + tóm tắt + từ khoá) trong số đồ án đã có người hướng dẫn thật liên kết, gộp phiếu theo
+    người, chỉ giữ ứng viên đạt `votes≥2` và tổng điểm `≥0,70`. Giả định này **có thể sai**
+    — một đề tài phổ biến (ví dụ Selenium) có thể do nhiều giảng viên khác nhau hướng dẫn,
+    không chỉ một người — nên sai không gây hậu quả: gợi ý chỉ đưa ứng viên vào hàng đợi
+    tác giả ở trạng thái `ChoXacNhan`, giống mọi liên kết khác, chuyên viên xem bằng chứng
+    (đồ án dẫn chứng) rồi tự quyết định xác nhận hay bác bỏ (BR-18) — không có gì tự nối.
+
+15. **Khoa và phòng tranh nhau thì sao?**
     Không tranh chấp được vì mỗi bước chuyển trạng thái gắn cứng với một tập vai trò
     (`cris/declare.py` — `_TRANSITIONS`): khoa chỉ đưa hồ sơ từ Chờ khoa duyệt sang Khoa đã
     duyệt hoặc trả về Nháp; phòng chỉ quyết định từ Chờ phòng kiểm tra sang Đạt yêu cầu hoặc
@@ -374,12 +419,17 @@ trước ngày 10/10, tốt nhất là ngắt mạng ở bước cuối để ch
       `python -m cris ai screen --cohort 21`.
 - [ ] `python -m cris ai status` — xác nhận provider `local` và số vector đã có khớp số
       công trình.
+- [ ] `python -m cris normalize --redo --doc-type do_an` (vá lượt tên vai `mentor` giữ chỗ
+      hồi tố cho đồ án đã đồng bộ trước lát cắt I4) rồi `python -m cris ai mentors` — xác
+      nhận `suggested > 0` trước khi mở `/doi-soat/huong-dan/` cho phân đoạn 3 Phần B.
+- [ ] Mở `/huong-dan/` — kiểm đủ ảnh cho bốn vai trò, để lại tab này cho giám khảo tự xem
+      trong lúc chờ, không cần chờ người thuyết trình dẫn qua từng bước.
 - [ ] `python -m cris serve` (hoặc container `serve --host 0.0.0.0`) — mở
       `http://localhost:8000` và `http://localhost:8000/docs`, kiểm cả hai trả `200`.
 - [ ] Mở sẵn các tab trình duyệt theo đúng thứ tự bảy phân đoạn ở trên, để không mất thời
       gian gõ URL giữa buổi trình diễn: `/tong-quan/`, `/tra-cuu/`, `/doi-soat/tac-gia/`,
-      `/doi-soat/trung-lap/`, `/doi-chieu/`, `/doi-chieu/ra-soat/`,
-      `/ky-bao-cao/chi-tiet/?id=1`, `/ve/`, `/docs`.
+      `/doi-soat/huong-dan/`, `/doi-soat/trung-lap/`, `/doi-chieu/`, `/doi-chieu/ra-soat/`,
+      `/ky-bao-cao/chi-tiet/?id=1`, `/ke-khai/?id=`, `/huong-dan/`, `/ve/`, `/docs`.
   - [ ] Trước khi thao tác thật trên hàng đợi tác giả/nghi trùng (phân đoạn 3, 4), xác
       nhận đây là **bản sao DB dành cho demo**, hoặc đã đánh dấu trước các hàng "an toàn để
       đổi trạng thái" nếu bắt buộc dùng DB thật.

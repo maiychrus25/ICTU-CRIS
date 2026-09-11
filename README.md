@@ -91,12 +91,12 @@ sẵn thành HTML/CSS/JS tĩnh (`next build`, `output: "export"`), FastAPI phụ
 bản xuất đó ở `/` cùng gốc với `/api/*`: **một ảnh Docker, một container, một
 cổng** cho cả API lẫn giao diện. **Tầng AI** (`cris/ai/`) cũng chỉ gọi vào tầng
 nghiệp vụ và chỉ ghi vào bảng `ai_*`. Lược đồ CSDL nằm ở `cris/migrations/0001`–
-`0010` (PostgreSQL 16, không ORM).
+`0012` (PostgreSQL 16, không ORM).
 
 | Thành phần | Công nghệ | Vai trò |
 |---|---|---|
 | Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3 | Không ORM — truy vấn SQL trực tiếp |
-| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0010` |
+| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0012` |
 | Đóng gói | sdist + wheel đính kèm mỗi Release (không gồm `frontend/`); ảnh `ghcr.io/maiychrus25/ictu-cris` là bản chạy đủ (`:<version>-ai` kèm thư viện AI) | Workflow `release.yml` kiểm phiên bản khớp tag; `docker.yml` đẩy ảnh theo semver |
 | Triển khai | `deploy/setup.sh` + `deploy/docker-compose.yml` | Một lệnh: DB, lược đồ, người dùng mặc định, giao diện; `--ai` tải mô hình |
 | API | FastAPI + `uvicorn` | Router `/api/*`, tài liệu OpenAPI tương tác ở `/docs` |
@@ -109,9 +109,10 @@ nghiệp vụ và chỉ ghi vào bảng `ai_*`. Lược đồ CSDL nằm ở `cr
 CLI thống nhất:
 
 ```
-python -m cris migrate|seed|sync [paths]|people|normalize|link|dedup|quality [--json]
+python -m cris migrate|seed|sync [paths]|people|link|dedup|quality [--json]
+python -m cris normalize [--redo] [--doc-type do_an]               # --redo vá hồi tố work đã chuẩn hoá (I4)
 python -m cris serve [--host] [--port]
-python -m cris ai download|embed|topics|suggest|screen|status      # cần CRIS_AI_PROVIDER=local
+python -m cris ai download|embed|topics|suggest|screen|mentors|status   # cần CRIS_AI_PROVIDER=local
 python -m cris user set-password <email>|list                     # đăng nhập cục bộ (NFR-01)
 python -m cris user create --email --name --roles a,b [--unit CODE] [--password]
 python -m cris user set-unit --email --unit CODE
@@ -132,6 +133,10 @@ python -m cris user create-lecturers [--unit CODE] [--dry-run]     # tài khoả
   khoa chỉ thấy và thao tác được hồ sơ của đơn vị mình (NFR-02, lọc ở tầng
   SQL); giảng viên tự kê khai công trình của chính mình và trình khoa duyệt
   (`/ke-khai-cua-toi/`).
+- **Minh chứng dạng tệp** — tải lên PDF/ảnh/docx cho hồ sơ kê khai (tối đa
+  10 MB, loại tệp kiểm bằng chữ ký byte chứ không tin phần mở rộng), băm
+  SHA-256 lúc lưu; tải về kiểm đúng phạm vi đơn vị (NFR-02) — minh chứng
+  không còn chỉ là một đường link có thể chết.
 - **Chỉnh tay có xuất xứ** (BR-23) — phòng KH-CN sửa trực tiếp 9 trường của
   một công trình (tiêu đề, DOI, năm/số, tạp chí, tập, loại bài, khoá, tóm
   tắt, từ khoá) khi nguồn sai hoặc thiếu, luôn kèm lý do bắt buộc; **không**
@@ -163,6 +168,14 @@ python -m cris user create-lecturers [--unit CODE] [--dry-run]     # tài khoả
   (BR-18), không tự nối bao giờ.
 - **Chất lượng dữ liệu** (`/chat-luong-du-lieu/`) — báo cáo độ phủ liên kết,
   cảnh báo dữ liệu thiếu/nghi vấn.
+- **Hướng dẫn sử dụng trong ứng dụng** (`/huong-dan/`) — mục lục theo vai
+  trò (Phòng KH-CN / Khoa / Giảng viên / Lãnh đạo), mỗi mục kèm ảnh và thuật
+  ngữ (xuất xứ, hàng đợi, nghi trùng, khía cạnh, chế độ mở), không cần đọc
+  tài liệu ngoài ứng dụng để bắt đầu dùng.
+- **Triển khai tự động** — mỗi GitHub Release tự lên máy chủ thật: dựng và
+  đẩy ảnh `-ai` lên GHCR, SSH chạy `deploy/upgrade.sh`, tự sao lưu CSDL
+  trước khi đổi và tự quay lui nếu `/api/health` không trả 200 — xem
+  [docs/deploy-prod.md](docs/deploy-prod.md).
 
 ### Màn hình (Screenshots)
 
@@ -223,6 +236,9 @@ mạng công khai**.
 
 ## 🛰️ Triển khai máy chủ thật (Production deploy)
 
+**Chạy thật**: [https://cris.ahvlabs.com](https://cris.ahvlabs.com) — bản demo công khai,
+đăng nhập bắt buộc (không ghi mật khẩu ở đây, xin liên hệ nhóm dự án).
+
 Bản chạy thật tại `https://cris.ahvlabs.com`: mỗi GitHub Release tự lên máy chủ qua
 `.github/workflows/deploy.yml`, có sao lưu CSDL trước khi đổi và tự khôi phục nếu
 `/api/health` không trả 200. Nâng cấp bằng tay cùng một script:
@@ -244,13 +260,14 @@ trúc máy chủ, secrets GitHub cần tạo, quy trình phát hành và quay lu
       soát trùng đề tài theo khoá
 - [x] **0.3.0 đã phát hành (11/09)** — đăng nhập cục bộ và vai trò, tìm người,
       chủ đề, lịch sử đồng bộ, kê khai công trình vào kỳ
-- [ ] **0.4.0 đang phát triển (lát cắt H)** — duyệt hai cấp đúng theo BA
+- [ ] **0.4.0 đang phát triển (lát cắt H + I)** — duyệt hai cấp đúng theo BA
       (`docs/ba/03-state.md`), phạm vi đơn vị (NFR-02), chỉnh tay có xuất xứ
       (BR-23), tìm kiếm không dấu, giảng viên tự kê khai công trình của mình
-      (xem [docs/release-notes/v0.4.0.md](docs/release-notes/v0.4.0.md), dự
-      thảo)
-- [ ] Còn lại: SSO trường thật, biểu mẫu Bộ, đính kèm tệp minh chứng (hiện
-      chỉ URL/ghi chú)
+      (H); minh chứng dạng tệp thật, AI gợi ý người hướng dẫn cho đồ án
+      `ICTU_TEACHER`, hướng dẫn sử dụng trong ứng dụng, CI/CD triển khai máy
+      chủ thật với sao lưu và quay lui (I) (xem
+      [docs/release-notes/v0.4.0.md](docs/release-notes/v0.4.0.md), dự thảo)
+- [ ] Còn lại: SSO trường thật, biểu mẫu Bộ
 
 ## 📚 Tài liệu (Documentation)
 

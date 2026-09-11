@@ -19,6 +19,8 @@ với dữ liệu đổi theo mỗi lần đồng bộ). Đường dẫn UI th�
 /doi-soat/tac-gia/                         Hàng đợi xác nhận liên kết tác giả
 /doi-soat/trung-lap/                       Hàng đợi nghi trùng
 /doi-soat/trung-lap/chi-tiet/?id=          Chi tiết nhóm nghi trùng (so cạnh nhau)
+/doi-soat/huong-dan/                       Gợi ý người hướng dẫn AI cho đồ án ICTU_TEACHER
+/huong-dan/                                Hướng dẫn sử dụng trong ứng dụng, theo vai trò
 /ky-bao-cao/                               Danh sách kỳ báo cáo
 /ky-bao-cao/chi-tiet/?id=                  Chi tiết kỳ: tiến độ theo đơn vị, hồ sơ kê khai
 /ke-khai/?id=                              Chi tiết hồ sơ kê khai: trạng thái, minh chứng

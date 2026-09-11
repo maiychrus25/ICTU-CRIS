@@ -224,6 +224,16 @@ python -m cris user list                            # id, email, vai trò, has_p
   khoa — duyệt hoặc trả hồ sơ về khoa mình). `lecturer` (giảng viên tự kê
   khai công trình của chính mình) dùng chung cơ chế đăng nhập cục bộ này.
 
+### 6.6 Minh chứng dạng tệp (evidence uploads)
+
+Tệp minh chứng kê khai (PDF/ảnh/docx, tối đa 10 MB) lưu dưới `CRIS_DATA_DIR` (mặc định
+`/data` trong ảnh Docker, `ENV CRIS_DATA_DIR=/data` ở `Dockerfile`), đường dẫn
+`evidence/<id hồ sơ>/<sha256 rút gọn><đuôi>`; loại tệp kiểm bằng chữ ký byte đầu, không
+tin phần mở rộng tên tệp gửi lên. Chạy Docker Compose (mục 3): volume `cris_data:/data`
+đã khai trong `deploy/docker-compose.yml`, giữ nguyên qua các lần nâng cấp. Chạy venv
+(mục 4): đặt `CRIS_DATA_DIR` trỏ tới một thư mục ghi được trước khi `serve`, ví dụ
+`export CRIS_DATA_DIR=$(pwd)/.data`.
+
 ## 7. Bật AI (Enabling the AI features)
 
 AI là **tuỳ chọn**. Mặc định `CRIS_AI_PROVIDER=none`: mọi chức năng khác chạy bình
@@ -236,11 +246,19 @@ python -m cris ai download        # tải mô hình 118 MB + tokenizer 17 MB và
                                   # kiểm SHA-256 trước khi dùng; chỉ tải một lần
 export CRIS_AI_PROVIDER=local     # hoặc đặt trong .env
 python -m cris ai embed           # sinh vector cho toàn bộ công trình (~3 phút trên CPU 4 nhân)
+python -m cris ai mentors         # gợi ý người hướng dẫn cho đồ án đang ghi ICTU_TEACHER (cần embed trước)
 python -m cris ai status          # provider đang dùng, số vector đã có
 ```
 
 Đổi thư mục mô hình bằng `CRIS_AI_MODEL_DIR`. Với Docker, mount thư mục đó vào container
-để không tải lại mỗi lần dựng.
+để không tải lại mỗi lần dựng — `ai download` ghi vào đúng thư mục này (kể cả khi chạy qua
+`docker compose run --rm app ai download`, tránh mất tệp khi container bị xoá sau khi chạy).
+
+`ai mentors` chỉ tìm được ứng viên cho đồ án đã có lượt tên vai `mentor` giữ chỗ; các bản
+ghi `do_an` đồng bộ trước khi có nhánh đọc `meta.GVHD` (`cris/normalize.py`) cần chuẩn hoá
+lại một lần bằng `python -m cris normalize --redo --doc-type do_an` (không tự chạy lại mặc
+định — `normalize_pending` chỉ xử lý phần đang chờ) trước khi chạy `ai mentors`. Chi tiết
+thuật toán, ngưỡng và số đo trên dữ liệu thật ở [docs/ai.md](docs/ai.md) mục 6.
 
 Kiểm thử mô hình thật: `pytest -m slow` (tự bỏ qua nếu chưa tải mô hình). CI chạy
 `pytest -m "not slow"` nên không cần mô hình.
@@ -307,6 +325,18 @@ không dấu, giảng viên tự kê khai), cùng máy phát triển:
 | `npx playwright test` (`frontend/e2e/`, cấu hình mặc định, dữ liệu mẫu) | mock (`core-flows.spec.ts`) **14** kịch bản |
 | `npx playwright test --config=playwright.real.config.ts` (ba project `desktop`/`tablet`/`mobile`) | thật: `real-backend.spec.ts` trên `desktop` **9** + `responsive-accessibility.real.spec.ts` trên `tablet`/`mobile` **2+2** — tổng **13** |
 | `python -m cris migrate` trên DB đã có `0001`–`0009` | áp thêm `0010_declaration_states.sql` (mở CHECK `declaration.state` đủ 8 trạng thái) |
+
+Ngày 11/09/2026 đêm (lát cắt I — CI/CD triển khai máy chủ thật, minh chứng dạng tệp, AI
+gợi ý người hướng dẫn, hướng dẫn sử dụng trong ứng dụng), cùng máy phát triển:
+
+| Việc | Kết quả |
+|---|---|
+| `pytest -q -m "not slow"` sau I1–I4 | **322 passed**, 3 skipped (`slow` cần mô hình) |
+| `npx playwright test` (cấu hình mặc định, dữ liệu mẫu) | mock: `core-flows.spec.ts` **17** + `user-guide.spec.ts` **1** — tổng **18** kịch bản |
+| `npx playwright test --config=playwright.real.config.ts` (ba project `desktop`/`tablet`/`mobile`) | thật: `real-backend.spec.ts` trên `desktop` **9** + `responsive-accessibility.real.spec.ts` trên `tablet`/`mobile` **2+2** — tổng **13** |
+| `python -m cris migrate` trên DB đã có `0001`–`0010` | áp thêm `0011_evidence_file.sql` (cột `storage_path`/`size_bytes`/`sha256`/`content_type`/`original_name` của `evidence`) rồi `0012_ai_mentor.sql` (mở CHECK `ai_suggestion.kind` thêm `mentor`, `author_link.confidence` thêm `ai_mentor`) |
+| `python -m cris normalize --redo --doc-type do_an` trên 5.375 đồ án thật | ~41,5 s, `{'created': 0, 'updated': 5375, 'skipped': 0}`, tạo đúng **4.621** lượt tên vai `mentor` giữ chỗ (khớp README "Ba số liệu") |
+| `python -m cris ai mentors` (mặc định `k=5, min_votes=2, min_score=0.70`) sau khi embed | ~12 s, `scanned=4621 suggested=1381` (**29,9%**) — chi tiết ngưỡng và ví dụ ở [docs/ai.md](docs/ai.md) mục 6 |
 
 ## 10. Triển khai máy chủ thật (Production deploy)
 
