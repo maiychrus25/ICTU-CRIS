@@ -26,10 +26,12 @@ EXE_BYTES = b"MZ\x90\x00\x03\x00\x00\x00" + b"0" * 64
 
 
 def docx_bytes():
+    # Cố định date_time trong header ZIP: hai lần gọi cách nhau một giây từng cho hai
+    # byte khác nhau → so khớp nội dung tải về bị flaky.
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
-        zf.writestr("[Content_Types].xml", "<Types/>")
-        zf.writestr("word/document.xml", "<w:document/>")
+        for name, data in (("[Content_Types].xml", "<Types/>"), ("word/document.xml", "<w:document/>")):
+            zf.writestr(zipfile.ZipInfo(name, date_time=(2026, 1, 1, 0, 0, 0)), data)
     return buf.getvalue()
 
 
