@@ -6,7 +6,7 @@
 import { AlertTriangle, ArrowUpRight, Clipboard, Info, Search, Share2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { CompareModeTabs } from "@/components/compare-mode-tabs";
@@ -68,6 +68,10 @@ function ExpertsContent() {
   const [degree, setDegree] = useState("all");
   const [unit, setUnit] = useState("all");
   const [excluded, setExcluded] = useState<PersonSearchRow[]>([]);
+  // Chỉ bật nút sau khi hydrate: bấm trước đó sẽ submit form theo kiểu HTML (tải lại trang với "?"),
+  // mất mutation — thấy trên CI chậm.
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
   const output = created ?? saved.data;
 
   async function submit(event: React.FormEvent) {
@@ -90,7 +94,7 @@ function ExpertsContent() {
           <div><label htmlFor="exclude-person" className="mb-1 block text-xs font-medium">Loại trừ giảng viên</label><PersonCombobox id="exclude-person" onValueChange={() => undefined} onSelect={(person) => setExcluded((current) => current.some((item) => item.id === person.id) ? current : [...current, person])} /><div className="mt-2 flex flex-wrap gap-1">{excluded.map((person) => <Badge key={person.id} variant="outline">{person.display_name}<button type="button" aria-label={`Bỏ ${person.display_name}`} onClick={() => setExcluded((current) => current.filter((item) => item.id !== person.id))}><X className="size-3" /></button></Badge>)}</div></div>
           <p className="text-xs text-muted-foreground">Ưu tiên công trình trong 3 năm gần đây.</p>
         </div></details>
-        <Button type="submit" className="w-full" disabled={find.isPending}><Search />{find.isPending ? "Đang tìm…" : "Tìm chuyên gia"}</Button>
+        <Button type="submit" className="w-full" disabled={!ready || find.isPending}><Search />{find.isPending ? "Đang tìm…" : "Tìm chuyên gia"}</Button>
       </form>
       <section aria-label="Kết quả tìm chuyên gia">{find.isError ? <ErrorView error={find.error} retry={() => find.reset()} /> : id !== null && saved.isLoading && !created ? <LoadingView label="Đang tải danh sách chuyên gia…" /> : saved.isError && !created ? <ErrorView error={saved.error} retry={() => saved.refetch()} /> : output ? <ExpertResults data={output} /> : <EmptyView title="Sẵn sàng tìm chuyên gia" description="Nhập tiêu đề đề tài để nhận danh sách xếp hạng và dẫn chứng liên quan." />}</section>
     </div>
