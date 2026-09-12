@@ -27,6 +27,7 @@ from cris.api.routes import (
     quality,
     queue,
     recent,
+    reports,
     screen,
     search,
     stats,
@@ -39,7 +40,7 @@ FRONTEND_OUT = pathlib.Path(__file__).resolve().parents[2] / "frontend" / "out"
 def create_app(static_dir: str | os.PathLike | None = None) -> FastAPI:
     app = FastAPI(
         title="ICTU-CRIS API",
-        version="0.5.0",
+        version="0.6.0",
         description="Một nguồn sự thật cho dữ liệu công bố khoa học — mỗi con số truy ngược được về bản ghi gốc. "
                     "AI gợi ý, người quyết; không có AI vẫn chạy đủ chức năng.",
         license_info={"name": "Apache-2.0", "url": "https://www.apache.org/licenses/LICENSE-2.0"},
@@ -51,7 +52,7 @@ def create_app(static_dir: str | os.PathLike | None = None) -> FastAPI:
               stats.router, export.router, audit.router, periods.router, screen.router,
               persons.router, sync.router, auth.router, declarations.router, me.router,
               mentors.router, ai_public.router, ai_map.router,
-              cite.router, recent.router, feed.router, anomalies.router):
+              cite.router, recent.router, feed.router, anomalies.router, reports.router):
         app.include_router(r)
 
     @app.get("/api/health", tags=["he-thong"])

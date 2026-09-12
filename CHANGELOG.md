@@ -5,6 +5,21 @@
 
 ## [Unreleased]
 
+### Added
+
+- Bản báo cáo kỳ đóng băng, có phiên bản (lát cắt L1, điểm BA "P"): `POST
+  /api/periods/{id}/reports` (`rd_officer`) chụp lại toàn bộ hồ sơ kê khai của
+  kỳ (mọi trạng thái) cùng công trình/tác giả/minh chứng tại thời điểm gọi
+  thành một phiên bản mới, không đổi về sau (`cris/report.py`, `build_report`,
+  migration `0018_period_report.sql`); `sha256` băm payload để kiểm lại report
+  không bị sửa. `GET /api/periods/{id}/reports` liệt kê các phiên bản,
+  `GET /api/reports/{id}` xem đầy đủ một phiên bản, `GET
+  /api/reports/{id}/export?format=csv|xlsx` tải CSV (BOM UTF-8) hoặc XLSX
+  (`openpyxl`, sheet "Tổng hợp" đơn vị × trạng thái + tổng theo loại, sheet
+  "Chi tiết") — cấp khoa chỉ thấy hồ sơ của đơn vị mình trong một báo cáo.
+  `POST /api/periods/{id}/finalize` (chốt kỳ) nay tự sinh một bản báo cáo,
+  trả thêm `report_id`.
+
 ## [0.5.0] - 2026-09-12
 
 ### Added

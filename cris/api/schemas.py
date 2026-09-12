@@ -558,6 +558,97 @@ class PeriodFinalizeSkipped(BaseModel):
 class PeriodFinalizeOut(BaseModel):
     finalized: int
     skipped: list[PeriodFinalizeSkipped]
+    report_id: int
+
+
+# ---------- bản báo cáo kỳ đóng băng, có phiên bản (L1) ----------
+class ReportCreateIn(BaseModel):
+    note: str | None = None
+
+
+class ReportUnitSummary(BaseModel):
+    unit_id: int
+    code: str
+    name: str
+    by_state: dict[str, int]
+    declared: int
+    accepted: int
+
+
+class ReportTotals(BaseModel):
+    declared: int
+    accepted: int
+    by_state: dict[str, int]
+
+
+class ReportSummary(BaseModel):
+    units: list[ReportUnitSummary]
+    by_doc_type: dict[str, int]
+    totals: ReportTotals
+
+
+class ReportListRow(BaseModel):
+    id: int
+    version: int
+    generated_at: datetime
+    generated_by_name: str | None = None
+    note: str | None = None
+    totals: ReportTotals
+
+
+class ReportCreateOut(BaseModel):
+    id: int
+    period_id: int
+    version: int
+    generated_at: datetime
+    generated_by: int | None = None
+    note: str | None = None
+    summary: ReportSummary
+    sha256: str
+
+
+class ReportUnitRef(BaseModel):
+    id: int
+    code: str
+    name: str
+
+
+class ReportWork(BaseModel):
+    id: int
+    title: str | None
+    doc_type: str
+    year: int | None = None
+    doi: str | None = None
+    indexes: list[str] = Field(default_factory=list)
+    quartile: str | None = None
+    journal: str | None = None
+
+
+class ReportEvent(BaseModel):
+    state: str
+    at: str
+
+
+class ReportItem(BaseModel):
+    declaration_id: int
+    state: str
+    unit: ReportUnitRef
+    work: ReportWork
+    authors: list[str]
+    evidence_count: int
+    events: list[ReportEvent]
+
+
+class ReportDetail(BaseModel):
+    id: int
+    period_id: int
+    version: int
+    generated_at: datetime
+    generated_by: int | None = None
+    note: str | None = None
+    summary: ReportSummary
+    items: list[ReportItem]
+    sha256: str
 
 
 # ---------- kê khai công trình vào kỳ (G3) ----------
