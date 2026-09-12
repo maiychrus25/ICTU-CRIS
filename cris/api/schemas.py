@@ -957,3 +957,25 @@ class RecentOut(BaseModel):
     added: list[RecentAddedRow]
     changed: list[RecentChangedRow]
     run: LastSync | None
+
+
+# ---------- thông báo (L2) ----------
+class NotificationRow(BaseModel):
+    id: int
+    kind: str
+    title: str
+    body: str
+    link: str | None
+    created_at: datetime
+    read_at: datetime | None
+
+
+class NotificationList(BaseModel):
+    items: list[NotificationRow]
+    page: Page
+    unread: int
+
+
+class MarkAllReadOut(BaseModel):
+    ok: bool
+    marked: int

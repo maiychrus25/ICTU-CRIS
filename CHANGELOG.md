@@ -19,6 +19,18 @@
   "Chi tiết") — cấp khoa chỉ thấy hồ sơ của đơn vị mình trong một báo cáo.
   `POST /api/periods/{id}/finalize` (chốt kỳ) nay tự sinh một bản báo cáo,
   trả thêm `report_id`.
+- Thông báo trong ứng dụng (lát cắt L2, điểm BA "H"): người dùng biết hồ sơ
+  của mình đổi trạng thái (`cris/notify.py`, migration `0019_notification.sql`).
+  Móc gọi từ route sau khi nghiệp vụ thành công (không sửa `cris.declare`/
+  `cris.link`): hồ sơ chuyển `ChoKhoaDuyet` → báo `faculty_head` cùng đơn vị;
+  `KhoaDaDuyet`/`ChoPhongKiemTra` → mọi `rd_officer`; `DatYeuCau`/`DaChot`/trả
+  về `Nhap`/`ChoBoSung`/`Rut` → người tạo hồ sơ (cộng `faculty_officer` cùng
+  đơn vị khi trả về); kỳ báo cáo mở/đóng nộp/huỷ/chốt → `faculty_officer`/
+  `faculty_head` mọi đơn vị (chốt kỳ trỏ thẳng tới bản báo cáo vừa sinh); liên
+  kết tác giả được xác nhận → giảng viên có tài khoản. Không bao giờ báo cho
+  chính người thao tác; lỗi khi gửi thông báo không làm hỏng thao tác chính.
+  `GET /api/notifications?unread=&page=`, `POST /api/notifications/{id}/read`,
+  `POST /api/notifications/read-all` (`cris/api/routes/notifications.py`).
 
 ## [0.5.0] - 2026-09-12
 
