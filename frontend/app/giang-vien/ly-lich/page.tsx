@@ -46,6 +46,7 @@ function CvContent() {
         <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={() => void copyAllCitations()} disabled={!content.citations.length}><Copy />Sao chép trích dẫn tất cả</Button><Button type="button" onClick={() => window.print()}><Printer />In / Lưu PDF</Button></div>
       </nav>
       <main className="cv-sheet mx-auto max-w-[210mm] bg-white px-[18mm] py-[16mm] text-neutral-950 shadow-sm print:max-w-none print:p-0 print:shadow-none">
+        <img src="/brand/icut-cris-logo.svg" alt="ICTU-CRIS" width={320} height={300} className="mb-6 h-16 w-auto print:h-14" />
         <article className="cv-document" dangerouslySetInnerHTML={{ __html: content.body }} />
         <DataNoticeFooter className="mt-8 px-0 text-neutral-600" />
       </main>

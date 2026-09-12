@@ -42,6 +42,7 @@ function LoginContent() {
 
   return (
     <>
+      <img src="/brand/icut-cris-logo.svg" alt="ICTU-CRIS" width={320} height={300} className="mx-auto mb-5 h-28 w-auto" />
       <PageHeader title="Đăng nhập" description="Dùng tài khoản cục bộ ICTU-CRIS để thực hiện các thao tác nghiệp vụ." />
       <div className="mx-auto max-w-md rounded-lg border bg-card p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary"><ShieldCheck className="size-5" /></span><div><h2 className="font-semibold">Tài khoản ICTU-CRIS</h2><p className="text-xs text-muted-foreground">Phiên đăng nhập được bảo vệ bằng cookie HttpOnly.</p></div></div>

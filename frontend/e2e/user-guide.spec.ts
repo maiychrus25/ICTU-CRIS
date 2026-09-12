@@ -11,7 +11,7 @@ test("hướng dẫn hiển thị đủ vai trò, ảnh mô tả và mở đư�
   }
 
   const images = page.locator("main img");
-  await expect(images).toHaveCount(9);
+  await expect(images).toHaveCount(10);
   expect(await images.evaluateAll((items) => items.every((item) => Boolean(item.getAttribute("alt")?.trim())))).toBe(true);
 
   await page.locator('main a[href="/tra-cuu/"]').first().click();

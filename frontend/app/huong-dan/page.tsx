@@ -219,6 +219,7 @@ export default function UserGuidePage() {
 
   return (
     <>
+      <img src="/brand/icut-cris-logo.svg" alt="ICTU-CRIS" width={320} height={300} className="mb-5 h-24 w-auto" />
       <PageHeader title="Hướng dẫn sử dụng" description="Đi theo vai trò của anh/chị hoặc đọc từ đầu để hiểu cách dữ liệu đi từ nguồn tới quyết định." />
 
       <section aria-labelledby="guide-purpose-title" className="mb-8 border-b pb-8">

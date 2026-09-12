@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 300" width="320" height="300" role="img" aria-labelledby="icutCrisLogoTitle">
+  <title id="icutCrisLogoTitle">ICTU-CRIS</title>
+  <style>
+    .icut-layer1 { stroke: #94A3B8; }
+    .icut-layer2 { stroke: #64748B; }
+    .icut-layer3 { stroke: #1D4ED8; }
+    .icut-badge { stroke: #0EA5E9; }
+    .icut-text { fill: #0F172A; }
+    @media (prefers-color-scheme: dark) {
+      .icut-layer1 { stroke: #64748B; }
+      .icut-layer2 { stroke: #94A3B8; }
+      .icut-layer3 { stroke: #60A5FA; }
+      .icut-badge { stroke: #38BDF8; }
+      .icut-text { fill: #F8FAFC; }
+    }
+  </style>
+  <g transform="translate(37.5,-15.6) scale(2.3)" fill="none">
+    <rect class="icut-layer1" x="14" y="50" width="46" height="30" rx="6" stroke-width="3"/>
+    <rect class="icut-layer2" x="24" y="37" width="46" height="30" rx="6" stroke-width="4"/>
+    <rect class="icut-layer3" x="34" y="24" width="46" height="30" rx="6" stroke-width="5.5"/>
+    <circle class="icut-badge" cx="82" cy="24" r="10" stroke-width="4"/>
+    <path class="icut-badge" d="M77,24 L81,28 L88,20" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text class="icut-text" x="160" y="255" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="52" font-weight="700" letter-spacing="2" text-anchor="middle">ICTU-CRIS</text>
+</svg>
