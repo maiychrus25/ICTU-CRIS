@@ -175,4 +175,29 @@
   figure {
     break-inside: avoid;
   }
+
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  .cv-document table,
+  .cv-document .pub,
+  .data-notice-footer {
+    break-inside: avoid;
+  }
 }
+
+.cv-document {
+  font-family: "Times New Roman", Georgia, serif;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.cv-document h1 { margin: 0 0 6px; font-size: 20px; font-weight: 700; }
+.cv-document h2 { margin-top: 24px; border-bottom: 1px solid #999; padding-bottom: 2px; font-size: 15px; font-weight: 700; }
+.cv-document .meta { margin: 2px 0; }
+.cv-document table { margin: 8px 0 16px; border-collapse: collapse; }
+.cv-document td, .cv-document th { border: 1px solid #999; padding: 4px 8px; text-align: left; font-size: 12px; }
+.cv-document .pub { margin: 6px 0 6px 1.2em; text-indent: -1.2em; }
+.cv-document a { color: #1d4ed8; text-decoration: underline; }

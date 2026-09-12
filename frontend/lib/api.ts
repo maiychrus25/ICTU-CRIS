@@ -14,7 +14,7 @@ import type {
   DeclarationDetail, DeclarationEvidenceIn, DeclarationList, DeclarationRow, DeclarationStateIn,
   AcceptMentorResult, DecideAuthorsIn, DecideDupIn, DecideResult, DupGroupDetail, DupGroupList, EvidenceFileOut, EvidenceOut, HealthOut, MentorFilters, MentorList, PeriodOpenIn, PeriodOut, PeriodProgress,
   FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, MyDeclarationCreateIn, MyWorkList, PeriodFinalizeOut, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
-  CoauthorsOut, DismissAnomalyIn, ExpertIn, ExpertOut, MapColor, MapOut, PublicTopicCheckIn,
+  CoauthorsOut, DismissAnomalyIn, DismissAnomalyOut, ExpertIn, ExpertOut, MapColor, MapOut, PublicTopicCheckIn,
   PublicTopicCheckOut, QualityAnomalyFilters, QualityAnomalyList, RecentOut, TrendsOut, UserOut,
   WorkDetail, WorkFacets, WorkFilters, WorkList,
   ScreenCohortSummary, ScreenFilters, ScreenList,
@@ -40,6 +40,7 @@ const mockMyWorks = structuredClone(myWorksFixture);
 const mockMyDeclarationIds = new Set(myDeclarationsFixture.map((row) => row.id));
 const mockAuthorQueue = structuredClone(authorQueueFixture);
 const mockMentors = structuredClone(mentorFixture);
+const mockAnomalies = structuredClone(anomaliesFixture);
 
 function queryString(params: Record<string, string | number | undefined>) {
   const query = new URLSearchParams();
@@ -175,10 +176,24 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     data = { ok: true, link_id: linkId, person_id: personId, state: "ChoXacNhan" } satisfies AcceptMentorResult;
   }
   else if (url.pathname === "/api/quality") data = qualityFixture;
-  else if (url.pathname === "/api/quality/anomalies") data = { ...anomaliesFixture, page: { ...anomaliesFixture.page, page: Number(url.searchParams.get("page") ?? 1) } };
-  else if (/^\/api\/quality\/anomalies\/\d+\/dismiss$/.test(url.pathname)) data = { ok: true };
+  else if (url.pathname === "/api/quality/anomalies") {
+    const kind = url.searchParams.get("kind");
+    const severity = url.searchParams.get("severity");
+    const state = url.searchParams.get("state") ?? "open";
+    const items = mockAnomalies.items.filter((item) => (!kind || item.kind === kind) && (!severity || item.severity === severity) && (!state || item.state === state));
+    data = { items, summary: mockAnomalies.summary, page: { ...mockAnomalies.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
+  }
+  else if (/^\/api\/quality\/anomalies\/\d+\/dismiss$/.test(url.pathname)) {
+    const body = JSON.parse(String(init?.body)) as DismissAnomalyIn;
+    if (!body.reason.trim()) throw new ApiError(400, "cần ghi lý do bỏ qua");
+    const anomaly = mockAnomalies.items.find((item) => item.id === Number(url.pathname.split("/").at(-2)));
+    if (!anomaly) throw new ApiError(404, "Không tìm thấy cảnh báo");
+    anomaly.state = "dismissed";
+    mockAnomalies.summary[anomaly.kind].open = Math.max(0, mockAnomalies.summary[anomaly.kind].open - 1);
+    data = { ok: true, id: anomaly.id, state: "dismissed" } satisfies DismissAnomalyOut;
+  }
   else if (url.pathname === "/api/recent") data = recentFixture;
-  else if (/^\/api\/persons\/\d+\/cv$/.test(url.pathname)) data = "<!doctype html><html lang=\"vi\"><body><h1>Lý lịch khoa học</h1></body></html>";
+  else if (/^\/api\/persons\/\d+\/cv$/.test(url.pathname)) data = `<!doctype html><html lang="vi"><body><h1>${personFixture.display_name}</h1><h2>Công trình</h2>${citationsFixture.apa.split("\n").map((citation) => `<div class="pub">${citation}</div>`).join("")}<footer>Sinh từ ICTU-CRIS</footer></body></html>`;
   else if (url.pathname === "/api/feed.xml") data = "<?xml version=\"1.0\"?><rss version=\"2.0\"><channel><title>ICTU-CRIS</title></channel></rss>";
   else if (url.pathname === "/api/about") data = aboutFixture;
   else if (url.pathname === "/api/stats") data = statsFixture;
@@ -417,6 +432,17 @@ export async function apiTextRequest(path: string, init?: RequestInit): Promise<
   return response.text();
 }
 
+export async function apiHtmlRequest(path: string): Promise<string> {
+  if (MOCK) return mockRequest<string>(path);
+  const response = await fetch(`${API_BASE}${path}`, { credentials: "include" });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new ApiError(response.status, typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail ?? response.statusText));
+  }
+  if (!response.headers.get("content-type")?.toLowerCase().startsWith("text/html")) throw new ApiError(502, "API lý lịch khoa học không trả về HTML hợp lệ.");
+  return response.text();
+}
+
 export async function apiUpload<T>(path: string, body: FormData): Promise<T> {
   if (MOCK) return mockRequest<T>(path, { method: "POST", body });
   const response = await fetch(`${API_BASE}${path}`, { method: "POST", body, credentials: "include" });
@@ -460,10 +486,10 @@ export const api = {
   getMentors: (filters: MentorFilters = {}) => apiRequest<MentorList>(`/api/ai/mentors${queryString({ unit: filters.unit, min_votes: filters.min_votes, page: filters.page })}`),
   acceptMentor: (workId: number, personId: number) => apiRequest<AcceptMentorResult>(`/api/ai/mentors/${workId}/accept`, { method: "POST", body: JSON.stringify({ person_id: personId }) }),
   getQuality: () => apiRequest<QualityOut>("/api/quality"),
-  getQualityAnomalies: (filters: QualityAnomalyFilters = {}) => apiRequest<QualityAnomalyList>(`/api/quality/anomalies${queryString({ kind: filters.kind, page: filters.page })}`),
-  dismissQualityAnomaly: (id: number, input: DismissAnomalyIn) => apiRequest<{ ok: boolean }>(`/api/quality/anomalies/${id}/dismiss`, { method: "POST", body: JSON.stringify(input) }),
+  getQualityAnomalies: (filters: QualityAnomalyFilters = {}) => apiRequest<QualityAnomalyList>(`/api/quality/anomalies${queryString({ kind: filters.kind, severity: filters.severity, state: filters.state, page: filters.page })}`),
+  dismissQualityAnomaly: (id: number, input: DismissAnomalyIn) => apiRequest<DismissAnomalyOut>(`/api/quality/anomalies/${id}/dismiss`, { method: "POST", body: JSON.stringify(input) }),
   getRecent: (limit = 20) => apiRequest<RecentOut>(`/api/recent${queryString({ limit })}`),
-  getPersonCv: (id: number) => apiTextRequest(`/api/persons/${id}/cv?format=html`),
+  getPersonCv: (id: number) => apiHtmlRequest(`/api/persons/${id}/cv?format=html`),
   getFeed: () => apiTextRequest("/api/feed.xml"),
   getAbout: () => apiRequest<AboutOut>("/api/about"),
   getStats: (years = 5) => apiRequest<StatsOut>(`/api/stats${queryString({ years })}`),

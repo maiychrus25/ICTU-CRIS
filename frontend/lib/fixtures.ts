@@ -100,7 +100,7 @@ export const personFixture: PersonProfile = {
   orcid: "0000-0002-1825-0097", by_type: { bai_bao: 8, do_an: 14, hoc_lieu: 2 },
   by_year: { "2022": 3, "2023": 5, "2024": 7, "2025": 9 },
   publications: workItems.slice(0, 6).map((work) => ({ work_id: work.id, title: work.title, doc_type: work.doc_type, year: work.year, doi: work.doi, link_state: "DaXacNhan", confidence: "cao" })),
-  pending_count: 2, rank: null, scholar_url: "https://scholar.google.com/", citation_stats: null,
+  pending_count: 2, rank: "Phó giáo sư", scholar_url: "https://scholar.google.com/", citation_stats: null,
   last_sync: { id: 18, source: "Kho dữ liệu ICTU", scope: "Hồ sơ giảng viên", status: "success", started_at: "2026-09-10T01:00:00Z", finished_at: "2026-09-10T01:04:12Z" },
 };
 
@@ -214,6 +214,7 @@ export const qualityFixture: QualityOut = {
     { key: "pending_authors", label: "Liên kết tác giả chờ xác nhận", value: 6, queue_url: "/doi-soat/tac-gia" },
     { key: "duplicate_groups", label: "Nhóm nghi trùng", value: 2, queue_url: "/doi-soat/trung-lap" },
     { key: "missing_doi", label: "Công trình chưa có DOI", value: 8, queue_url: null },
+    { key: "anomalies_open", label: "Cảnh báo bất thường đang mở", value: 2, queue_url: "/chat-luong-du-lieu/canh-bao" },
   ],
   works_by_type: { bai_bao: 3, do_an: 4, luan_van: 2, luan_an: 1, hoc_lieu: 2 },
   works_with_link_pct: 83.3,
@@ -414,10 +415,12 @@ export const recentFixture: RecentOut = {
 
 export const anomaliesFixture: QualityAnomalyList = {
   items: [
-    { id: 801, kind: "doi_invalid", kind_label: "DOI không hợp lệ", work_id: 2, title: workItems[1].title, detail: "DOI không đúng định dạng chuẩn.", severity: "high", state: "open" },
-    { id: 802, kind: "missing_abstract_article", kind_label: "Bài báo thiếu tóm tắt", work_id: 6, title: workItems[5].title, detail: { field: "abstract" }, severity: "medium", state: "open" },
+    { id: 801, kind: "doi_invalid", kind_label: "DOI sai định dạng 10.xxxx/…", work_id: 2, title: workItems[1].title, person_id: null, display_name: null, detail: { doi: "10.1x/sai" }, severity: "cao", state: "open", created_at: "2026-09-11T19:55:20Z" },
+    { id: 802, kind: "thesis_title_equals_article", kind_label: "Luận văn/đồ án trùng tiêu đề chuẩn hoá với một bài báo", work_id: 6, title: workItems[5].title, person_id: null, display_name: null, detail: { article_id: 123 }, severity: "vua", state: "open", created_at: "2026-09-11T19:55:20Z" },
+    { id: 803, kind: "missing_abstract_article", kind_label: "Bài báo không có tóm tắt", work_id: 7, title: workItems[6].title, person_id: null, display_name: null, detail: {}, severity: "thap", state: "dismissed", created_at: "2026-09-10T19:55:20Z" },
   ],
   page: { page: 1, per_page: 50, total: 2 },
+  summary: { scopus_no_doi: { open: 0 }, year_out_of_range: { open: 0 }, thesis_title_equals_article: { open: 1 }, orcid_duplicate: { open: 0 }, doi_invalid: { open: 1 }, missing_abstract_article: { open: 0 } },
 };
 
 export const healthFixture: HealthOut = { status: "ok" };
