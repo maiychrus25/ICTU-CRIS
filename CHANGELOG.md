@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-12
+
+### Fixed (giao diện)
+
+- Footer nguồn dữ liệu cố định ở đáy khung nhìn trên mọi bố cục (`frontend/components/data-notice-footer.tsx`).
+
 ### Added
 
 - Bản báo cáo kỳ đóng băng, có phiên bản (lát cắt L1, điểm BA "P"): `POST
@@ -462,7 +468,8 @@ sinh trong 11 phút trên CPU; đối chiếu một đề tài 3,25 s. Chi tiế
   hỗ trợ `DISTINCT` trong window function nên mọi lần mở hàng đợi đều lỗi 500.
   Thay bằng subquery gộp rồi nối lại theo tên thô (`cris/web/views_queue.py`).
 
-[Unreleased]: https://github.com/maiychrus25/ICTU-CRIS/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/maiychrus25/ICTU-CRIS/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/maiychrus25/ICTU-CRIS/releases/tag/v0.6.0
 [0.5.0]: https://github.com/maiychrus25/ICTU-CRIS/releases/tag/v0.5.0
 [0.4.0]: https://github.com/maiychrus25/ICTU-CRIS/releases/tag/v0.4.0
 [0.3.0]: https://github.com/maiychrus25/ICTU-CRIS/releases/tag/v0.3.0
