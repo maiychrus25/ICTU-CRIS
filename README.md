@@ -344,6 +344,7 @@ trúc máy chủ, secrets GitHub cần tạo, quy trình phát hành và quay lu
 
 | | Tài liệu | Nội dung |
 |---|---|---|
+| 📖 | [docs/huong-dan-su-dung.md](docs/huong-dan-su-dung.md) | Hướng dẫn sử dụng chi tiết cho người dùng cuối: mọi tính năng theo menu, quy trình xuyên suốt, AI, FAQ, thuật ngữ |
 | 🎯 | [docs/BRD.md](docs/BRD.md) | Yêu cầu nghiệp vụ: 6 vấn đề đo được, YN-01..10, ràng buộc cuộc thi |
 | 📐 | [docs/SRS.md](docs/SRS.md) | Đặc tả phần mềm: FR theo giai đoạn, tích hợp AI, ma trận truy vết YN → FR → UC → US |
 | 🤖 | [docs/ai.md](docs/ai.md) | AI làm gì và không làm gì, ba nhà cung cấp, mô hình, thuật toán, giới hạn |
