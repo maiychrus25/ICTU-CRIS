@@ -4,22 +4,24 @@
 "use client";
 
 import {
-  BarChart3, BookOpenCheck, CalendarRange, CircleHelp, CopyCheck, FilePenLine, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
-  GraduationCap, Map, RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRound, UserRoundCheck,
+  AlertTriangle, BarChart3, BookOpenCheck, Building2, CalendarRange, CircleHelp, CopyCheck, FilePenLine, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
+  GraduationCap, Map, RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRound, UserRoundCheck, X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { DataNoticeFooter } from "@/components/data-notice-footer";
+import { NotificationCenter } from "@/components/notification-center";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ApiError } from "@/lib/api";
 import { userRoleLabels } from "@/lib/labels";
-import { useLogout, useMe } from "@/lib/queries";
+import { useHealth, useLogout, useMe } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -41,6 +43,9 @@ const navigation = [
 
 const routeTitles = [
   ["/ke-khai-cua-toi", "Kê khai của tôi"],
+  ["/thong-bao", "Thông báo"],
+  ["/bao-cao", "Báo cáo đóng băng"],
+  ["/khoa", "Góc nhìn khoa"],
   ["/ke-khai", "Chi tiết hồ sơ kê khai"],
   ["/dong-bo/chi-tiet", "Chi tiết lượt đồng bộ"],
   ["/chu-de/chi-tiet", "Chi tiết chủ đề"],
@@ -81,9 +86,15 @@ function Navigation({ compact = false }: { compact?: boolean }) {
   const pathname = usePathname();
   const me = useMe();
   const showMyDeclarations = Boolean(me.data?.user && (me.data.user.roles.includes("lecturer") || me.data.user.person_id !== null));
+  const user = me.data?.user;
+  const canChooseUnit = user?.roles.some((role) => ["rd_officer", "school_leader"].includes(role));
+  const hasOwnUnit = user?.unit_id && user.roles.some((role) => ["faculty_officer", "faculty_head", "lecturer"].includes(role));
+  const unitNavigation = canChooseUnit ? { href: "/khoa/", label: "Theo khoa", icon: Building2 }
+    : hasOwnUnit ? { href: `/khoa/?id=${user.unit_id}`, label: "Khoa của tôi", icon: Building2 } : null;
+  const items = unitNavigation ? [...navigation.slice(0, 2), unitNavigation, ...navigation.slice(2)] : navigation;
   return (
     <nav aria-label="Điều hướng chính" className="space-y-1 px-2 py-3">
-      {navigation.filter((item) => !item.lecturerOnly || showMyDeclarations).map(({ href, label, icon: Icon }) => {
+      {items.filter((item) => !("lecturerOnly" in item) || !item.lecturerOnly || showMyDeclarations).map(({ href, label, icon: Icon }) => {
         const active = pathname.startsWith(href.replace(/\/$/, ""));
         return (
           <Link key={href} href={href} title={compact ? label : undefined} aria-current={active ? "page" : undefined}
@@ -95,6 +106,20 @@ function Navigation({ compact = false }: { compact?: boolean }) {
       })}
     </nav>
   );
+}
+
+function SystemHealthBanner() {
+  const me = useMe();
+  const isOfficer = Boolean(me.data?.user?.roles.includes("rd_officer"));
+  const health = useHealth(isOfficer);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDismissed(sessionStorage.getItem("cris:model-missing-dismissed") === "1"), 0);
+    return () => window.clearTimeout(timeout);
+  }, []);
+  if (!isOfficer || health.data?.model !== "missing" || dismissed) return null;
+  return <div role="status" className="flex items-center justify-center gap-2 border-b border-status-warning/30 bg-status-warning/10 px-4 py-2 text-xs text-status-warning"><AlertTriangle className="size-4 shrink-0" /><span>Mô hình AI chưa nạp — chạy <code className="rounded bg-background/70 px-1 py-0.5 font-mono">python -m cris ai download</code></span><Button type="button" variant="ghost" size="icon-sm" className="ml-1" aria-label="Đóng cảnh báo mô hình AI" onClick={() => { sessionStorage.setItem("cris:model-missing-dismissed", "1"); setDismissed(true); }}><X /></Button></div>;
 }
 
 function ThemeToggle() {
@@ -167,8 +192,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input name="q" aria-label="Tìm nhanh công trình" placeholder="Tìm nhanh công trình…" className="pl-8" />
           </form>
+          <NotificationCenter />
           <ThemeToggle />
         </header>
+        <SystemHealthBanner />
         <main className="mx-auto w-full max-w-[1440px] flex-1 p-4 md:p-6">{children}</main>
         <DataNoticeFooter />
       </div>

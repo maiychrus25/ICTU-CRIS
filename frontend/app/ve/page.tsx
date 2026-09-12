@@ -3,14 +3,14 @@
 
 "use client";
 
-import { Bot, CheckCircle2, Database, ExternalLink, GitBranch, ShieldAlert } from "lucide-react";
+import { Activity, Bot, CheckCircle2, Database, ExternalLink, GitBranch, ShieldAlert } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { docTypeLabels } from "@/lib/labels";
-import { useAbout, useMe, useMentors, useScreenCohorts } from "@/lib/queries";
+import { useAbout, useHealth, useMe, useMentors, useScreenCohorts } from "@/lib/queries";
 
 function Metric({ label, value }: { label: string; value: React.ReactNode }) {
   return <div className="border-b py-3 last:border-0"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1 font-medium tabular-nums">{value}</dd></div>;
@@ -24,11 +24,12 @@ export default function AboutPage() {
   const query = useAbout();
   const cohorts = useScreenCohorts();
   const me = useMe();
+  const health = useHealth();
   const suggestions = query.data?.ai.suggestions;
   const reportedMentors = query.data?.ai.mentor_suggestions ?? (suggestions && typeof suggestions === "object" ? suggestions.mentor : undefined);
   const mentors = useMentors({ page: 1 }, query.isSuccess && reportedMentors === undefined);
-  if (query.isLoading || cohorts.isLoading || mentors.isLoading) return <><PageHeader title="Về hệ thống" /><LoadingView /></>;
-  if (query.isError || cohorts.isError || mentors.isError) return <><PageHeader title="Về hệ thống" /><ErrorView error={query.error ?? cohorts.error ?? mentors.error} retry={() => { query.refetch(); cohorts.refetch(); mentors.refetch(); }} /></>;
+  if (query.isLoading || cohorts.isLoading || mentors.isLoading || health.isLoading) return <><PageHeader title="Về hệ thống" /><LoadingView /></>;
+  if (query.isError || cohorts.isError || mentors.isError || health.isError) return <><PageHeader title="Về hệ thống" /><ErrorView error={query.error ?? cohorts.error ?? mentors.error ?? health.error} retry={() => { query.refetch(); cohorts.refetch(); mentors.refetch(); health.refetch(); }} /></>;
   if (!query.data) return <><PageHeader title="Về hệ thống" /><EmptyView description="Chưa có thông tin hệ thống. Hãy thử lại sau lần đồng bộ tiếp theo." /></>;
   const about = query.data;
   const screenedCohorts = cohorts.data?.length ?? 0;
@@ -40,6 +41,7 @@ export default function AboutPage() {
       {me.data && !me.data.auth_required && <Alert className="mb-6 border-status-warning/30 bg-status-warning/10 text-status-warning"><ShieldAlert /><AlertTitle>Chưa bật đăng nhập</AlertTitle><AlertDescription>Đặt mật khẩu bằng <code className="rounded bg-background/70 px-1 py-0.5 font-mono text-xs">python -m cris user set-password</code>.</AlertDescription></Alert>}
       <div className="grid gap-8 lg:grid-cols-[1fr_1.15fr]">
         <div className="space-y-7">
+          <section><div className="mb-3 flex items-center gap-2"><Activity className="size-4 text-primary" /><h2 className="text-base font-semibold">Tình trạng</h2></div><dl className="rounded-lg border bg-card px-4"><Metric label="Cơ sở dữ liệu" value={health.data?.db === "ok" ? "Hoạt động bình thường" : health.data?.db === "error" ? "Không kết nối được" : "Chưa có dữ liệu"} /><Metric label="Mô hình AI" value={health.data?.model === "loaded" ? "Đã nạp" : health.data?.model === "missing" ? "Chưa nạp" : health.data?.model === "disabled" ? "Đã tắt" : "Chưa có dữ liệu"} /><Metric label="Tuổi dữ liệu đồng bộ" value={health.data?.last_sync_age_h === null || health.data?.last_sync_age_h === undefined ? "Chưa có dữ liệu" : `cách đây ${health.data.last_sync_age_h.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} giờ`} /><Metric label="Phiên bản" value={health.data?.version ?? "Chưa có dữ liệu"} /></dl></section>
           <section><div className="mb-3 flex items-center gap-2"><Database className="size-4 text-primary" /><h2 className="text-base font-semibold">Nguồn và đồng bộ</h2></div><dl className="rounded-lg border bg-card px-4"><Metric label="Tổng số công trình" value={about.works.toLocaleString("vi-VN")} /><Metric label="Nguồn dữ liệu" value={<a href={about.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">Kho dữ liệu ICTU <ExternalLink className="size-3" /></a>} /><Metric label="Mã nguồn" value={<a href={about.repo_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">Kho ICTU-CRIS <GitBranch className="size-3" /></a>} /><Metric label="Lần đồng bộ gần nhất" value={about.last_sync?.finished_at ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(about.last_sync.finished_at)) : "Chưa có"} /></dl></section>
           <section><h2 className="mb-3 text-base font-semibold">Công trình theo loại</h2><div className="divide-y rounded-lg border bg-card px-4">{Object.entries(about.works_by_type).map(([type, count]) => <div key={type} className="flex items-center justify-between py-3"><span>{docTypeLabels[type] ?? type}</span><span className="font-semibold tabular-nums">{count.toLocaleString("vi-VN")}</span></div>)}</div></section>
         </div>

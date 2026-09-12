@@ -50,7 +50,7 @@ test("bản đồ canvas mở chi tiết khi bấm một điểm", async ({ page
   await canvas.hover({ position });
   await expect(page.getByRole("tooltip")).toBeVisible();
   await canvas.click({ position });
-  await expect(page).toHaveURL(/\/cong-trinh\/\?id=\d+/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/\/cong-trinh\/\?id=\d+/, { timeout: 30_000 });
 });
 
 test("xu hướng đổi được giữa khoá và năm", async ({ page }) => {

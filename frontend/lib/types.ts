@@ -154,7 +154,7 @@ export interface PeriodUnitProgress {
 export interface PeriodProgress {
   period_id: number; state: string; due_at: string | null; days_remaining: number | null; units: PeriodUnitProgress[];
 }
-export interface PeriodFinalizeOut { finalized: number; skipped: { id: number; state: string }[] }
+export interface PeriodFinalizeOut { finalized: number; skipped: { id: number; state: string }[]; report_id: number }
 export type DeclarationState = "Nhap" | "ChoBoSung" | "ChoKhoaDuyet" | "KhoaDaDuyet" | "ChoPhongKiemTra" | "DatYeuCau" | "DaChot" | "Rut";
 export type DeclarationTransitionState = Exclude<DeclarationState, "DaChot">;
 export type EvidenceKind = "link" | "file" | "note";
@@ -201,7 +201,46 @@ export interface SyncRunDetail extends SyncRunSummary {
   expected_count: Record<string, unknown> | null; fetched_count: Record<string, unknown> | null;
   triggered_by: number | null; records: SourceRecordRow[];
 }
-export interface HealthOut { status: "ok" }
+export interface HealthOut {
+  status: "ok" | "error"; db?: "ok" | "error"; model?: "loaded" | "missing" | "disabled";
+  last_sync_age_h?: number | null; version?: string;
+}
+export interface NotificationRow {
+  id: number; kind: string; title: string; body: string; link: string | null; created_at: string; read_at: string | null;
+}
+export interface NotificationList { items: NotificationRow[]; unread: number; page?: PageInfo }
+export interface ReportTotals { declared: number; accepted: number; by_state: Record<string, number> }
+export interface ReportUnitSummary {
+  unit_id: number; code: string; name: string; by_state: Record<string, number>; declared: number; accepted: number;
+}
+export interface ReportSummary { units: ReportUnitSummary[]; by_doc_type: Record<string, number>; totals: ReportTotals }
+export interface PeriodReportListItem {
+  id: number; version: number; generated_at: string; generated_by_name: string | null; note: string | null; totals: ReportTotals;
+}
+export interface ReportUnitRef { id: number; code: string; name: string }
+export interface ReportWork {
+  id: number; title: string | null; doc_type: string; year: number | null; doi: string | null;
+  indexes: string[]; quartile: string | null; journal: string | null;
+}
+export interface ReportEvent { state: string; at: string }
+export interface ReportItem {
+  declaration_id: number; state: string; unit: ReportUnitRef; work: ReportWork;
+  authors: string[]; evidence_count: number; events: ReportEvent[];
+}
+export interface ReportCreateOut {
+  id: number; period_id: number; version: number; generated_at: string; generated_by: number | null;
+  note: string | null; summary: ReportSummary; sha256: string;
+}
+export interface PeriodReport extends ReportCreateOut { items: ReportItem[] }
+export interface CreateReportIn { note?: string | null }
+export interface UnitOverviewPerson { person_id: number; display_name: string; works: number }
+export interface LecturerWithoutWorks { person_id: number; display_name: string }
+export interface UnitOverview {
+  unit: { id: number; code: string; name: string }; works_total: number; linked_works?: number;
+  by_doc_type: Record<string, number>; by_year: YearTypeRow[]; top_persons: UnitOverviewPerson[];
+  pending_links: number; declarations_by_state: Record<string, number>; lecturers_without_works: number;
+  lecturers_without_works_items?: LecturerWithoutWorks[];
+}
 export interface FacetOption { value: string; label: string; n: number }
 export interface WorkFacets {
   pub_types: FacetOption[]; quartiles: FacetOption[]; cohorts: FacetOption[];

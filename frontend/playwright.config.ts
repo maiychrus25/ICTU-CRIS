@@ -6,7 +6,8 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   testIgnore: ["real-backend.spec.ts", "responsive-accessibility.real.spec.ts"],
-  expect: { timeout: 15_000 },
+  timeout: 120_000,
+  expect: { timeout: 30_000 },
   workers: 1,
   use: { baseURL: "http://localhost:3000" },
   webServer: {

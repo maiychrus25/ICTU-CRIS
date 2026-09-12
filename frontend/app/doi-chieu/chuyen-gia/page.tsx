@@ -71,7 +71,10 @@ function ExpertsContent() {
   // Chỉ bật nút sau khi hydrate: bấm trước đó sẽ submit form theo kiểu HTML (tải lại trang với "?"),
   // mất mutation — thấy trên CI chậm.
   const [ready, setReady] = useState(false);
-  useEffect(() => setReady(true), []);
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setReady(true), 0);
+    return () => window.clearTimeout(timeout);
+  }, []);
   const output = created ?? saved.data;
 
   async function submit(event: React.FormEvent) {

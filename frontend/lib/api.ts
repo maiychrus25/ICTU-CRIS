@@ -4,8 +4,8 @@
 import {
   aboutFixture, auditFixture, authorQueueFixture, compareFixture, declarationDetailsFixture, declarationsFixture,
   anomaliesFixture, citationsFixture, coauthorsFixture, duplicateDetailFixture, duplicateGroupsFixture, expertsFixture,
-  facetsFixture, healthFixture, mapFixture, mentorFixture, periodProgressFixture, periodsFixture, personFixture,
-  publicTopicFixture, qualityFixture, recentFixture, statsFixture, trendsFixture,
+  facetsFixture, healthFixture, mapFixture, mentorFixture, notificationFixture, periodProgressFixture, periodReportsFixture, periodsFixture, personFixture,
+  publicTopicFixture, qualityFixture, recentFixture, reportFixture, statsFixture, trendsFixture, unitOverviewFixture,
   lecturerMeFixture, meFixture, myDeclarationsFixture, myWorksFixture, personsFixture, screenCohortsFixture, screenFixture, syncRunDetailsFixture, syncRunsFixture,
   topicDetailsFixture, topicsFixture, workDetailsFixture, workItems, worksFixture,
 } from "@/lib/fixtures";
@@ -13,7 +13,7 @@ import type {
   AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DeclarationCreateIn,
   DeclarationDetail, DeclarationEvidenceIn, DeclarationList, DeclarationRow, DeclarationStateIn,
   AcceptMentorResult, DecideAuthorsIn, DecideDupIn, DecideResult, DupGroupDetail, DupGroupList, EvidenceFileOut, EvidenceOut, HealthOut, MentorFilters, MentorList, PeriodOpenIn, PeriodOut, PeriodProgress,
-  FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, MyDeclarationCreateIn, MyWorkList, PeriodFinalizeOut, PersonProfile, PersonSearchRow, QualityOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail,
+  CreateReportIn, FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, MyDeclarationCreateIn, MyWorkList, NotificationList, PeriodFinalizeOut, PeriodReport, PeriodReportListItem, PersonProfile, PersonSearchRow, QualityOut, ReportCreateOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail, UnitOverview,
   CoauthorsOut, DismissAnomalyIn, DismissAnomalyOut, ExpertIn, ExpertOut, MapColor, MapOut, PublicTopicCheckIn,
   PublicTopicCheckOut, QualityAnomalyFilters, QualityAnomalyList, RecentOut, TrendsOut, UserOut,
   WorkDetail, WorkFacets, WorkFilters, WorkList,
@@ -41,6 +41,20 @@ const mockMyDeclarationIds = new Set(myDeclarationsFixture.map((row) => row.id))
 const mockAuthorQueue = structuredClone(authorQueueFixture);
 const mockMentors = structuredClone(mentorFixture);
 const mockAnomalies = structuredClone(anomaliesFixture);
+const mockNotifications = structuredClone(notificationFixture);
+const mockPeriodReports = structuredClone(periodReportsFixture);
+const mockReportDetails: Record<number, PeriodReport> = { [reportFixture.id]: structuredClone(reportFixture) };
+
+function createMockReport(periodId: number, note: string | null) {
+  const reports = mockPeriodReports[periodId] ??= [];
+  const version = Math.max(0, ...reports.map((report) => report.version)) + 1;
+  const id = Math.max(900, ...Object.keys(mockReportDetails).map(Number)) + 1;
+  const report = structuredClone(reportFixture);
+  Object.assign(report, { id, period_id: periodId, version, generated_at: new Date().toISOString(), note, sha256: `${String(id).padStart(8, "0")}${reportFixture.sha256.slice(8)}` });
+  mockReportDetails[id] = report;
+  reports.unshift({ id, version, generated_at: report.generated_at, generated_by_name: mockUser?.display_name ?? null, note, totals: report.summary.totals });
+  return report;
+}
 
 function queryString(params: Record<string, string | number | undefined>) {
   const query = new URLSearchParams();
@@ -197,6 +211,23 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   else if (url.pathname === "/api/feed.xml") data = "<?xml version=\"1.0\"?><rss version=\"2.0\"><channel><title>ICTU-CRIS</title></channel></rss>";
   else if (url.pathname === "/api/about") data = aboutFixture;
   else if (url.pathname === "/api/stats") data = statsFixture;
+  else if (url.pathname === "/api/notifications" && !init?.method) {
+    const unreadOnly = url.searchParams.get("unread") === "1";
+    const items = mockNotifications.filter((item) => !unreadOnly || item.read_at === null);
+    data = { items, unread: mockNotifications.filter((item) => item.read_at === null).length, page: { page: Number(url.searchParams.get("page") ?? 1), per_page: 50, total: items.length } } satisfies NotificationList;
+  }
+  else if (url.pathname === "/api/notifications/read-all") {
+    const now = new Date().toISOString();
+    mockNotifications.forEach((item) => { if (item.read_at === null) item.read_at = now; });
+    data = { ok: true };
+  }
+  else if (/^\/api\/notifications\/\d+\/read$/.test(url.pathname)) {
+    const notificationId = Number(url.pathname.split("/").at(-2));
+    const notification = mockNotifications.find((item) => item.id === notificationId);
+    if (!notification) throw new ApiError(404, "Không tìm thấy thông báo.");
+    notification.read_at ??= new Date().toISOString();
+    data = { ok: true };
+  }
   else if (url.pathname === "/api/audit") {
     const entity = url.searchParams.get("entity");
     const entityId = url.searchParams.get("entity_id");
@@ -210,6 +241,16 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     mockPeriods.unshift(period);
     data = period;
   }
+  else if (/^\/api\/periods\/\d+\/reports$/.test(url.pathname) && !init?.method) {
+    data = mockPeriodReports[Number(url.pathname.split("/").at(-2))] ?? [];
+  }
+  else if (/^\/api\/periods\/\d+\/reports$/.test(url.pathname) && init?.method === "POST") {
+    const periodId = Number(url.pathname.split("/").at(-2));
+    const body = JSON.parse(String(init.body)) as CreateReportIn;
+    data = createMockReport(periodId, body.note?.trim() || null);
+  }
+  else if (/^\/api\/reports\/\d+$/.test(url.pathname)) data = mockReportDetails[id];
+  else if (/^\/api\/units\/\d+\/overview$/.test(url.pathname)) data = unitOverviewFixture[Number(url.pathname.split("/").at(-2))];
   else if (url.pathname === "/api/me/works") {
     if (mockUser?.person_id === null || mockUser?.person_id === undefined) throw new ApiError(409, "Tài khoản chưa gắn với hồ sơ giảng viên");
     data = { ...mockMyWorks, page: { ...mockMyWorks.page, page: Number(url.searchParams.get("page") ?? 1) } };
@@ -380,7 +421,8 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
         finalized += 1;
       } else skipped.push({ id: row.id, state: row.state });
     }
-    data = { finalized, skipped } satisfies PeriodFinalizeOut;
+    const report = createMockReport(periodId, "Tự động tạo khi chốt kỳ báo cáo.");
+    data = { finalized, skipped, report_id: report.id } satisfies PeriodFinalizeOut;
   }
   else if (/^\/api\/periods\/\d+\/(close|cancel)$/.test(url.pathname)) {
     const periodId = Number(url.pathname.split("/").at(-2));
@@ -493,6 +535,9 @@ export const api = {
   getFeed: () => apiTextRequest("/api/feed.xml"),
   getAbout: () => apiRequest<AboutOut>("/api/about"),
   getStats: (years = 5) => apiRequest<StatsOut>(`/api/stats${queryString({ years })}`),
+  getNotifications: (unread = false, page = 1) => apiRequest<NotificationList>(`/api/notifications${queryString({ unread: unread ? 1 : undefined, page })}`),
+  readNotification: (id: number) => apiRequest<{ ok: boolean }>(`/api/notifications/${id}/read`, { method: "POST" }),
+  readAllNotifications: () => apiRequest<{ ok: boolean }>("/api/notifications/read-all", { method: "POST" }),
   getAudit: (filters: AuditFilters = {}) => apiRequest<AuditList>(`/api/audit${queryString({ entity: filters.entity, entity_id: filters.entity_id, actor: filters.actor, page: filters.page })}`),
   getPeriods: () => apiRequest<PeriodOut[]>("/api/periods"),
   getMyWorks: (page = 1) => apiRequest<MyWorkList>(`/api/me/works${queryString({ page })}`),
@@ -509,7 +554,13 @@ export const api = {
   closePeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/close`, { method: "POST" }),
   cancelPeriod: (id: number) => apiRequest<PeriodOut>(`/api/periods/${id}/cancel`, { method: "POST" }),
   finalizePeriod: (id: number) => apiRequest<PeriodFinalizeOut>(`/api/periods/${id}/finalize`, { method: "POST" }),
+  getPeriodReports: (id: number) => apiRequest<PeriodReportListItem[]>(`/api/periods/${id}/reports`),
+  createPeriodReport: (id: number, input: CreateReportIn) => apiRequest<ReportCreateOut>(`/api/periods/${id}/reports`, { method: "POST", body: JSON.stringify(input) }),
+  getReport: (id: number) => apiRequest<PeriodReport>(`/api/reports/${id}`),
+  getUnitOverview: (id: number, periodId?: number) => apiRequest<UnitOverview>(`/api/units/${id}/overview${queryString({ period_id: periodId })}`),
   getSyncRuns: (page = 1) => apiRequest<SyncRunList>(`/api/sync/runs${queryString({ page })}`),
   getSyncRun: (id: number) => apiRequest<SyncRunDetail>(`/api/sync/runs/${id}`),
   getHealth: () => apiRequest<HealthOut>("/api/health"),
 };
+
+export const reportExportUrl = (id: number, format: "csv" | "xlsx") => `${API_BASE}/api/reports/${id}/export?format=${format}`;
