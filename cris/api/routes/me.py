@@ -9,7 +9,7 @@ sơ (`_assert_own_work`/`_assert_owner`) — `PermissionError` → 403. Tài kho
 chưa gắn `person_id` → 409 khi xem công trình của mình."""
 from fastapi import APIRouter, HTTPException, Query
 
-from cris import declare
+from cris import declare, notify
 from cris.api.deps import Conn, CurrentUser
 from cris.api.schemas import (
     DOC_TYPE_LABELS,
@@ -114,4 +114,7 @@ def add_my_declaration(conn: Conn, user: CurrentUser, body: MyDeclarationCreateI
         raise HTTPException(403, str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
+    # Giảng viên vừa tự kê khai (Nhap): báo cho faculty_officer cùng đơn vị để
+    # biết có hồ sơ mới cần đẩy đi (cùng nhóm "trả về" trong cris.notify).
+    notify.on_declaration_state(conn, did, None, "Nhap", user["id"])
     return _row_from_detail(declare.get_declaration(conn, did))

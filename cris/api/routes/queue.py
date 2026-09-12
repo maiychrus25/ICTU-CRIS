@@ -8,7 +8,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from cris import dedup, link
+from cris import dedup, link, notify
 from cris.api.deps import Conn, DeferredCommitConn, require_role
 from cris.api.schemas import (
     AuthorQueueList,
@@ -90,6 +90,22 @@ def decide_authors(conn: Conn, actor: RdOfficer, body: DecideAuthorsIn):
         conn.rollback()
         raise HTTPException(400, f"Không xử lý được liên kết #{failed}: {exc}. Không thay đổi nào được ghi.")
     conn.commit()
+    if body.decision in ("confirm", "reassign"):
+        for lid in done:
+            target_id = lid
+            if body.decision == "reassign":
+                # `decide_link` không trả về id của liên kết mới (bản ghi
+                # `lid` cũ đã chuyển DaBacBo) — tra lại theo (mention_id của
+                # liên kết cũ, person_id vừa gán) để báo đúng người được nối.
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT al2.id FROM author_link al1 JOIN author_link al2 "
+                        "ON al2.mention_id = al1.mention_id "
+                        "WHERE al1.id=%s AND al2.person_id=%s AND al2.state='DaXacNhan'",
+                        (lid, body.person_id))
+                    row = cur.fetchone()
+                target_id = row["id"] if row else lid
+            notify.on_link_confirmed(conn, target_id, actor)
     return DecideResult(ok=True, processed=done)
 
 

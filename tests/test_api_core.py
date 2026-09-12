@@ -49,7 +49,8 @@ def test_health_and_openapi(client):
               "/api/ai/map", "/api/ai/trends", "/api/ai/coauthors",
               "/api/works/{wid}/citation", "/api/works/facets", "/api/persons/{pid}/cv",
               "/api/recent", "/api/feed.xml",
-              "/api/periods/{pid}/reports", "/api/reports/{rid}", "/api/reports/{rid}/export"):
+              "/api/periods/{pid}/reports", "/api/reports/{rid}", "/api/reports/{rid}/export",
+              "/api/notifications", "/api/notifications/{nid}/read", "/api/notifications/read-all"):
         assert p in paths, p
 
 

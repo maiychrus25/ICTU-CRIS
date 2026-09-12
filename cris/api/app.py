@@ -22,6 +22,7 @@ from cris.api.routes import (
     feed,
     me,
     mentors,
+    notifications,
     periods,
     persons,
     quality,
@@ -52,7 +53,8 @@ def create_app(static_dir: str | os.PathLike | None = None) -> FastAPI:
               stats.router, export.router, audit.router, periods.router, screen.router,
               persons.router, sync.router, auth.router, declarations.router, me.router,
               mentors.router, ai_public.router, ai_map.router,
-              cite.router, recent.router, feed.router, anomalies.router, reports.router):
+              cite.router, recent.router, feed.router, anomalies.router, reports.router,
+              notifications.router):
         app.include_router(r)
 
     @app.get("/api/health", tags=["he-thong"])

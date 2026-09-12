@@ -15,7 +15,7 @@ from urllib.parse import quote
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
-from cris import declare
+from cris import declare, notify
 from cris.api.deps import Conn, CurrentUser, require_role
 from cris.api.schemas import (
     DOC_TYPE_LABELS,
@@ -112,6 +112,9 @@ def declaration_detail(conn: Conn, did: int):
 @router.post("/declarations/{did}/state", response_model=DeclarationRow)
 def set_declaration_state(conn: Conn, user: CurrentUser, did: int, body: DeclarationStateIn):
     _fetch_declaration(conn, did)
+    with conn.cursor() as cur:
+        cur.execute("SELECT state FROM declaration WHERE id=%s", (did,))
+        from_state = cur.fetchone()["state"]
     try:
         declare.set_state(conn, did, body.to_state, user["id"], reason=body.reason,
                           actor_roles=user["roles"], actor_unit_id=user["unit_id"])
@@ -119,6 +122,7 @@ def set_declaration_state(conn: Conn, user: CurrentUser, did: int, body: Declara
         raise HTTPException(403, str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
+    notify.on_declaration_state(conn, did, from_state, body.to_state, user["id"], reason=body.reason)
     return _row_from_detail(declare.get_declaration(conn, did))
 
 

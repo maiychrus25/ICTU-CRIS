@@ -8,7 +8,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from cris import declare
+from cris import declare, notify
 from cris import period as period_mod
 from cris.api.deps import Conn, require_role
 from cris.api.schemas import (
@@ -60,6 +60,7 @@ def open_period(conn: Conn, actor: RdOfficer, body: PeriodOpenIn):
                                      criteria=body.criteria, due_at=body.due_at, actor_id=actor)
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
+    notify.on_period_state(conn, pid, "DangMo", actor)
     return _out(_fetch(conn, pid))
 
 
@@ -69,6 +70,7 @@ def close_submissions(conn: Conn, actor: RdOfficer, pid: int):
         period_mod.close_submissions(conn, pid, actor)
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
+    notify.on_period_state(conn, pid, "DaDongNop", actor)
     return _out(_fetch(conn, pid))
 
 
@@ -78,6 +80,7 @@ def cancel_period(conn: Conn, actor: RdOfficer, pid: int):
         period_mod.cancel_period(conn, pid, actor)
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
+    notify.on_period_state(conn, pid, "Huy", actor)
     return _out(_fetch(conn, pid))
 
 
@@ -88,5 +91,6 @@ def finalize_period(conn: Conn, actor: RdOfficer, pid: int):
         result = declare.finalize_period(conn, pid, actor)
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
+    notify.on_period_state(conn, pid, "DaChot", actor, report_id=result["report_id"])
     return PeriodFinalizeOut(finalized=result["finalized"], skipped=result["skipped"],
                              report_id=result["report_id"])
