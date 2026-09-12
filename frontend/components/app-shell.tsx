@@ -175,7 +175,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mt-auto lg:hidden"><PublicPortalLink compact /><Account compact /></div><div className="mt-auto hidden lg:block"><PublicPortalLink /><Account /></div>
       </aside>
 
-      <div className="flex min-h-screen flex-col lg:pl-60">
+      <div className="data-footer-layout flex min-h-screen flex-col lg:pl-60">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:px-6">
           <Sheet>
             <SheetTrigger render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label="Mở điều hướng" />}><Menu /></SheetTrigger>
@@ -197,7 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <SystemHealthBanner />
         <main className="mx-auto w-full max-w-[1440px] flex-1 p-4 md:p-6">{children}</main>
-        <DataNoticeFooter />
+        <DataNoticeFooter className="lg:left-60" />
       </div>
     </div>
   );

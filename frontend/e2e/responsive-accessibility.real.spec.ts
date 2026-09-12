@@ -102,7 +102,7 @@ async function assertResponsiveAndAccessible(page: Page, url: string) {
       let contained = false;
       while (scrollParent) {
         const style = getComputedStyle(scrollParent);
-        if (scrollParent.scrollWidth > scrollParent.clientWidth && ["auto", "scroll"].includes(style.overflowX)) { contained = true; break; }
+        if (["hidden", "clip"].includes(style.overflowX) || (scrollParent.scrollWidth > scrollParent.clientWidth && ["auto", "scroll"].includes(style.overflowX))) { contained = true; break; }
         scrollParent = scrollParent.parentElement;
       }
       if (!contained) failures.add(`${element.tagName.toLowerCase()}: ${text.slice(0, 80)}`);
@@ -194,6 +194,8 @@ test("bảng, biểu đồ, thẻ số, form và dialog vừa viewport", async (
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   const tableBottom = await page.locator('[data-slot="table-container"]').last().evaluate((element) => element.getBoundingClientRect().bottom);
   expect(await batchActions.evaluate((element, bottom) => element.getBoundingClientRect().top >= Number(bottom) - 1, tableBottom), "Thanh hành động không che bảng ở cuối trang").toBe(true);
+  const footerTop = await page.locator(".data-notice-footer").evaluate((element) => element.getBoundingClientRect().top);
+  expect(await batchActions.evaluate((element, top) => element.getBoundingClientRect().bottom <= Number(top) + 1, footerTop), "Thanh hành động phải nằm trên footer dữ liệu").toBe(true);
   await page.getByRole("button", { name: "Chuyển cho người khác" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();

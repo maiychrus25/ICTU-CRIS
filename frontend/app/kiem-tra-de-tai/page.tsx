@@ -44,7 +44,7 @@ export default function PublicTopicPage() {
     catch { setResult(null); }
   }
 
-  return <div className="flex min-h-screen flex-col bg-background">
+  return <div className="data-footer-layout flex min-h-screen flex-col bg-background">
     <header className="border-b bg-card"><div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6"><Link href="/kiem-tra-de-tai/" className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground"><BookOpenCheck className="size-5" /></span><span><strong className="block text-sm">ICTU-CRIS</strong><span className="text-xs text-muted-foreground">Cổng kiểm tra đề tài</span></span></Link><Button render={<Link href="/tong-quan/" />} variant="outline">Vào hệ thống<ArrowRight /></Button></div></header>
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 md:px-6 md:py-14">
       <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Dành cho sinh viên ICTU</p><h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Kiểm tra đề tài trước khi đăng ký</h1><p className="mx-auto mt-3 max-w-2xl text-muted-foreground">Nhanh chóng xem đề tài gần với các khoá trước và giảng viên có chuyên môn liên quan. Không cần đăng nhập.</p></div>

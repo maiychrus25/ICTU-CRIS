@@ -51,6 +51,7 @@
 }
 
 :root {
+  --data-footer-h: 2.5rem;
   --background: oklch(0.975 0.009 255);
   --foreground: oklch(0.25 0.03 255);
   --card: oklch(0.995 0.004 255);
@@ -138,6 +139,10 @@
 }
 
 @layer utilities {
+  .data-footer-layout {
+    padding-bottom: var(--data-footer-h);
+  }
+
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
@@ -185,6 +190,15 @@
   .cv-document .pub,
   .data-notice-footer {
     break-inside: avoid;
+  }
+
+  .data-footer-layout {
+    padding-bottom: 0;
+  }
+
+  .data-notice-footer {
+    position: static !important;
+    height: auto !important;
   }
 }
 
