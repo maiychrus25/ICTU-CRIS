@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-09-13
+
 ### Added
 
 - Nhận diện sản phẩm và SEO: logo ICTU-CRIS ở thanh bên, trang đăng nhập, cổng công khai,
@@ -481,7 +483,8 @@ sinh trong 11 phút trên CPU; đối chiếu một đề tài 3,25 s. Chi tiế
   hỗ trợ `DISTINCT` trong window function nên mọi lần mở hàng đợi đều lỗi 500.
   Thay bằng subquery gộp rồi nối lại theo tên thô (`cris/web/views_queue.py`).
 
-[Unreleased]: https://github.com/maiychrus25/ICTU-CRIS/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/maiychrus25/ICTU-CRIS/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/maiychrus25/ICTU-CRIS/releases/tag/v0.6.1
 [0.6.0]: https://github.com/maiychrus25/ICTU-CRIS/releases/tag/v0.6.0
 [0.5.0]: https://github.com/maiychrus25/ICTU-CRIS/releases/tag/v0.5.0
 [0.4.0]: https://github.com/maiychrus25/ICTU-CRIS/releases/tag/v0.4.0

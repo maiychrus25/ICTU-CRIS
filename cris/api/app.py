@@ -114,7 +114,7 @@ def _last_sync_age_h(conn) -> float | None:
 def create_app(static_dir: str | os.PathLike | None = None) -> FastAPI:
     app = FastAPI(
         title="ICTU-CRIS API",
-        version="0.6.0",
+        version="0.6.1",
         description="Một nguồn sự thật cho dữ liệu công bố khoa học — mỗi con số truy ngược được về bản ghi gốc. "
                     "AI gợi ý, người quyết; không có AI vẫn chạy đủ chức năng.",
         license_info={"name": "Apache-2.0", "url": "https://www.apache.org/licenses/LICENSE-2.0"},
