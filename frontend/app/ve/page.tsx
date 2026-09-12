@@ -20,6 +20,10 @@ function totalCount(value: number | Record<string, number>) {
   return typeof value === "number" ? value : Object.values(value).reduce((total, count) => total + count, 0);
 }
 
+function AboutHeader() {
+  return <><img src="/brand/icut-cris-logo.svg" alt="ICTU-CRIS" width={320} height={300} className="mb-5 h-24 w-auto" /><PageHeader title="Về hệ thống" description="ICTU-CRIS hợp nhất dữ liệu công bố khoa học, giữ xuất xứ rõ ràng và đặt quyết định trong tay người dùng." /></>;
+}
+
 export default function AboutPage() {
   const query = useAbout();
   const cohorts = useScreenCohorts();
@@ -28,16 +32,16 @@ export default function AboutPage() {
   const suggestions = query.data?.ai.suggestions;
   const reportedMentors = query.data?.ai.mentor_suggestions ?? (suggestions && typeof suggestions === "object" ? suggestions.mentor : undefined);
   const mentors = useMentors({ page: 1 }, query.isSuccess && reportedMentors === undefined);
-  if (query.isLoading || cohorts.isLoading || mentors.isLoading || health.isLoading) return <><PageHeader title="Về hệ thống" /><LoadingView /></>;
-  if (query.isError || cohorts.isError || mentors.isError || health.isError) return <><PageHeader title="Về hệ thống" /><ErrorView error={query.error ?? cohorts.error ?? mentors.error ?? health.error} retry={() => { query.refetch(); cohorts.refetch(); mentors.refetch(); health.refetch(); }} /></>;
-  if (!query.data) return <><PageHeader title="Về hệ thống" /><EmptyView description="Chưa có thông tin hệ thống. Hãy thử lại sau lần đồng bộ tiếp theo." /></>;
+  if (query.isLoading || cohorts.isLoading || mentors.isLoading || health.isLoading) return <><AboutHeader /><LoadingView /></>;
+  if (query.isError || cohorts.isError || mentors.isError || health.isError) return <><AboutHeader /><ErrorView error={query.error ?? cohorts.error ?? mentors.error ?? health.error} retry={() => { query.refetch(); cohorts.refetch(); mentors.refetch(); health.refetch(); }} /></>;
+  if (!query.data) return <><AboutHeader /><EmptyView description="Chưa có thông tin hệ thống. Hãy thử lại sau lần đồng bộ tiếp theo." /></>;
   const about = query.data;
   const screenedCohorts = cohorts.data?.length ?? 0;
   const flaggedWorks = cohorts.data?.reduce((total, item) => total + item.flagged, 0) ?? 0;
   const mentorSuggestions = reportedMentors ?? mentors.data?.page.total ?? 0;
   return (
     <>
-      <PageHeader title="Về hệ thống" description="ICTU-CRIS hợp nhất dữ liệu công bố khoa học, giữ xuất xứ rõ ràng và đặt quyết định trong tay người dùng." />
+      <AboutHeader />
       {me.data && !me.data.auth_required && <Alert className="mb-6 border-status-warning/30 bg-status-warning/10 text-status-warning"><ShieldAlert /><AlertTitle>Chưa bật đăng nhập</AlertTitle><AlertDescription>Đặt mật khẩu bằng <code className="rounded bg-background/70 px-1 py-0.5 font-mono text-xs">python -m cris user set-password</code>.</AlertDescription></Alert>}
       <div className="grid gap-8 lg:grid-cols-[1fr_1.15fr]">
         <div className="space-y-7">

@@ -4,7 +4,7 @@
 "use client";
 
 import {
-  AlertTriangle, BarChart3, BookOpenCheck, Building2, CalendarRange, CircleHelp, CopyCheck, FilePenLine, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
+  AlertTriangle, BarChart3, Building2, CalendarRange, CircleHelp, CopyCheck, FilePenLine, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
   GraduationCap, Map, RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRound, UserRoundCheck, X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -76,7 +76,7 @@ const routeTitles = [
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <Link href="/tong-quan/" className="flex h-16 items-center gap-3 px-4 text-sidebar-foreground">
-      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"><BookOpenCheck className="size-5" /></span>
+      <img src="/brand/icut-cris-mark.svg" alt="ICTU-CRIS" width={36} height={36} className="size-9 shrink-0" />
       {!compact && <span><strong className="block text-sm tracking-wide">ICTU-CRIS</strong><span className="block text-[11px] text-muted-foreground">Thông tin nghiên cứu</span></span>}
     </Link>
   );
