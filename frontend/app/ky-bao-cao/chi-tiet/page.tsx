@@ -4,9 +4,9 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, FilePlus2, LockKeyhole, MoreHorizontal, Plus, Search } from "lucide-react";
+import { Ban, Download, Eye, FilePlus2, LockKeyhole, MoreHorizontal, Plus, Search } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -22,14 +22,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { ApiError } from "@/lib/api";
+import { ApiError, reportExportUrl } from "@/lib/api";
 import { getDeclarationActions, type DeclarationAction } from "@/lib/declarations";
-import { officerRoleRequired, stateLabels } from "@/lib/labels";
+import { officerRoleRequired } from "@/lib/labels";
 import {
-  useAddDeclaration, useCancelPeriod, useClosePeriod, useDeclarations,
-  useFinalizePeriod, useMe, useOfficerAccess, usePeriodProgress, usePeriods, useSetDeclarationState, useStats, useWorks,
+  useAddDeclaration, useCancelPeriod, useClosePeriod, useCreatePeriodReport, useDeclarations,
+  useFinalizePeriod, useMe, useOfficerAccess, usePeriodProgress, usePeriodReports, usePeriods, useSetDeclarationState, useStats, useWorks,
 } from "@/lib/queries";
-import type { DeclarationRow, PeriodFinalizeOut } from "@/lib/types";
+import type { DeclarationRow } from "@/lib/types";
 
 const progressGroups = [
   { label: "Đang soạn", states: ["Nhap", "ChoBoSung"], className: "bg-slate-400 dark:bg-slate-500" },
@@ -175,9 +175,39 @@ function DeclarationsTab({ periodId, periodState }: { periodId: number; periodSt
   );
 }
 
+function ReportsTab({ periodId }: { periodId: number }) {
+  const canCreate = useOfficerAccess();
+  const reports = usePeriodReports(periodId);
+  const create = useCreatePeriodReport(periodId);
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canCreate) return;
+    try {
+      const note = String(new FormData(event.currentTarget).get("note")).trim() || null;
+      const report = await create.mutateAsync({ note });
+      await queryClient.invalidateQueries({ queryKey: ["period-reports", periodId] });
+      setOpen(false);
+      toast.success(`Đã tạo bản báo cáo v${report.version}.`);
+    } catch (error) {
+      if (!(error instanceof ApiError && error.handled)) toast.error(error instanceof ApiError ? error.detail : "Không thể tạo bản báo cáo.");
+    }
+  }
+
+  if (reports.isLoading) return <LoadingView label="Đang tải các phiên bản báo cáo…" />;
+  if (reports.isError) return <ErrorView error={reports.error} retry={() => reports.refetch()} />;
+  return <section aria-labelledby="reports-title"><div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><h2 id="reports-title" className="text-base font-semibold">Các bản báo cáo đã đóng băng</h2><p className="text-xs text-muted-foreground">Mỗi phiên bản giữ nguyên dữ liệu tại thời điểm tạo để đối chiếu về sau.</p></div><span title={canCreate ? undefined : officerRoleRequired}><Button type="button" onClick={() => setOpen(true)} disabled={!canCreate}><Plus />Tạo bản báo cáo</Button></span></div>
+    {!reports.data?.length ? <EmptyView title="Chưa có bản báo cáo" description="Tạo phiên bản đầu tiên để đóng băng số liệu hiện tại của kỳ." /> : <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Phiên bản</TableHead><TableHead>Thời điểm tạo</TableHead><TableHead>Người tạo</TableHead><TableHead>Ghi chú</TableHead><TableHead className="text-right">Tổng hồ sơ</TableHead><TableHead className="text-right">Đạt / đã chốt</TableHead><TableHead>Hành động</TableHead></TableRow></TableHeader><TableBody>{reports.data.map((report) => <TableRow key={report.id}><TableCell className="font-semibold">Phiên bản v{report.version}</TableCell><TableCell className="tabular-nums">{formatDate(report.generated_at)}</TableCell><TableCell>{report.generated_by_name}</TableCell><TableCell className="max-w-sm whitespace-normal text-muted-foreground">{report.note || "—"}</TableCell><TableCell className="text-right tabular-nums">{report.totals.declared}</TableCell><TableCell className="text-right font-semibold tabular-nums">{report.totals.accepted}</TableCell><TableCell><div className="flex gap-1"><Button render={<Link href={`/bao-cao/?id=${report.id}`} />} variant="outline" size="sm"><Eye />Xem</Button><Button render={<a href={reportExportUrl(report.id, "csv")} />} variant="ghost" size="sm"><Download />CSV</Button><Button render={<a href={reportExportUrl(report.id, "xlsx")} />} variant="ghost" size="sm"><Download />XLSX</Button></div></TableCell></TableRow>)}</TableBody></Table></div>}
+    <Dialog open={open} onOpenChange={setOpen}><DialogContent><form onSubmit={(event) => void submit(event)}><DialogHeader><DialogTitle>Tạo bản báo cáo</DialogTitle><DialogDescription>Số liệu hiện tại sẽ được đóng băng thành một phiên bản mới và không thể thay đổi.</DialogDescription></DialogHeader><div className="py-4"><label htmlFor="report-note" className="mb-1.5 block font-medium">Ghi chú</label><Textarea id="report-note" name="note" placeholder="Ví dụ: Bản trình Ban Giám hiệu" /></div><DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Huỷ</Button><Button type="submit" disabled={!canCreate || create.isPending}>Tạo bản báo cáo</Button></DialogFooter></form></DialogContent></Dialog>
+  </section>;
+}
+
 function PeriodDetailContent() {
   const rawId = useSearchParams().get("id");
   const id = rawId && /^\d+$/.test(rawId) ? Number(rawId) : null;
+  const router = useRouter();
   const queryClient = useQueryClient();
   const progress = usePeriodProgress(id);
   const periods = usePeriods();
@@ -189,7 +219,6 @@ function PeriodDetailContent() {
   const [closeOpen, setCloseOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [finalizeOpen, setFinalizeOpen] = useState(false);
-  const [finalizeResult, setFinalizeResult] = useState<PeriodFinalizeOut | null>(null);
 
   if (id === null) return <><PageHeader title="Chi tiết kỳ báo cáo" /><EmptyView title="Chưa chọn kỳ báo cáo" description="Mở một kỳ từ danh sách để xem tiến độ." action={<Link href="/ky-bao-cao/" className="font-medium text-primary hover:underline">Đi đến danh sách kỳ</Link>} /></>;
   if (progress.isLoading || periods.isLoading) return <><PageHeader title="Chi tiết kỳ báo cáo" /><LoadingView /></>;
@@ -216,12 +245,12 @@ function PeriodDetailContent() {
   async function finalizeDeclarations() {
     try {
       const result = await finalize.mutateAsync();
-      setFinalizeResult(result);
       toast.success(`Đã chốt ${result.finalized} hồ sơ.`);
-      await Promise.all([
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: ["period-progress", id] }),
         queryClient.invalidateQueries({ queryKey: ["declarations", id] }),
       ]);
+      router.push(`/bao-cao/?id=${result.report_id}`);
     } catch (error) {
       if (!(error instanceof ApiError && error.handled)) toast.error(error instanceof ApiError ? error.detail : "Không thể chốt kỳ báo cáo.");
     }
@@ -230,14 +259,14 @@ function PeriodDetailContent() {
   return (
     <>
       <PageHeader title={period?.name ?? `Kỳ báo cáo #${id}`} description={period ? `Mã kỳ ${period.code}` : undefined} action={<div className="flex items-center gap-3"><DueStatus days={data.days_remaining} /><StatusBadge value={state} /></div>} />
-      <div className="mb-5 flex flex-wrap justify-end gap-2" title={canDecide ? undefined : officerRoleRequired}>{state === "DangMo" && <Button type="button" onClick={() => setCloseOpen(true)} disabled={!canDecide}><LockKeyhole />Đóng nộp</Button>}{state === "DaDongNop" && <Button type="button" onClick={() => { setFinalizeResult(null); setFinalizeOpen(true); }} disabled={!canDecide}><LockKeyhole />Chốt kỳ</Button>}{(state === "ChuanBi" || state === "DangMo") && <Button type="button" variant="destructive" onClick={() => setCancelOpen(true)} disabled={!canDecide}><Ban />Huỷ kỳ</Button>}</div>
-      <Tabs value={tab} onValueChange={(value) => setTab(String(value))} className="mb-5"><TabsList variant="line"><TabsTrigger value="progress">Tiến độ theo đơn vị</TabsTrigger><TabsTrigger value="declarations">Hồ sơ kê khai</TabsTrigger></TabsList></Tabs>
+      <div className="mb-5 flex flex-wrap justify-end gap-2" title={canDecide ? undefined : officerRoleRequired}>{state === "DangMo" && <Button type="button" onClick={() => setCloseOpen(true)} disabled={!canDecide}><LockKeyhole />Đóng nộp</Button>}{state === "DaDongNop" && <Button type="button" onClick={() => setFinalizeOpen(true)} disabled={!canDecide}><LockKeyhole />Chốt kỳ</Button>}{(state === "ChuanBi" || state === "DangMo") && <Button type="button" variant="destructive" onClick={() => setCancelOpen(true)} disabled={!canDecide}><Ban />Huỷ kỳ</Button>}</div>
+      <Tabs value={tab} onValueChange={(value) => setTab(String(value))} className="mb-5"><TabsList variant="line"><TabsTrigger value="progress">Tiến độ theo đơn vị</TabsTrigger><TabsTrigger value="declarations">Hồ sơ kê khai</TabsTrigger><TabsTrigger value="reports">Báo cáo</TabsTrigger></TabsList></Tabs>
 
-      {tab === "progress" ? <section aria-labelledby="period-progress-title"><div className="mb-3"><h2 id="period-progress-title" className="text-base font-semibold">Tiến độ theo đơn vị</h2><p className="text-xs text-muted-foreground">Thanh thể hiện cơ cấu trạng thái của các hồ sơ đã kê khai tại từng đơn vị.</p></div>{data.units.length ? <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Đơn vị</TableHead>{progressGroups.map((group) => <TableHead key={group.label} className="text-right">{group.label}</TableHead>)}<TableHead className="min-w-52">Tiến độ</TableHead></TableRow></TableHeader><TableBody>{data.units.map((unit) => { const counts = progressGroups.map((group) => group.states.reduce((total, item) => total + (unit.counts[item] ?? 0), 0)); return <TableRow key={unit.unit_id}><TableCell><span className="font-medium">{unit.unit_name}</span><span className="ml-2 text-xs text-muted-foreground">{unit.unit_code}</span></TableCell>{counts.map((count, index) => <TableCell key={progressGroups[index].label} className="text-right tabular-nums">{count}</TableCell>)}<TableCell><div role="progressbar" aria-label={`Cơ cấu hồ sơ ${unit.unit_name}`} aria-valuemin={0} aria-valuemax={Math.max(1, unit.total)} aria-valuenow={unit.total} className="flex h-2.5 overflow-hidden rounded-full bg-muted">{unit.total > 0 && counts.map((count, index) => count > 0 && <span key={progressGroups[index].label} className={`h-full ${progressGroups[index].className}`} style={{ width: `${count / unit.total * 100}%` }} title={`${progressGroups[index].label}: ${count}`} />)}</div><p className="mt-1 text-[11px] text-muted-foreground tabular-nums">{unit.total} hồ sơ</p></TableCell></TableRow>; })}</TableBody></Table></div> : <EmptyView description="Chưa có đơn vị hoạt động trong kỳ này. Hãy kiểm tra lại phạm vi kỳ báo cáo." />}</section> : <DeclarationsTab periodId={id} periodState={state} />}
+      {tab === "progress" ? <section aria-labelledby="period-progress-title"><div className="mb-3"><h2 id="period-progress-title" className="text-base font-semibold">Tiến độ theo đơn vị</h2><p className="text-xs text-muted-foreground">Thanh thể hiện cơ cấu trạng thái của các hồ sơ đã kê khai tại từng đơn vị.</p></div>{data.units.length ? <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Đơn vị</TableHead>{progressGroups.map((group) => <TableHead key={group.label} className="text-right">{group.label}</TableHead>)}<TableHead className="min-w-52">Tiến độ</TableHead></TableRow></TableHeader><TableBody>{data.units.map((unit) => { const counts = progressGroups.map((group) => group.states.reduce((total, item) => total + (unit.counts[item] ?? 0), 0)); return <TableRow key={unit.unit_id}><TableCell><span className="font-medium">{unit.unit_name}</span><span className="ml-2 text-xs text-muted-foreground">{unit.unit_code}</span></TableCell>{counts.map((count, index) => <TableCell key={progressGroups[index].label} className="text-right tabular-nums">{count}</TableCell>)}<TableCell><div role="progressbar" aria-label={`Cơ cấu hồ sơ ${unit.unit_name}`} aria-valuemin={0} aria-valuemax={Math.max(1, unit.total)} aria-valuenow={unit.total} className="flex h-2.5 overflow-hidden rounded-full bg-muted">{unit.total > 0 && counts.map((count, index) => count > 0 && <span key={progressGroups[index].label} className={`h-full ${progressGroups[index].className}`} style={{ width: `${count / unit.total * 100}%` }} title={`${progressGroups[index].label}: ${count}`} />)}</div><p className="mt-1 text-[11px] text-muted-foreground tabular-nums">{unit.total} hồ sơ</p></TableCell></TableRow>; })}</TableBody></Table></div> : <EmptyView description="Chưa có đơn vị hoạt động trong kỳ này. Hãy kiểm tra lại phạm vi kỳ báo cáo." />}</section> : tab === "declarations" ? <DeclarationsTab periodId={id} periodState={state} /> : <ReportsTab periodId={id} />}
 
       <Dialog open={closeOpen} onOpenChange={setCloseOpen}><DialogContent><DialogHeader><DialogTitle>Đóng nộp kỳ báo cáo?</DialogTitle><DialogDescription>Sau khi đóng, các đơn vị không thể tiếp tục nộp hồ sơ vào kỳ này.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setCloseOpen(false)}>Huỷ</Button><Button type="button" onClick={() => canDecide && void decide("close")} disabled={!canDecide || close.isPending}>Đóng nộp</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}><DialogContent><DialogHeader><DialogTitle>Huỷ kỳ báo cáo?</DialogTitle><DialogDescription>Kỳ sẽ chuyển sang trạng thái Đã huỷ và không thể tiếp tục nhận hồ sơ.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setCancelOpen(false)}>Quay lại</Button><Button type="button" variant="destructive" onClick={() => canDecide && void decide("cancel")} disabled={!canDecide || cancel.isPending}>Huỷ kỳ</Button></DialogFooter></DialogContent></Dialog>
-      <Dialog open={finalizeOpen} onOpenChange={setFinalizeOpen}><DialogContent><DialogHeader><DialogTitle>Chốt kỳ báo cáo?</DialogTitle><DialogDescription>Hồ sơ Đạt yêu cầu sẽ chuyển sang Đã chốt; các hồ sơ còn lại được giữ nguyên và liệt kê là bỏ qua.</DialogDescription></DialogHeader>{finalizeResult ? <dl className="grid grid-cols-2 gap-4 py-4"><div className="rounded-lg border p-4"><dt className="text-xs text-muted-foreground">Đã chốt</dt><dd className="mt-1 text-2xl font-semibold tabular-nums">{finalizeResult.finalized}</dd></div><div className="rounded-lg border p-4"><dt className="text-xs text-muted-foreground">Bỏ qua</dt><dd className="mt-1 text-2xl font-semibold tabular-nums">{finalizeResult.skipped.length}</dd></div>{finalizeResult.skipped.length > 0 && <div className="col-span-2 text-xs text-muted-foreground">Hồ sơ bỏ qua: {finalizeResult.skipped.map((item) => `#${item.id} (${stateLabels[item.state] ?? item.state})`).join(", ")}</div>}</dl> : <p className="py-4 text-sm">Hành động ghi nhận người thực hiện và không tự thay đổi hồ sơ chưa đạt yêu cầu.</p>}<DialogFooter>{finalizeResult ? <Button type="button" onClick={() => setFinalizeOpen(false)}>Đóng</Button> : <><Button type="button" variant="outline" onClick={() => setFinalizeOpen(false)}>Huỷ</Button><Button type="button" onClick={() => canDecide && void finalizeDeclarations()} disabled={!canDecide || finalize.isPending}>Chốt kỳ</Button></>}</DialogFooter></DialogContent></Dialog>
+      <Dialog open={finalizeOpen} onOpenChange={setFinalizeOpen}><DialogContent><DialogHeader><DialogTitle>Chốt kỳ báo cáo?</DialogTitle><DialogDescription>Hồ sơ Đạt yêu cầu sẽ chuyển sang Đã chốt; hệ thống đồng thời tạo một bản báo cáo đóng băng và mở ngay sau khi hoàn tất.</DialogDescription></DialogHeader><p className="py-4 text-sm">Các hồ sơ còn lại được giữ nguyên và ghi nhận là bỏ qua.</p><DialogFooter><Button type="button" variant="outline" onClick={() => setFinalizeOpen(false)}>Huỷ</Button><Button type="button" onClick={() => canDecide && void finalizeDeclarations()} disabled={!canDecide || finalize.isPending}>Chốt kỳ</Button></DialogFooter></DialogContent></Dialog>
     </>
   );
 }

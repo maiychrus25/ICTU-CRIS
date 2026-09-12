@@ -5,15 +5,15 @@
 
 import { CopyCheck, FileStack, History, Link2, Rss, UserRoundCheck } from "lucide-react";
 import Link from "next/link";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { PageHeader } from "@/components/page-header";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { YearTypeChart } from "@/components/year-type-chart";
 import { API_BASE } from "@/lib/api";
-import { docTypeColors, docTypeLabels, getFieldValueLabel } from "@/lib/labels";
+import { getFieldValueLabel } from "@/lib/labels";
 import { useRecent, useStats } from "@/lib/queries";
 import type { RecentAdded, RecentChanged } from "@/lib/types";
 
@@ -62,7 +62,7 @@ export default function OverviewPage() {
 
       <section className="mt-7" aria-labelledby="year-type-chart-title">
         <div className="mb-3"><h2 id="year-type-chart-title" className="text-base font-semibold">Công trình theo năm và loại tài liệu</h2><p className="text-xs text-muted-foreground">Số lượng trong 5 năm có dữ liệu gần nhất.</p></div>
-        {yearlyData.length ? <><div className="h-88 rounded-lg border bg-card p-4" role="img" aria-label="Biểu đồ cột chồng công trình theo năm và loại tài liệu"><ResponsiveContainer width="100%" height="100%"><BarChart data={yearlyData} margin={{ top: 8, right: 12, left: 10, bottom: 22 }}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="year" tickLine={false} axisLine={false} label={{ value: "Năm công bố", position: "insideBottom", offset: -14 }} /><YAxis allowDecimals={false} tickLine={false} axisLine={false} label={{ value: "Số công trình", angle: -90, position: "insideLeft" }} /><Tooltip cursor={{ fill: "var(--muted)" }} /><Legend verticalAlign="top" height={38} />{docTypes.map((type) => <Bar key={type} dataKey={type} name={docTypeLabels[type]} stackId="works" fill={docTypeColors[type]} />)}</BarChart></ResponsiveContainer></div><p className="mt-2 text-xs text-muted-foreground tabular-nums">{unknownWorks.toLocaleString("vi-VN")} công trình không rõ năm.</p></> : <EmptyView description="Chưa có dữ liệu theo năm để vẽ biểu đồ. Hãy chờ lần đồng bộ tiếp theo." />}
+        {yearlyData.length ? <><YearTypeChart data={yearlyData} label="Biểu đồ cột chồng công trình theo năm và loại tài liệu" /><p className="mt-2 text-xs text-muted-foreground tabular-nums">{unknownWorks.toLocaleString("vi-VN")} công trình không rõ năm.</p></> : <EmptyView description="Chưa có dữ liệu theo năm để vẽ biểu đồ. Hãy chờ lần đồng bộ tiếp theo." />}
       </section>
 
       <div className="mt-7 grid items-start gap-7 xl:grid-cols-2">

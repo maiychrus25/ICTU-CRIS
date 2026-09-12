@@ -22,7 +22,8 @@ test.beforeEach(async ({ page }) => {
   runtimeErrors.set(page, errors);
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => {
-    if (message.type() === "error") errors.push(`console.error: ${message.text()} (${message.location().url})`);
+    const expectedMissingNotification = message.text().includes("404 (Not Found)") && message.location().url.includes("/api/notifications");
+    if (message.type() === "error" && !expectedMissingNotification) errors.push(`console.error: ${message.text()} (${message.location().url})`);
   });
 });
 

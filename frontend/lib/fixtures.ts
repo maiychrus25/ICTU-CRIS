@@ -3,6 +3,7 @@
 
 import type {
   AboutOut, AuditList, AuthorQueueList, CompareOut, DeclarationDetail, DeclarationRow, DupGroupDetail, DupGroupList, HealthOut, MeOut,
+  NotificationRow, PeriodReport, PeriodReportListItem, UnitOverview,
   CoauthorsOut, ExpertOut, MentorList, MyWorkList, PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow,
   PublicTopicCheckOut, QualityAnomalyList, QualityOut, RecentOut, StatsOut, SyncRunDetail, SyncRunList, Topic,
   TopicDetail, TrendsOut, WorkDetail, WorkFacets, WorkList, WorkSummary, ScreenCohortSummary, ScreenList, MapOut,
@@ -423,4 +424,65 @@ export const anomaliesFixture: QualityAnomalyList = {
   summary: { scopus_no_doi: { open: 0 }, year_out_of_range: { open: 0 }, thesis_title_equals_article: { open: 1 }, orcid_duplicate: { open: 0 }, doi_invalid: { open: 1 }, missing_abstract_article: { open: 0 } },
 };
 
-export const healthFixture: HealthOut = { status: "ok" };
+export const notificationFixture: NotificationRow[] = [
+  { id: 1001, kind: "declaration", title: "Hồ sơ đã được khoa duyệt", body: "Hồ sơ #606 đã chuyển sang chờ Phòng KHCN kiểm tra.", link: "/ke-khai/?id=606", created_at: new Date(Date.now() - 5 * 60_000).toISOString(), read_at: null },
+  { id: 1002, kind: "period", title: "Kỳ báo cáo sắp hết hạn", body: "Kỳ Báo cáo công trình năm 2026 còn 19 ngày.", link: "/ky-bao-cao/chi-tiet/?id=401", created_at: new Date(Date.now() - 2 * 3_600_000).toISOString(), read_at: null },
+  { id: 1003, kind: "author_link", title: "Công trình đã được nối vào hồ sơ", body: `“${workItems[1].title}” đã được nối vào hồ sơ giảng viên.`, link: "/cong-trinh/?id=2", created_at: new Date(Date.now() - 26 * 3_600_000).toISOString(), read_at: null },
+  { id: 1004, kind: "declaration", title: "Hồ sơ cần bổ sung", body: "Hồ sơ #602 cần bổ sung đường dẫn công bố.", link: "/ke-khai/?id=602", created_at: new Date(Date.now() - 3 * 86_400_000).toISOString(), read_at: "2026-09-10T08:30:00Z" },
+];
+
+export const reportFixture: PeriodReport = {
+  id: 901, period_id: 401, version: 1, generated_at: "2026-09-12T03:15:00Z", generated_by: 1,
+  note: "Bản đối chiếu nội bộ trước khi trình lãnh đạo.",
+  sha256: "6f2a9d31f40b92c58b2068b18a7cd405df72164d56b79f20e943bec47d5fe631",
+  summary: {
+    units: [
+      { unit_id: 1, code: "CNTT", name: "Khoa Công nghệ thông tin", by_state: { Nhap: 1, KhoaDaDuyet: 1, DaChot: 1 }, declared: 3, accepted: 1 },
+      { unit_id: 2, code: "KHMT", name: "Khoa Khoa học máy tính", by_state: { ChoBoSung: 1, ChoKhoaDuyet: 1, ChoPhongKiemTra: 1 }, declared: 3, accepted: 0 },
+      { unit_id: 3, code: "HTTT", name: "Khoa Hệ thống thông tin kinh tế", by_state: { DatYeuCau: 1, Rut: 1 }, declared: 2, accepted: 1 },
+    ],
+    by_doc_type: { bai_bao: 3, do_an: 2, luan_van: 1, luan_an: 1, hoc_lieu: 1 },
+    totals: { declared: 8, accepted: 2, by_state: { Nhap: 1, ChoBoSung: 1, ChoKhoaDuyet: 1, KhoaDaDuyet: 1, ChoPhongKiemTra: 1, DatYeuCau: 1, DaChot: 1, Rut: 1 } },
+  },
+  items: declarationsFixture[401].slice(0, 5).map((row) => {
+    const work = workItems.find((item) => item.id === row.work_id)!;
+    return {
+      declaration_id: row.id, state: row.state, unit: { id: row.unit_id, code: row.unit_code, name: statsFixture.by_unit.find((item) => item.unit_id === row.unit_id)?.name ?? row.unit_code },
+      work: { id: work.id, title: work.title, doc_type: work.doc_type, year: work.year, doi: work.doi, indexes: work.doc_type === "bai_bao" ? ["Scopus"] : [], quartile: work.doc_type === "bai_bao" ? "Q2" : null, journal: work.doc_type === "bai_bao" ? "Tạp chí Khoa học và Công nghệ" : null },
+      authors: ["TS. Nguyễn Văn A"], evidence_count: row.evidence_count, events: [{ state: row.state, at: row.updated_at }],
+    };
+  }),
+};
+
+export const periodReportsFixture: Record<number, PeriodReportListItem[]> = {
+  401: [{ id: reportFixture.id, version: reportFixture.version, generated_at: reportFixture.generated_at, generated_by_name: "Nguyễn Minh Anh", note: reportFixture.note, totals: reportFixture.summary.totals }],
+  402: [],
+  403: [],
+};
+
+export const unitOverviewFixture: Record<number, UnitOverview> = {
+  1: {
+    unit: { id: 1, code: "CNTT", name: "Khoa Công nghệ thông tin" }, works_total: 426, linked_works: 389,
+    by_doc_type: { bai_bao: 118, do_an: 224, luan_van: 38, luan_an: 8, hoc_lieu: 38 },
+    by_year: [
+      { year: 2021, bai_bao: 18, do_an: 37, luan_van: 6, luan_an: 1, hoc_lieu: 7 },
+      { year: 2022, bai_bao: 21, do_an: 41, luan_van: 7, luan_an: 2, hoc_lieu: 8 },
+      { year: 2023, bai_bao: 23, do_an: 44, luan_van: 8, luan_an: 1, hoc_lieu: 7 },
+      { year: 2024, bai_bao: 27, do_an: 49, luan_van: 8, luan_an: 2, hoc_lieu: 8 },
+      { year: 2025, bai_bao: 29, do_an: 53, luan_van: 9, luan_an: 2, hoc_lieu: 8 },
+    ],
+    top_persons: [
+      { person_id: 1, display_name: "TS. Nguyễn Văn A", works: 42 },
+      { person_id: 2, display_name: "TS. Nguyễn Văn An", works: 31 },
+      { person_id: 3, display_name: "ThS. Trần Thị Bình", works: 24 },
+    ],
+    pending_links: 12, declarations_by_state: { Nhap: 1, KhoaDaDuyet: 1, DaChot: 1 }, lecturers_without_works: 3,
+    lecturers_without_works_items: [
+      { person_id: 7, display_name: "ThS. Hoàng Thị Lan" },
+      { person_id: 8, display_name: "TS. Vũ Đức Long" },
+      { person_id: 9, display_name: "ThS. Nguyễn Thu Trang" },
+    ],
+  },
+};
+
+export const healthFixture: HealthOut = { status: "ok", db: "ok", model: "missing", last_sync_age_h: 31, version: "0.6.0" };

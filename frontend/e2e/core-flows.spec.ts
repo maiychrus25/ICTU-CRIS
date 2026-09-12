@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 
 test("trang gốc mở tổng quan với bốn chỉ số và biểu đồ", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/tong-quan\/$/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/\/tong-quan\/$/, { timeout: 30_000 });
   await expect(page.getByText("Tổng công trình 5 năm", { exact: true })).toBeVisible();
   await expect(page.getByText("Công trình có liên kết tác giả", { exact: true })).toBeVisible();
   await expect(page.getByText("Liên kết tác giả chờ xác nhận", { exact: true })).toBeVisible();

@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 import type {
-  AuditFilters, CompareIn, DeclarationCreateIn, DeclarationEvidenceIn, DeclarationStateIn,
+  AuditFilters, CompareIn, CreateReportIn, DeclarationCreateIn, DeclarationEvidenceIn, DeclarationStateIn,
   DecideAuthorsIn, DecideDupIn, DismissAnomalyIn, ExpertIn, FieldEditIn, LoginIn, MapColor,
   MentorFilters, MyDeclarationCreateIn, PeriodOpenIn, PublicTopicCheckIn, QualityAnomalyFilters,
   ScreenFilters, WorkFilters,
@@ -53,6 +53,13 @@ export const usePersonCv = (id: number | null) => useQuery({ queryKey: ["person-
 export const useFeed = () => useQuery({ queryKey: ["feed"], queryFn: api.getFeed });
 export const useAbout = () => useQuery({ queryKey: ["about"], queryFn: api.getAbout });
 export const useStats = () => useQuery({ queryKey: ["stats", 5], queryFn: () => api.getStats(5) });
+export const useNotifications = (unread: boolean, page = 1, enabled = true, poll = false) => useQuery({
+  queryKey: ["notifications", unread, page], queryFn: () => api.getNotifications(unread, page), enabled,
+  refetchInterval: poll ? () => typeof document !== "undefined" && document.visibilityState === "visible" ? 60_000 : false : false,
+  refetchOnWindowFocus: true, retry: false,
+});
+export const useReadNotification = () => useMutation({ mutationFn: (id: number) => api.readNotification(id) });
+export const useReadAllNotifications = () => useMutation({ mutationFn: api.readAllNotifications });
 export const useAudit = (filters: AuditFilters) => useQuery({ queryKey: ["audit", filters], queryFn: () => api.getAudit(filters) });
 export const usePeriods = () => useQuery({ queryKey: ["periods"], queryFn: api.getPeriods });
 export const useMyWorks = (page: number) => useQuery({ queryKey: ["my-works", page], queryFn: () => api.getMyWorks(page) });
@@ -69,6 +76,10 @@ export const useOpenPeriod = () => useMutation({ mutationFn: (input: PeriodOpenI
 export const useClosePeriod = (id: number) => useMutation({ mutationFn: () => api.closePeriod(id) });
 export const useCancelPeriod = (id: number) => useMutation({ mutationFn: () => api.cancelPeriod(id) });
 export const useFinalizePeriod = (id: number) => useMutation({ mutationFn: () => api.finalizePeriod(id) });
+export const usePeriodReports = (id: number | null) => useQuery({ queryKey: ["period-reports", id], queryFn: () => api.getPeriodReports(id!), enabled: id !== null, retry: false });
+export const useCreatePeriodReport = (id: number) => useMutation({ mutationFn: (input: CreateReportIn) => api.createPeriodReport(id, input) });
+export const useReport = (id: number | null) => useQuery({ queryKey: ["report", id], queryFn: () => api.getReport(id!), enabled: id !== null, retry: false });
+export const useUnitOverview = (id: number | null, periodId?: number) => useQuery({ queryKey: ["unit-overview", id, periodId], queryFn: () => api.getUnitOverview(id!, periodId), enabled: id !== null, retry: false });
 export const useSyncRuns = (page: number) => useQuery({ queryKey: ["sync-runs", page], queryFn: () => api.getSyncRuns(page) });
 export const useSyncRun = (id: number | null) => useQuery({ queryKey: ["sync-run", id], queryFn: () => api.getSyncRun(id!), enabled: id !== null });
-export const useHealth = () => useQuery({ queryKey: ["health"], queryFn: api.getHealth });
+export const useHealth = (enabled = true) => useQuery({ queryKey: ["health"], queryFn: api.getHealth, enabled });
