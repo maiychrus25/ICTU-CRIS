@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- Nhận diện sản phẩm và SEO: logo ICTU-CRIS ở thanh bên, trang đăng nhập, cổng công khai,
+  hướng dẫn, lý lịch (bản in) và Về hệ thống; bộ favicon (`icon.svg`, apple-icon, 192/512),
+  ảnh Open Graph 1200×630, `manifest.webmanifest`; metadata từng trang (title template
+  "· ICTU-CRIS", description, Open Graph/Twitter, canonical, theme-color), trang nội bộ
+  `noindex`; JSON-LD `WebSite` (SearchAction), `Organization`, `SoftwareApplication`;
+  `robots.txt` và `sitemap.xml` sinh tĩnh cùng `next build` (`frontend/app/{robots,sitemap}.ts`).
+
 ### Fixed
 
 - `deploy/upgrade.sh`: tệp chưa theo dõi trên máy chủ mà tag mới bắt đầu quản lý (ví dụ `deploy/pipeline.sh` chép tay) được cất sang `.local.bak` thay vì làm `git checkout` thất bại — Deploy v0.6.0 từng đỏ vì lỗi này.
