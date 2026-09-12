@@ -20,6 +20,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  commit-messages:
+    name: Thông điệp commit (không ghi công AI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Kiểm mọi commit mới trong lần đẩy / PR
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="origin/${{ github.base_ref }}..HEAD"
+          elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            RANGE="${{ github.event.before }}..${{ github.sha }}"
+          else
+            RANGE="HEAD~20..HEAD"
+          fi
+          python scripts/check_commit_trailers.py "$RANGE"
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

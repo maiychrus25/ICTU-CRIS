@@ -23,3 +23,10 @@ repos:
         entry: python scripts/check_spdx.py
         language: system
         files: '\.(py|sql|sh|yml|yaml)$'
+  - repo: local
+    hooks:
+      - id: no-ai-trailer
+        name: Thông điệp commit không có dòng ghi công AI
+        entry: python3 scripts/check_commit_trailers.py --file
+        language: system
+        stages: [commit-msg]
