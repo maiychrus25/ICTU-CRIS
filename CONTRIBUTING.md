@@ -92,7 +92,7 @@ trong checklist của [mẫu PR](.github/pull_request_template.md).
   gắn nhãn `skip-issue-link` cho sửa nhỏ không cần issue.
 - Nhãn được gắn tự động theo đường dẫn (`.github/labeler.yml`).
 - Issue chỉ đóng qua PR merge; đóng tay sẽ được mở lại (trừ `wontfix`/`invalid`/`duplicate`).
-- Không có dòng ghi công AI (`Co-Authored-By`…) trong thông điệp commit.
+- Không có dòng ghi công AI (`Co-Authored-By`…) trong thông điệp commit — hook `commit-msg` (pre-commit) và job CI `commit-messages` chặn (`scripts/check_commit_trailers.py`).
 - Tuỳ chọn: `pip install pre-commit && pre-commit install` để kiểm header SPDX, YAML,
   lỗi cú pháp trước khi commit.
 

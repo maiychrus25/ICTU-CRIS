@@ -62,7 +62,7 @@ if $DRY_RUN; then
 [dry-run] không chạy gì, chỉ in các bước sẽ thực hiện:
 
 1/6 Mã nguồn
-    git -C "$REPO_DIR" fetch --tags
+    git -C "$REPO_DIR" fetch --tags --force --prune
     git -C "$REPO_DIR" checkout -q "$TAG"
 
 2/6 Ảnh ${IMAGE_TAG}
@@ -94,7 +94,7 @@ fi
 
 # 1/6 — mã nguồn
 echo "-- 1/6 lấy mã nguồn theo tag ${TAG}"
-git -C "$REPO_DIR" fetch --tags
+git -C "$REPO_DIR" fetch --tags --force --prune
 # Tệp máy chủ tự thêm (chưa theo dõi) mà tag mới bắt đầu quản lý (vd deploy/pipeline.sh
 # từng chép tay) sẽ chặn checkout — cất sang <tệp>.local.bak rồi mới checkout.
 git -C "$REPO_DIR" ls-tree -r --name-only "$TAG" | while IFS= read -r f; do
