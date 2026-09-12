@@ -3,16 +3,19 @@
 
 "use client";
 
-import { CopyCheck, FileStack, Link2, UserRoundCheck } from "lucide-react";
+import { CopyCheck, FileStack, History, Link2, Rss, UserRoundCheck } from "lucide-react";
 import Link from "next/link";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { PageHeader } from "@/components/page-header";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { API_BASE } from "@/lib/api";
 import { docTypeColors, docTypeLabels, getFieldValueLabel } from "@/lib/labels";
-import { useStats } from "@/lib/queries";
+import { useRecent, useStats } from "@/lib/queries";
+import type { RecentAdded, RecentChanged } from "@/lib/types";
 
 const docTypes = ["bai_bao", "do_an", "luan_van", "luan_an", "hoc_lieu"] as const;
 
@@ -23,6 +26,15 @@ function formatDate(value: string | null | undefined) {
 function MetricCard({ label, value, icon: Icon, href }: { label: string; value: string; icon: typeof FileStack; href?: string }) {
   const card = <Card className="h-full" size="sm"><CardHeader className="flex-row items-center justify-between"><CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle><Icon className="size-4 text-primary" /></CardHeader><CardContent><p className="text-2xl font-semibold tabular-nums">{value}</p>{href && <p className="mt-1 text-xs text-primary">Mở hàng đợi →</p>}</CardContent></Card>;
   return href ? <Link href={href} className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50">{card}</Link> : card;
+}
+
+function RecentColumn({ title, items, fallbackTime, changed = false }: { title: string; items: (RecentAdded | RecentChanged)[]; fallbackTime?: string | null; changed?: boolean }) {
+  return <div><h3 className="mb-2 text-sm font-semibold">{title} <span className="font-normal text-muted-foreground tabular-nums">({items.length})</span></h3>{items.length ? <ul className="divide-y rounded-lg border bg-card">{items.map((work) => <li key={work.id} className="p-3"><Link href={`/cong-trinh/?id=${work.id}`} className="line-clamp-2 font-medium leading-5 text-primary hover:underline">{work.title ?? "Chưa có tiêu đề"}</Link><p className="mt-1 text-xs text-muted-foreground"><span>{work.doc_type_label}</span>{changed && "version" in work ? ` · Phiên bản ${work.version}` : ""}<span> · {formatDate("first_seen_at" in work ? work.first_seen_at : fallbackTime)}</span></p></li>)}</ul> : <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">Không có công trình {changed ? "thay đổi" : "thêm mới"} trong lượt này.</p>}</div>;
+}
+
+function RecentWorks() {
+  const query = useRecent();
+  return <section className="mt-7" aria-labelledby="recent-title"><div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><h2 id="recent-title" className="text-base font-semibold">Mới cập nhật từ kho</h2><p className="mt-1 text-xs text-muted-foreground">Công trình thêm mới và thay đổi trong lượt đồng bộ gần nhất.</p></div><div className="flex gap-2"><Button render={<Link href="/dong-bo/" />} variant="outline" size="sm"><History />Xem lịch sử đồng bộ</Button><Button render={<a href={`${API_BASE}/api/feed.xml`} target="_blank" rel="noreferrer" />} variant="outline" size="sm" title="Theo dõi công trình mới bằng RSS"><Rss />RSS</Button></div></div>{query.isLoading ? <LoadingView label="Đang tải cập nhật mới từ kho…" /> : query.isError ? <ErrorView error={query.error} retry={() => query.refetch()} /> : query.data ? <div className="grid items-start gap-4 md:grid-cols-2"><RecentColumn title="Thêm" items={query.data.added} fallbackTime={query.data.run?.finished_at} /><RecentColumn title="Đổi" items={query.data.changed} fallbackTime={query.data.run?.finished_at} changed /></div> : <EmptyView description="Chưa có lượt đồng bộ hoàn tất để hiển thị cập nhật." />}</section>;
 }
 
 export default function OverviewPage() {
@@ -45,6 +57,8 @@ export default function OverviewPage() {
         <MetricCard label="Liên kết tác giả chờ xác nhận" value={stats.queues.authors_pending.toLocaleString("vi-VN")} icon={UserRoundCheck} href="/doi-soat/tac-gia/" />
         <MetricCard label="Nhóm nghi trùng đang mở" value={stats.queues.dup_groups_open.toLocaleString("vi-VN")} icon={CopyCheck} href="/doi-soat/trung-lap/" />
       </section>
+
+      <RecentWorks />
 
       <section className="mt-7" aria-labelledby="year-type-chart-title">
         <div className="mb-3"><h2 id="year-type-chart-title" className="text-base font-semibold">Công trình theo năm và loại tài liệu</h2><p className="text-xs text-muted-foreground">Số lượng trong 5 năm có dữ liệu gần nhất.</p></div>

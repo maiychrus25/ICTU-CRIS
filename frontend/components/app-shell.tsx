@@ -14,6 +14,7 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { DataNoticeFooter } from "@/components/data-notice-footer";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ApiError } from "@/lib/api";
@@ -50,6 +51,7 @@ const routeTitles = [
   ["/doi-soat/huong-dan", "Gợi ý người hướng dẫn"],
   ["/doi-soat/trung-lap", "Hàng đợi nghi trùng"],
   ["/doi-soat/tac-gia", "Hàng đợi tác giả"],
+  ["/chat-luong-du-lieu/canh-bao", "Cảnh báo bất thường"],
   ["/chat-luong-du-lieu", "Chất lượng dữ liệu"],
   ["/ban-do", "Bản đồ tri thức"],
   ["/dong-bo", "Đồng bộ"],
@@ -138,7 +140,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const title = routeTitles.find(([route]) => pathname.startsWith(route))?.[1] ?? "ICTU-CRIS";
 
-  if (pathname.startsWith("/kiem-tra-de-tai")) return <>{children}</>;
+  if (pathname.startsWith("/kiem-tra-de-tai") || pathname.startsWith("/giang-vien/ly-lich")) return <>{children}</>;
 
   return (
     <div className="min-h-screen">
@@ -148,7 +150,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mt-auto lg:hidden"><PublicPortalLink compact /><Account compact /></div><div className="mt-auto hidden lg:block"><PublicPortalLink /><Account /></div>
       </aside>
 
-      <div className="lg:pl-60">
+      <div className="flex min-h-screen flex-col lg:pl-60">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:px-6">
           <Sheet>
             <SheetTrigger render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label="Mở điều hướng" />}><Menu /></SheetTrigger>
@@ -167,7 +169,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </form>
           <ThemeToggle />
         </header>
-        <main className="mx-auto w-full max-w-[1440px] p-4 md:p-6">{children}</main>
+        <main className="mx-auto w-full max-w-[1440px] flex-1 p-4 md:p-6">{children}</main>
+        <DataNoticeFooter />
       </div>
     </div>
   );

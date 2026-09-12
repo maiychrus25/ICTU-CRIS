@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { EmptyView, LoadingView } from "@/components/state-views";
+import { DataNoticeFooter } from "@/components/data-notice-footer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,13 +44,14 @@ export default function PublicTopicPage() {
     catch { setResult(null); }
   }
 
-  return <div className="min-h-screen bg-background">
+  return <div className="flex min-h-screen flex-col bg-background">
     <header className="border-b bg-card"><div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6"><Link href="/kiem-tra-de-tai/" className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground"><BookOpenCheck className="size-5" /></span><span><strong className="block text-sm">ICTU-CRIS</strong><span className="text-xs text-muted-foreground">Cổng kiểm tra đề tài</span></span></Link><Button render={<Link href="/tong-quan/" />} variant="outline">Vào hệ thống<ArrowRight /></Button></div></header>
-    <main className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
+    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 md:px-6 md:py-14">
       <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Dành cho sinh viên ICTU</p><h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Kiểm tra đề tài trước khi đăng ký</h1><p className="mx-auto mt-3 max-w-2xl text-muted-foreground">Nhanh chóng xem đề tài gần với các khoá trước và giảng viên có chuyên môn liên quan. Không cần đăng nhập.</p></div>
       <form onSubmit={(event) => void submit(event)} className="mx-auto mt-8 max-w-3xl space-y-4 rounded-xl border bg-card p-5 shadow-sm md:p-6"><div><label htmlFor="topic-title" className="mb-1.5 block font-medium">Tên đề tài dự định <span className="text-status-danger">*</span></label><Input id="topic-title" name="title" required minLength={5} className="h-12 text-base" placeholder="Ví dụ: Xây dựng ứng dụng hỗ trợ trẻ em luyện phát âm" autoFocus /></div><div><label htmlFor="topic-description" className="mb-1.5 block font-medium">Mô tả <span className="font-normal text-muted-foreground">(tuỳ chọn)</span></label><Textarea id="topic-description" name="description" className="min-h-28" placeholder="Nêu mục tiêu, đối tượng và cách thực hiện dự kiến…" /></div>{error && <Alert variant="destructive"><AlertTitle>Chưa thể kiểm tra</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}<Button type="submit" size="lg" className="w-full" disabled={check.isPending}><SearchCheck />{check.isPending ? "Đang kiểm tra…" : "Kiểm tra"}</Button></form>
       {check.isPending ? <div className="mt-8"><LoadingView label="Đang đối chiếu đề tài và chuyên môn giảng viên…" /></div> : result ? <Results data={result} /> : !check.isError && <div className="mx-auto mt-8 max-w-3xl"><EmptyView title="Sẵn sàng kiểm tra" description="Nhập tên đề tài càng cụ thể, kết quả càng dễ tham khảo." /></div>}
     </main>
-    <footer className="border-t py-5 text-center text-xs text-muted-foreground">AI chạy cục bộ trên dữ liệu tóm tắt; kết quả không thay thế trao đổi với giảng viên hướng dẫn.</footer>
+    <p className="border-t px-4 py-3 text-center text-xs text-muted-foreground">AI chạy cục bộ trên dữ liệu tóm tắt; kết quả không thay thế trao đổi với giảng viên hướng dẫn.</p>
+    <DataNoticeFooter />
   </div>;
 }

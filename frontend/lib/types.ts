@@ -245,11 +245,15 @@ export interface TrendsOut { series: TrendSeries[]; keys: string[] }
 export interface CoauthorNode { person_id: number; display_name: string; unit_code: string | null; works: number }
 export interface CoauthorEdge { a: number; b: number; weight: number }
 export interface CoauthorsOut { nodes: CoauthorNode[]; edges: CoauthorEdge[] }
-export interface RecentOut { added: WorkSummary[]; changed: WorkSummary[]; run: LastSync }
+export interface RecentAdded extends WorkSummary { first_seen_at: string }
+export interface RecentChanged extends WorkSummary { version: number }
+export interface RecentOut { added: RecentAdded[]; changed: RecentChanged[]; run: LastSync | null }
 export interface QualityAnomaly {
   id: number; kind: string; kind_label: string; work_id: number | null; title: string | null;
-  detail: Record<string, unknown> | string; severity: string; state: string;
+  person_id: number | null; display_name: string | null; detail: Record<string, unknown>;
+  severity: "cao" | "vua" | "thap"; state: "open" | "dismissed" | "resolved"; created_at: string;
 }
-export interface QualityAnomalyList { items: QualityAnomaly[]; page: PageInfo }
-export interface QualityAnomalyFilters { kind?: string; page?: number }
+export interface QualityAnomalyList { items: QualityAnomaly[]; page: PageInfo; summary: Record<string, { open: number }> }
+export interface QualityAnomalyFilters { kind?: string; severity?: string; state?: string; page?: number }
 export interface DismissAnomalyIn { reason: string }
+export interface DismissAnomalyOut { ok: boolean; id: number; state: "dismissed" }

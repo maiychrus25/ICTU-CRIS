@@ -125,6 +125,52 @@ test("chi tiết công trình gắn nhãn mã trạng thái và loại nơi côn
   await expect(page.getByText("journal_intl", { exact: true })).toHaveCount(0);
 });
 
+test("bản đồ thật vẽ đủ dữ liệu và tooltip hiện tiêu đề", async ({ page }) => {
+  await page.goto("/ban-do/");
+  const canvas = page.getByTestId("knowledge-map-canvas");
+  await expect(canvas).toBeVisible();
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  await canvas.hover({ position: { x: box!.width / 2, y: box!.height / 2 } });
+  const tooltip = page.getByRole("tooltip");
+  await expect(tooltip).toBeVisible();
+  expect((await tooltip.textContent())?.trim().length).toBeGreaterThan(5);
+  await assertHealthyPage(page);
+});
+
+test("cổng công khai trả kết quả cho đề tài website bán hàng", async ({ page }) => {
+  await page.goto("/kiem-tra-de-tai/");
+  await page.getByLabel("Tên đề tài dự định").fill("Xây dựng website bán hàng");
+  await page.getByRole("button", { name: "Kiểm tra", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Đề tài tương tự các khoá trước" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Giảng viên gần chuyên môn" })).toBeVisible();
+  await expect(page.locator("article").first()).toBeVisible();
+  await assertHealthyPage(page);
+});
+
+test("tìm theo nghĩa thật trả kết quả", async ({ page }) => {
+  await page.goto("/tra-cuu/");
+  await page.getByLabel("Từ khoá").fill("Xây dựng website bán hàng");
+  await page.getByRole("button", { name: "Theo nghĩa (AI)" }).click();
+  await expect(page.locator('tbody a[href^="/cong-trinh/?id="]').first()).toBeVisible();
+  await expect(page.getByText("Tìm theo nghĩa", { exact: true })).toBeVisible();
+  await assertHealthyPage(page);
+});
+
+test("trích dẫn APA thật có năm", async ({ page }) => {
+  await page.goto("/cong-trinh/?id=458");
+  await page.getByRole("button", { name: "Trích dẫn" }).click();
+  const citation = page.getByRole("dialog").locator("pre");
+  await expect(citation).toContainText("(2026)");
+  await assertHealthyPage(page);
+});
+
+test("RSS thật phản hồi thành công", async ({ page }) => {
+  const response = await page.goto("/api/feed.xml");
+  expect(response?.status()).toBe(200);
+  await expect(page.locator("body")).toContainText("ICTU-CRIS");
+});
+
 test("đối chiếu đề tài thật hoàn tất trong 30 giây", async ({ page }) => {
   await page.goto("/doi-chieu/");
   await page.getByLabel("Tiêu đề đề tài").fill("Xây dựng website bán hàng");
