@@ -28,7 +28,7 @@ import os
 import pathlib
 import zipfile
 
-from cris import audit
+from cris import audit, report
 from cris.db import tx
 
 EVIDENCE_KINDS = ("link", "file", "note")
@@ -228,8 +228,9 @@ def finalize_period(conn, period_id, actor_id):
     Kỳ phải ở `DaDongNop` (`ValueError` nếu không, hoặc không tìm thấy kỳ).
     Hồ sơ chưa ở `DatYeuCau` giữ nguyên trạng thái, được liệt kê trong
     `skipped`. Ghi `declaration_event` + `audit_log('declaration.DaChot')`
-    từng hồ sơ được chốt, và một `audit_log('period.finalize')` cho kỳ. Trả
-    `{"finalized": n, "skipped": [{"id", "state"}, ...]}`.
+    từng hồ sơ được chốt, và một `audit_log('period.finalize')` cho kỳ. Sau khi
+    chốt, tự sinh một bản báo cáo đóng băng (`cris.report.build_report`). Trả
+    `{"finalized": n, "skipped": [{"id", "state"}, ...], "report_id": id}`.
     """
     with tx(conn), conn.cursor() as cur:
         cur.execute("SELECT * FROM period WHERE id=%s FOR UPDATE", (period_id,))
@@ -259,7 +260,8 @@ def finalize_period(conn, period_id, actor_id):
         audit.log(conn, actor_id, "period.finalize", "period", period_id,
                   before={"state": period["state"]},
                   after={"finalized": len(finalized_ids), "skipped": len(skipped)})
-    return {"finalized": len(finalized_ids), "skipped": skipped}
+    report_id = report.build_report(conn, period_id, actor_id, note="Tự sinh khi chốt kỳ")
+    return {"finalized": len(finalized_ids), "skipped": skipped, "report_id": report_id}
 
 
 def add_evidence(conn, declaration_id, *, kind, url=None, file_name=None, note=None, actor_id):

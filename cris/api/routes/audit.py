@@ -36,6 +36,7 @@ ACTION_LABELS = {
     "declaration.DatYeuCau": "Phòng xác nhận đạt",
     "declaration.DaChot": "Đã chốt",
     "period.finalize": "Chốt kỳ báo cáo",
+    "period.report": "Tạo bản báo cáo kỳ",
     "source_record.new_version": "Nguồn có phiên bản mới",
     "mention.orphaned": "Lượt tên mất nguồn",
     "work.edit": "Chỉnh tay trường dữ liệu",

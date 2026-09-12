@@ -26,9 +26,11 @@
 | `uvicorn` | `>=0.30,<1` | BSD-3-Clause | Máy chủ ASGI chạy bởi `python -m cris serve` |
 | `pydantic` | `>=2.7,<3` | MIT | Kiểu dữ liệu vào/ra của API (`cris/api/schemas.py`) |
 | `python-multipart` | `>=0.0.9,<1` | MIT | FastAPI phân tích `multipart/form-data` cho tải tệp minh chứng lên (`UploadFile`, `POST /api/declarations/{id}/evidence/file`) |
+| `openpyxl` | `>=3.1,<4` | MIT | Xuất bản báo cáo kỳ đóng băng (L1) ra XLSX 2 sheet (`cris/report.py`, `report_xlsx`) |
 
-Tầng nghiệp vụ (`cris/*.py` ngoài `cris/api/`) vẫn chỉ phụ thuộc `psycopg`; bốn
-thư viện web ở trên chỉ phục vụ lớp API JSON mỏng gọi vào tầng đó.
+Tầng nghiệp vụ (`cris/*.py` ngoài `cris/api/`) chỉ phụ thuộc `psycopg` và
+`openpyxl` (riêng `cris/report.py`, xuất XLSX); bốn thư viện web ở trên chỉ
+phục vụ lớp API JSON mỏng gọi vào tầng đó.
 
 ### Thư viện phát triển (dev)
 

@@ -88,4 +88,5 @@ def finalize_period(conn: Conn, actor: RdOfficer, pid: int):
         result = declare.finalize_period(conn, pid, actor)
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
-    return PeriodFinalizeOut(finalized=result["finalized"], skipped=result["skipped"])
+    return PeriodFinalizeOut(finalized=result["finalized"], skipped=result["skipped"],
+                             report_id=result["report_id"])
