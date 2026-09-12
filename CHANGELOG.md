@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `deploy/upgrade.sh`: tệp chưa theo dõi trên máy chủ mà tag mới bắt đầu quản lý (ví dụ `deploy/pipeline.sh` chép tay) được cất sang `.local.bak` thay vì làm `git checkout` thất bại — Deploy v0.6.0 từng đỏ vì lỗi này.
+
 ## [0.6.0] - 2026-09-12
 
 ### Fixed (giao diện)
