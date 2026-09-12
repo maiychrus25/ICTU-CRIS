@@ -95,6 +95,14 @@ fi
 # 1/6 — mã nguồn
 echo "-- 1/6 lấy mã nguồn theo tag ${TAG}"
 git -C "$REPO_DIR" fetch --tags
+# Tệp máy chủ tự thêm (chưa theo dõi) mà tag mới bắt đầu quản lý (vd deploy/pipeline.sh
+# từng chép tay) sẽ chặn checkout — cất sang <tệp>.local.bak rồi mới checkout.
+git -C "$REPO_DIR" ls-tree -r --name-only "$TAG" | while IFS= read -r f; do
+  if [ -e "$REPO_DIR/$f" ] && ! git -C "$REPO_DIR" ls-files --error-unmatch -- "$f" >/dev/null 2>&1; then
+    echo "   cất tệp chưa theo dõi bị tag mới ghi đè: $f -> $f.local.bak"
+    mv "$REPO_DIR/$f" "$REPO_DIR/$f.local.bak"
+  fi
+done
 git -C "$REPO_DIR" checkout -q "$TAG"
 
 # 2/6 — ảnh
