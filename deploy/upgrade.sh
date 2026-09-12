@@ -81,6 +81,7 @@ if $DRY_RUN; then
 
 5/6 Migrate và khởi động lại
     docker compose run --rm -T app migrate
+    # có migration mới → nhắc xem "Nâng cấp" trong docs/release-notes/$TAG.md
     docker compose up -d app
     curl -fs "$HEALTH_URL"   # chờ tối đa ${HEALTH_TIMEOUT}s
 
@@ -137,7 +138,11 @@ sed -i "s|^\(\s*image:\s*\).*|\1${LOCAL_IMAGE}|" "$OVERRIDE_FILE"
 
 # 5/6 — migrate rồi khởi động lại, chờ health
 echo "-- 5/6 migrate và khởi động lại app"
-docker compose run --rm -T app migrate
+migrate_out="$(docker compose run --rm -T app migrate)"
+echo "   $migrate_out"
+if [ "$migrate_out" != "[]" ]; then
+  echo "   có migration mới — xem \"Nâng cấp\" trong docs/release-notes/${TAG}.md, có thể cần chạy thêm bước dữ liệu" >&2
+fi
 docker compose up -d app
 
 echo -n "   chờ ${HEALTH_URL}"

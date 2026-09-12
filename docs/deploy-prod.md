@@ -28,8 +28,11 @@ Internet → Cloudflare (proxy) → nginx (80/443, chứng chỉ Let's Encrypt)
   nhóm `docker`), sở hữu toàn bộ `/opt/ictu-cris`. `root` vẫn còn để vận hành
   tay khi cần (vá hệ điều hành, nginx, ...) nhưng CI chỉ SSH bằng `deploy`.
 - Cron của `deploy` (`crontab -u deploy -l`):
-  - `0 2 * * *` — đường ống đồng bộ đêm: `sync → normalize → link → dedup →
-    ai embed → ai suggest`, log vào `/opt/ictu-cris/sync-nightly.log`.
+  - `0 2 * * 1-6` — đường ống dữ liệu đêm (thứ Hai–thứ Bảy):
+    `deploy/pipeline.sh --nightly` (bỏ hai bước nặng `ai topics`/`ai map`, chỉ
+    chạy đủ vào đêm chủ nhật), log vào `/opt/ictu-cris/sync-nightly.log`.
+  - `0 2 * * 0` — đêm chủ nhật: `deploy/pipeline.sh` (không có `--nightly`) —
+    chạy đủ cả `ai topics`/`ai map`, cùng log trên.
   - `30 3 * * *` — sao lưu `pg_dump | gzip` vào `/opt/ictu-cris/backups/`,
     xoá bản cũ hơn 7 ngày (`find -mtime +7 -delete`).
   - Cron của `root` (giám sát các dự án khác trên máy — `openclaw`, ...)
@@ -93,6 +96,29 @@ dùng được cả bằng tay lẫn từ CI):
 
 `--dry-run` in ra các bước sẽ chạy mà không chạy gì.
 
+## `deploy/pipeline.sh` làm gì
+
+Đường ống dữ liệu đầy đủ (đồng bộ nguồn cho tới các gợi ý AI), gọi bởi cron
+đêm ở trên hoặc chạy tay `bash deploy/pipeline.sh [--nightly]` (từ máy chủ,
+trong `/opt/ictu-cris`; script tự `cd` vào `deploy/` nên gọi từ đâu cũng
+được). Idempotent — mỗi bước tự bỏ qua phần đã làm, chạy lại không hại. Các
+bước theo thứ tự, in `date` trước mỗi bước:
+
+1. `sync` → `people` → `normalize` → `link` → `dedup` → `quality` (đồng bộ
+   nguồn, chuẩn hoá, liên kết tác giả, gộp trùng, số liệu chất lượng).
+2. `ai embed`; `ai topics` (bỏ qua khi `--nightly`); `ai suggest`.
+3. Lấy khoá đồ án mới nhất bằng `psql` qua `docker compose exec db` (không
+   hard-code như bản cũ), rồi `ai screen --cohort <khoá>` rà trùng đề tài của
+   khoá đó với các khoá khác; `normalize --redo --doc-type do_an` chuẩn hoá
+   lại đồ án (rà trùng có thể đổi `needs_review`). Bỏ qua hai bước này nếu
+   chưa có đồ án nào gắn `cohort`.
+4. `ai mentors` gợi ý người hướng dẫn thật; `ai map` dựng lại bản đồ tri thức
+   (bỏ qua khi `--nightly`); `quality scan` quét bất thường dữ liệu (K2).
+
+`--nightly` bỏ `ai topics` và `ai map` (hai bước nặng nhất, không đổi nhiều
+theo ngày) — dùng cho cron các đêm thường; đêm chủ nhật chạy đủ (không có cờ)
+để hai số liệu đó không lệch quá một tuần.
+
 ## Quay lui (rollback)
 
 - **Chỉ ảnh bị lỗi** (CSDL vẫn tương thích, ví dụ vừa deploy một bản có lỗi ở
@@ -132,6 +158,32 @@ bash /opt/ictu-cris/deploy/upgrade.sh vX.Y.Z
 - Sao lưu nằm trên cùng máy chủ (không đẩy đi nơi khác) — nếu cần sao lưu
   ngoài máy chủ (ổ đĩa hỏng, máy chủ mất), đó là việc chưa làm, ghi nhận ở
   đây để làm sau.
+
+## nginx
+
+`nginx` không nằm trong repo (xem mục Kiến trúc) — khối `location` dưới đây
+là mẫu khuyến nghị để chỉnh tay trong
+`/etc/nginx/sites-available/cris.ahvlabs.com`:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # App đã tự nén (GZipMiddleware, minimum_size=1024 byte) — không nén lại ở
+    # đây (tránh nén hai lần); để mặc định (gzip off) là đủ.
+    gzip off;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    client_max_body_size 12m;   # đủ cho minh chứng PDF/ảnh (evidence)
+}
+```
 
 ## Đã biết / giới hạn
 

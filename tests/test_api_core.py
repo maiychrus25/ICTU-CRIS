@@ -34,7 +34,10 @@ def client(monkeypatch):
 
 
 def test_health_and_openapi(client):
-    assert client.get("/api/health").json() == {"status": "ok"}
+    # Hợp đồng đầy đủ (db/model/last_sync_age_h/version, DB lỗi -> 503, model
+    # theo provider) có test riêng ở tests/test_health_units.py; ở đây chỉ
+    # kiểm sơ bộ endpoint còn sống.
+    assert client.get("/api/health").json()["status"] == "ok"
     spec = client.get("/openapi.json").json()
     paths = set(spec["paths"])
     for p in ("/api/works", "/api/works/{wid}", "/api/persons", "/api/persons/{pid}", "/api/queue/authors",
@@ -50,7 +53,8 @@ def test_health_and_openapi(client):
               "/api/works/{wid}/citation", "/api/works/facets", "/api/persons/{pid}/cv",
               "/api/recent", "/api/feed.xml",
               "/api/periods/{pid}/reports", "/api/reports/{rid}", "/api/reports/{rid}/export",
-              "/api/notifications", "/api/notifications/{nid}/read", "/api/notifications/read-all"):
+              "/api/notifications", "/api/notifications/{nid}/read", "/api/notifications/read-all",
+              "/api/units/{unit_id}/overview"):
         assert p in paths, p
 
 
