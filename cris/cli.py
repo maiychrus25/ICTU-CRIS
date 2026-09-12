@@ -66,6 +66,12 @@ def main(argv=None):
         import uvicorn
         uvicorn.run("cris.api.app:app", host=a.host, port=a.port)
         return
+    if a.cmd == "ai" and a.ai_cmd == "download":
+        # Tải mô hình không cần CSDL (chạy được trước khi có DATABASE_URL, ví dụ lúc dựng ảnh).
+        from cris.ai.local import ensure_model
+        print(ensure_model(model_dir=os.environ.get("CRIS_AI_MODEL_DIR") or None,
+                           log=lambda m: print(m, file=sys.stderr)))
+        return
     conn = db.connect()
     if a.cmd == "migrate":
         print(db.migrate(conn))
@@ -90,50 +96,43 @@ def main(argv=None):
             embed as ai_embed,
         )
         from cris.ai import provider as ai_provider
-        if a.ai_cmd == "download":
-            from cris.ai.local import ensure_model
-            # Cùng thư mục với provider local (CRIS_AI_MODEL_DIR), để tải một lần rồi dùng
-            # được ngay trong container/volume thay vì rơi vào cache riêng của người dùng.
-            print(ensure_model(model_dir=os.environ.get("CRIS_AI_MODEL_DIR") or None,
-                               log=lambda m: print(m, file=sys.stderr)))
-        else:
-            prov = ai_provider.get_provider()
-            if a.ai_cmd == "status":
-                print(json.dumps(ai_embed.status(conn, prov), ensure_ascii=False, indent=2, default=str))
-            elif a.ai_cmd == "embed":
-                prog = lambda done, total: print(f"  {done}/{total}", file=sys.stderr) if done % 200 == 0 or done == total else None
-                print(ai_embed.build_embeddings(conn, prov, only_missing=not a.all, progress=prog))
-            elif a.ai_cmd == "topics":
-                from cris.ai import topics as ai_topics
-                print(ai_topics.build_topics(conn, prov, k=a.k))
-            elif a.ai_cmd == "suggest":
-                from cris.ai import suggest as ai_suggest
-                print({"author_link": ai_suggest.suggest_author_links(conn, prov),
-                       "duplicate": ai_suggest.suggest_duplicates(conn, prov)})
-            elif a.ai_cmd == "screen":
-                from cris.ai import screen as ai_screen
-                high = a.high if a.high is not None else ai_screen.SCREEN_THRESHOLDS[0]
-                mid = a.mid if a.mid is not None else ai_screen.SCREEN_THRESHOLDS[1]
-                r = ai_screen.screen_cohort(conn, prov, cohort=a.cohort, k=a.k, thresholds=(high, mid))
-                print(f"screened={r['screened']} flagged={r['flagged']}")
-            elif a.ai_cmd == "mentors":
-                from cris.ai import mentor as ai_mentor
-                r = ai_mentor.suggest_mentors(conn, prov, k=a.k, min_votes=a.min_votes, min_score=a.min_score)
-                print(f"scanned={r['scanned']} suggested={r['suggested']}")
-            elif a.ai_cmd == "experts":
-                from cris.ai import expert as ai_expert
-                r = ai_expert.find_experts(conn, prov, title=a.title, description=a.description, k=a.k, save=False)
-                if r["fallback"]:
-                    print(r["note"], file=sys.stderr)
-                else:
-                    print(f"{'điểm':>8}  {'bài khớp':>8}  giảng viên")
-                    for row in r["results"]:
-                        print(f"{row['score']:8.3f}  {row['works_matched']:8d}  "
-                              f"{row['display_name']} ({row['degree'] or '—'}, {row['unit_code'] or '—'})")
-            elif a.ai_cmd == "map":
-                from cris.ai import map as ai_map
-                r = ai_map.build_map(conn, prov)
-                print(f"points={r['points']} topics={r['topics']} seconds={r['seconds']}")
+        prov = ai_provider.get_provider()
+        if a.ai_cmd == "status":
+            print(json.dumps(ai_embed.status(conn, prov), ensure_ascii=False, indent=2, default=str))
+        elif a.ai_cmd == "embed":
+            prog = lambda done, total: print(f"  {done}/{total}", file=sys.stderr) if done % 200 == 0 or done == total else None
+            print(ai_embed.build_embeddings(conn, prov, only_missing=not a.all, progress=prog))
+        elif a.ai_cmd == "topics":
+            from cris.ai import topics as ai_topics
+            print(ai_topics.build_topics(conn, prov, k=a.k))
+        elif a.ai_cmd == "suggest":
+            from cris.ai import suggest as ai_suggest
+            print({"author_link": ai_suggest.suggest_author_links(conn, prov),
+                   "duplicate": ai_suggest.suggest_duplicates(conn, prov)})
+        elif a.ai_cmd == "screen":
+            from cris.ai import screen as ai_screen
+            high = a.high if a.high is not None else ai_screen.SCREEN_THRESHOLDS[0]
+            mid = a.mid if a.mid is not None else ai_screen.SCREEN_THRESHOLDS[1]
+            r = ai_screen.screen_cohort(conn, prov, cohort=a.cohort, k=a.k, thresholds=(high, mid))
+            print(f"screened={r['screened']} flagged={r['flagged']}")
+        elif a.ai_cmd == "mentors":
+            from cris.ai import mentor as ai_mentor
+            r = ai_mentor.suggest_mentors(conn, prov, k=a.k, min_votes=a.min_votes, min_score=a.min_score)
+            print(f"scanned={r['scanned']} suggested={r['suggested']}")
+        elif a.ai_cmd == "experts":
+            from cris.ai import expert as ai_expert
+            r = ai_expert.find_experts(conn, prov, title=a.title, description=a.description, k=a.k, save=False)
+            if r["fallback"]:
+                print(r["note"], file=sys.stderr)
+            else:
+                print(f"{'điểm':>8}  {'bài khớp':>8}  giảng viên")
+                for row in r["results"]:
+                    print(f"{row['score']:8.3f}  {row['works_matched']:8d}  "
+                          f"{row['display_name']} ({row['degree'] or '—'}, {row['unit_code'] or '—'})")
+        elif a.ai_cmd == "map":
+            from cris.ai import map as ai_map
+            r = ai_map.build_map(conn, prov)
+            print(f"points={r['points']} topics={r['topics']} seconds={r['seconds']}")
     elif a.cmd == "quality":
         if a.action == "scan":
             r = anomaly.scan(conn)
