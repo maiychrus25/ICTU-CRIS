@@ -979,3 +979,26 @@ class NotificationList(BaseModel):
 class MarkAllReadOut(BaseModel):
     ok: bool
     marked: int
+
+
+# ---------- góc nhìn theo đơn vị (L3) ----------
+class UnitRef(BaseModel):
+    id: int
+    code: str
+    name: str
+
+
+class UnitYearCount(BaseModel):
+    year: int
+    n: int
+
+
+class UnitOverviewOut(BaseModel):
+    unit: UnitRef
+    works_total: int
+    by_doc_type: dict[str, int]
+    by_year: list[UnitYearCount]
+    top_persons: list[TopPerson]
+    pending_links: int
+    declarations_by_state: dict[str, int]
+    lecturers_without_works: int

@@ -31,6 +31,23 @@
   chính người thao tác; lỗi khi gửi thông báo không làm hỏng thao tác chính.
   `GET /api/notifications?unread=&page=`, `POST /api/notifications/{id}/read`,
   `POST /api/notifications/read-all` (`cris/api/routes/notifications.py`).
+- Vận hành (lát cắt L3): `GZipMiddleware` (`minimum_size=1024`) cho mọi
+  `/api/*` — bản đồ tri thức ~1,5 MB còn ~300 KB. Provider AI cục bộ
+  (`CRIS_AI_PROVIDER=local`) nay nạp ở luồng nền lúc khởi động thay vì chặn
+  request đầu tiên ~1,8 s. `GET /api/health` mở rộng: `db` (503 khi CSDL lỗi),
+  `model` (`loaded|missing|disabled|loading`), `last_sync_age_h` (giờ từ lần
+  đồng bộ gần nhất), `version`. `GET /api/units/{id}/overview?period_id=` góc
+  nhìn khoa: số công trình theo loại/5 năm gần nhất, 10 giảng viên nhiều công
+  trình nhất, lượt tác giả đang chờ xác nhận, hồ sơ kê khai theo trạng thái
+  của một kỳ (mặc định kỳ đang mở mới nhất), số giảng viên chưa có công trình
+  liên kết — cấp khoa chỉ xem đơn vị mình (403 khác), `rd_officer`/
+  `school_leader` xem mọi đơn vị (`cris/api/routes/units.py`). `deploy/pipeline.sh`
+  gộp toàn bộ đường ống dữ liệu (trước chỉ có tay trên máy chủ) thành một
+  script trong repo, cờ `--nightly` bỏ hai bước nặng `ai topics`/`ai map`;
+  `deploy/upgrade.sh` nhắc xem release notes khi migrate có bản ghi mới;
+  `docs/deploy-prod.md` thêm khối `nginx` khuyến nghị (header bảo mật,
+  `client_max_body_size 12m`, tắt nén ở nginx vì app đã tự nén) và lịch cron
+  đêm mới (`--nightly` các đêm thường, đủ vào chủ nhật).
 
 ## [0.5.0] - 2026-09-12
 
