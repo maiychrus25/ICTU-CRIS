@@ -1,9 +1,10 @@
 # Kịch bản trình diễn — chung kết 10/10/2026
 
-Thời lượng mục tiêu: **9–12 phút** cho bảy phân đoạn lõi (1–7), cộng tối đa **3 phút** cho
-năm phân đoạn bổ sung lát cắt J/K (8–12, bản đồ tri thức/tìm chuyên gia/cổng sinh
-viên/trích dẫn/cảnh báo bất thường) nếu chương trình còn thời gian — cắt bớt đoạn 8–12 đầu
-tiên khi phải rút ngắn, không cắt đoạn 1–7. Cộng phần hỏi đáp riêng (mục cuối). Chạy
+Thời lượng mục tiêu: **9–12 phút** cho bảy phân đoạn lõi (1–7), cộng tối đa **4–5 phút** cho
+tám phân đoạn bổ sung lát cắt J/K/L (8–15, bản đồ tri thức/tìm chuyên gia/cổng sinh
+viên/trích dẫn/cảnh báo bất thường/chốt kỳ → báo cáo đóng băng/thông báo/góc nhìn khoa) nếu
+chương trình còn thời gian — cắt bớt đoạn 8–15 đầu tiên khi phải rút ngắn, không cắt đoạn
+1–7. Cộng phần hỏi đáp riêng (mục cuối). Chạy
 trên container đã dựng (`docker compose up`), dữ liệu thật đồng bộ từ
 `repository.ictu.edu.vn` (7.618 công trình, 410 giảng viên, 903 liên kết chờ xác nhận, 39
 nhóm nghi trùng, khoá 21: 529 đồ án đã rà, 47 gắn cờ). Ảnh tham chiếu: `docs/images/*.png`
@@ -381,6 +382,66 @@ trả về Nháp, lý do "Thiếu minh chứng trang bìa tạp chí".
 
 ---
 
+## 13. Chốt kỳ → báo cáo đóng băng (45 giây)
+
+**URL**: `/ky-bao-cao/chi-tiet/?id=` (tab "Báo cáo", `rd_officer`) → `/bao-cao/?id=`
+
+**Thao tác**:
+1. Ở tab "Báo cáo" của kỳ mẫu **`2026-H2`** đã **Đã đóng nộp**, bấm **Chốt kỳ** — hệ thống
+   chuyển thẳng tới bản báo cáo vừa tự sinh, không cần bấm thêm lần nào để "tạo báo cáo".
+2. Chỉ vào badge **"Đóng băng · SHA-256 …"** đầu trang — hover vào tooltip giải thích: bản
+   ghi này chụp lại toàn bộ hồ sơ kê khai tại đúng thời điểm chốt, không đổi về sau dù dữ
+   liệu gốc có sửa tiếp.
+3. Chỉ vào bảng tổng hợp đơn vị × trạng thái và bảng theo loại tài liệu, rồi cuộn xuống bảng
+   chi tiết từng hồ sơ (có ô tìm nhanh).
+4. Bấm nút tải **XLSX** — chỉ vào tệp vừa tải: hai sheet "Tổng hợp" và "Chi tiết", tiêu đề
+   in đậm, hàng đầu cố định.
+
+**Câu nói then chốt**:
+> "Số liệu đã ký không sửa ngầm được. Mỗi lần chốt kỳ tạo một phiên bản báo cáo mới, kèm mã
+> băm SHA-256 của toàn bộ dữ liệu — ai cũng tính lại được mã băm đó để chứng minh báo cáo
+> chưa bị đổi một dòng nào, kể cả khi hồ sơ gốc bị sửa tiếp sau ngày chốt."
+
+**Con số thật**: kỳ mẫu `2026-H2`, phiên bản v1, 3 hồ sơ kê khai tại thời điểm chốt.
+
+---
+
+## 14. Thông báo (15 giây)
+
+**URL**: bất kỳ trang nào đã đăng nhập (chuông ở topbar) → `/thong-bao/`
+
+**Thao tác**:
+1. Chỉ vào chuông ở topbar — số chưa đọc hiện ngay trên huy hiệu.
+2. Bấm chuông mở popover: danh sách thông báo gần nhất kèm thời gian tương đối; bấm một
+   dòng — điều hướng thẳng tới hồ sơ/báo cáo liên quan và tự đánh dấu đã đọc.
+3. Bấm "Đánh dấu tất cả đã đọc", huy hiệu về 0.
+
+**Câu nói then chốt**:
+> "Không phải chờ ai nhắc bằng lời hay bằng Excel gửi qua email nữa — hồ sơ đổi trạng thái,
+> kỳ mở/đóng/chốt, hay công trình vừa được nối vào hồ sơ của mình, người liên quan biết ngay
+> trong ứng dụng."
+
+---
+
+## 15. Góc nhìn khoa (30 giây)
+
+**URL**: `/khoa/?id=`
+
+**Thao tác**:
+1. Mở `/khoa/?id=` của một khoa mẫu — chỉ vào hàng thẻ số: tổng công trình theo loại, 5 năm
+   gần nhất.
+2. Cuộn xuống bảng "10 giảng viên nhiều công trình nhất" và khối "hồ sơ kê khai theo trạng
+   thái" của kỳ đang mở — bấm vào một trạng thái để đi thẳng tới hàng đợi/kỳ tương ứng.
+3. Chỉ vào khối "Giảng viên chưa có công trình liên kết" — mỗi dòng có link ra hồ sơ liên
+   kết tác giả.
+
+**Câu nói then chốt**:
+> "Trước đây lãnh đạo khoa chỉ có được bức tranh này khi chuyên viên tổng hợp tay từ Excel;
+> giờ mở một trang là thấy ngay, và bấm vào bất kỳ con số nào cũng đi tiếp được về đúng hàng
+> đợi hay hồ sơ đứng sau nó."
+
+---
+
 ## Câu hỏi giám khảo có thể hỏi & trả lời ngắn
 
 1. **Vì sao không dùng LLM (ChatGPT/Claude/Gemini) mà chỉ dùng mô hình embedding nhỏ?**
@@ -460,7 +521,16 @@ trả về Nháp, lý do "Thiếu minh chứng trang bìa tạp chí".
     `docs/ba/14-nfr.md`) — chọn mật khẩu cục bộ băm chuẩn PBKDF2 để có đăng nhập thật ngay,
     không thêm dependency, và không chặn tích hợp SSO trường thật ở lát cắt sau.
 
-13. **Ai được sửa dữ liệu, sửa xong có truy ngược được không?**
+13. **Báo cáo đóng băng khác gì Excel gửi email?**
+    Excel gửi qua email không có gì ngăn ai đó mở lại và sửa số sau khi đã gửi, cũng không
+    ai chứng minh được bản đang cầm là bản đã chốt hay bản bị sửa tiếp. Báo cáo kỳ đóng băng
+    ghi payload đầy đủ (mọi hồ sơ + công trình + tác giả + minh chứng tại thời điểm chốt)
+    thành một dòng bất biến trong CSDL kèm mã băm SHA-256 — ai cũng tính lại được mã băm đó
+    để kiểm báo cáo có bị đổi hay không, kể cả khi dữ liệu gốc (`declaration`/`work`) sửa
+    tiếp sau ngày chốt; mỗi lần chốt kỳ tạo thêm một phiên bản mới (v1, v2, …) thay vì ghi
+    đè, nên vẫn xem lại được số liệu của các kỳ trước đúng như lúc chốt.
+
+14. **Ai được sửa dữ liệu, sửa xong có truy ngược được không?**
     Chỉ vai `rd_officer` (phòng KH-CN) sửa trực tiếp được — và chỉ chín trường mô tả
     (`cris/edit.py` — `EDITABLE`: tiêu đề, DOI, năm/số, tạp chí, tập, loại bài, khoá, tóm
     tắt, từ khoá), không sửa được tác giả, đơn vị, minh chứng (BR-23). Mọi lần sửa bắt buộc
@@ -468,7 +538,7 @@ trả về Nháp, lý do "Thiếu minh chứng trang bìa tạp chí".
     `audit_log('work.edit')` — trang chi tiết công trình đổi dòng "Nguồn" thành "Chỉnh tay
     bởi … lúc …", giá trị gốc từ kho không bao giờ bị ghi đè.
 
-14. **Gợi ý người hướng dẫn dựa trên gì, sai thì sao?**
+15. **Gợi ý người hướng dẫn dựa trên gì, sai thì sao?**
     Dựa trên giả định thống kê (ghi rõ trong docstring `suggest_mentors`, `cris/ai/mentor.py`):
     đồ án cùng đề tài thường do cùng một giảng viên hướng dẫn. Với mỗi đồ án đang ghi
     `ICTU_TEACHER`, hệ thống tìm `k=5` đồ án gần nhất về nghĩa (cosine trên vector tiêu đề
@@ -479,7 +549,7 @@ trả về Nháp, lý do "Thiếu minh chứng trang bìa tạp chí".
     tác giả ở trạng thái `ChoXacNhan`, giống mọi liên kết khác, chuyên viên xem bằng chứng
     (đồ án dẫn chứng) rồi tự quyết định xác nhận hay bác bỏ (BR-18) — không có gì tự nối.
 
-15. **Khoa và phòng tranh nhau thì sao?**
+16. **Khoa và phòng tranh nhau thì sao?**
     Không tranh chấp được vì mỗi bước chuyển trạng thái gắn cứng với một tập vai trò
     (`cris/declare.py` — `_TRANSITIONS`): khoa chỉ đưa hồ sơ từ Chờ khoa duyệt sang Khoa đã
     duyệt hoặc trả về Nháp; phòng chỉ quyết định từ Chờ phòng kiểm tra sang Đạt yêu cầu hoặc
@@ -488,7 +558,7 @@ trả về Nháp, lý do "Thiếu minh chứng trang bìa tạp chí".
     dấu đã duyệt, nên không có tình huống khoa và phòng cùng giữ hai bản "đã duyệt" khác
     nhau của cùng một hồ sơ.
 
-16. **Tìm kiếm ngữ nghĩa khác gì Google?**
+17. **Tìm kiếm ngữ nghĩa khác gì Google?**
     Google (và tìm từ khoá cũ của hệ thống) khớp chuỗi ký tự — gõ "ứng dụng học tiếng Anh"
     sẽ bỏ lỡ một đồ án ghi "app luyện phát âm Anh ngữ" dù cùng đề tài. Tìm kiếm ngữ nghĩa
     embed câu đã gõ thành vector 384 chiều rồi so cosine với vector tiêu đề+tóm tắt+từ khoá
@@ -497,7 +567,7 @@ trả về Nháp, lý do "Thiếu minh chứng trang bìa tạp chí".
     top-200 gần nghĩa nhất trước khi lọc tiếp (`docs/ai.md` mục 7) — không nhằm thay Google
     cho tra cứu ngoài phạm vi kho.
 
-17. **Bản đồ PCA có tin được không?**
+18. **Bản đồ PCA có tin được không?**
     Tin được để *định hướng*, không tin được để *đo khoảng cách chính xác*. PCA chỉ giữ lại
     2 trong 384 chiều của vector gốc (phần lớn "phương sai" — biến thiên dữ liệu — vẫn mất),
     nên hai điểm gần nhau trên bản đồ **thường** cùng chủ đề nhưng không phải lúc nào cũng
@@ -514,7 +584,7 @@ Checklist chạy theo thứ tự, trên máy sẽ dùng để trình diễn — 
 trước ngày 10/10, tốt nhất là ngắt mạng ở bước cuối để chắc chắn hệ thống chạy offline:
 
 - [ ] `docker compose up -d db` rồi `docker compose build app` — dựng xong không lỗi.
-- [ ] `docker compose run --rm app migrate` — áp đủ `0001`–`0017`.
+- [ ] `docker compose run --rm app migrate` — áp đủ `0001`–`0019`.
 - [ ] Có dữ liệu thật đã đồng bộ (đồng bộ trước, không đồng bộ trực tiếp lúc demo — mất
       khoảng 2 giờ); nếu dùng bản sao dữ liệu demo, đối chiếu số liệu trong kịch bản với
       số liệu bản sao trước khi trình diễn.
@@ -548,12 +618,12 @@ trước ngày 10/10, tốt nhất là ngắt mạng ở bước cuối để ch
       trong lúc chờ, không cần chờ người thuyết trình dẫn qua từng bước.
 - [ ] `python -m cris serve` (hoặc container `serve --host 0.0.0.0`) — mở
       `http://localhost:8000` và `http://localhost:8000/docs`, kiểm cả hai trả `200`.
-- [ ] Mở sẵn các tab trình duyệt theo đúng thứ tự mười hai phân đoạn ở trên, để không mất
+- [ ] Mở sẵn các tab trình duyệt theo đúng thứ tự mười lăm phân đoạn ở trên, để không mất
       thời gian gõ URL giữa buổi trình diễn: `/tong-quan/`, `/tra-cuu/`, `/doi-soat/tac-gia/`,
       `/doi-soat/huong-dan/`, `/doi-soat/trung-lap/`, `/doi-chieu/`, `/doi-chieu/ra-soat/`,
       `/ky-bao-cao/chi-tiet/?id=1`, `/ke-khai/?id=`, `/huong-dan/`, `/ve/`, `/docs`, `/ban-do/`,
       `/doi-chieu/chuyen-gia/`, `/kiem-tra-de-tai/`, `/giang-vien/ly-lich/?id=`,
-      `/chat-luong-du-lieu/`.
+      `/chat-luong-du-lieu/`, `/bao-cao/?id=`, `/thong-bao/`, `/khoa/?id=`.
   - [ ] Trước khi thao tác thật trên hàng đợi tác giả/nghi trùng (phân đoạn 3, 4), xác
       nhận đây là **bản sao DB dành cho demo**, hoặc đã đánh dấu trước các hàng "an toàn để
       đổi trạng thái" nếu bắt buộc dùng DB thật.

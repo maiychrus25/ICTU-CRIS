@@ -10,7 +10,10 @@ Giao diện làm lại bằng Next.js xuất tĩnh (xem
 với dữ liệu đổi theo mỗi lần đồng bộ). Cập nhật 12/09/2026 (lát cắt J + K, xem
 [2026-09-12-lat-cat-j-k.md](../superpowers/plans/2026-09-12-lat-cat-j-k.md)): thêm năm
 đường dẫn — bản đồ tri thức, tìm chuyên gia, cổng kiểm tra đề tài công khai, lý lịch khoa
-học, cảnh báo bất thường dữ liệu. Đường dẫn UI thật đang chạy:
+học, cảnh báo bất thường dữ liệu. Cập nhật 12/09/2026 tối (lát cắt L, xem
+[2026-09-12-lat-cat-l.md](../superpowers/plans/2026-09-12-lat-cat-l.md)): thêm ba đường
+dẫn — thông báo trong ứng dụng, báo cáo kỳ đóng băng, góc nhìn theo khoa. Đường dẫn UI
+thật đang chạy:
 
 ```
 /tong-quan/                                Tổng quan cho lãnh đạo
@@ -30,8 +33,11 @@ học, cảnh báo bất thường dữ liệu. Đường dẫn UI thật đang 
 /huong-dan/                                Hướng dẫn sử dụng trong ứng dụng, theo vai trò
 /ky-bao-cao/                               Danh sách kỳ báo cáo
 /ky-bao-cao/chi-tiet/?id=                  Chi tiết kỳ: tiến độ theo đơn vị, hồ sơ kê khai
+/bao-cao/?id=                              Bản báo cáo kỳ đóng băng (phiên bản, SHA-256, xuất CSV/XLSX)
 /ke-khai/?id=                              Chi tiết hồ sơ kê khai: trạng thái, minh chứng
 /ke-khai-cua-toi/                          Giảng viên tự kê khai công trình của mình
+/khoa/?id=                                 Góc nhìn theo khoa: số liệu, tiến độ kê khai, giảng viên chưa liên kết
+/thong-bao/                                Thông báo trong ứng dụng (đầy đủ, có phân trang)
 /nhat-ky/                                  Nhật ký thao tác
 /chat-luong-du-lieu/                       Báo cáo chất lượng dữ liệu
 /chat-luong-du-lieu/canh-bao/              Cảnh báo bất thường dữ liệu (tab trong trang trên)

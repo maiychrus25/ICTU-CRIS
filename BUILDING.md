@@ -350,6 +350,19 @@ thường dữ liệu), cùng máy phát triển:
 | `python -m cris ai map` (7.618 công trình đã embed, 39 cụm chủ đề) | 7.618 điểm, 39 cụm, 9,7 s; `GET /api/ai/map` trả JSON ≈ 1,5 MB |
 | `python -m cris quality scan` (7.618 công trình, 400 giảng viên) | `scopus_no_doi` 64, `thesis_title_equals_article` 2, `missing_abstract_article` 1.697; `year_out_of_range`/`orcid_duplicate`/`doi_invalid` đều 0 |
 
+Ngày 12/09/2026 tối (lát cắt L — báo cáo kỳ đóng băng có phiên bản, thông báo trong ứng
+dụng, góc nhìn theo khoa, vận hành), cùng máy phát triển:
+
+| Việc | Kết quả |
+|---|---|
+| `pytest -q -m "not slow"` sau L1–L3 | **433 passed**, 3 skipped (`slow` cần mô hình) |
+| `python -m cris migrate` trên DB đã có `0001`–`0017` | áp thêm `0018_period_report.sql` (bảng `period_report`), `0019_notification.sql` (bảng `notification`) — tới `0019` |
+| `GET /api/ai/map` sau khi bật `GZipMiddleware` (`minimum_size=1024`) | JSON không nén ~1,5 MB → nén gzip còn ~316 KB |
+| `POST /api/periods/{id}/reports` (kỳ mẫu có 3 hồ sơ kê khai) | phiên bản v1, `sha256` ổn định giữa hai lần đọc lại, mở được cả CSV (BOM UTF-8) lẫn XLSX (đọc lại bằng `openpyxl`) |
+| `GET /api/health` sau L3 | trả đủ bốn trường `db`, `model`, `last_sync_age_h`, `version`; DB lỗi mô phỏng bằng monkeypatch → 503 (`tests/test_health_units.py`) |
+| `npx playwright test` (cấu hình mặc định, dữ liệu mẫu) | mock: `core-flows.spec.ts` **17** + `phase-j.spec.ts` **5** + `phase-k.spec.ts` **5** + `phase-l.spec.ts` **5** + `user-guide.spec.ts` **1** — tổng **33** kịch bản |
+| `npx playwright test --config=playwright.real.config.ts` (ba project `desktop`/`tablet`/`mobile`) | thật: `real-backend.spec.ts` trên `desktop` **14** + `responsive-accessibility.real.spec.ts` trên `tablet`/`mobile` **2+2** — tổng **18** |
+
 ## 10. Triển khai máy chủ thật (Production deploy)
 
 `deploy/setup.sh` ở trên là cài **một máy** bằng tay. Máy chủ thật

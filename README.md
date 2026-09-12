@@ -91,12 +91,12 @@ sẵn thành HTML/CSS/JS tĩnh (`next build`, `output: "export"`), FastAPI phụ
 bản xuất đó ở `/` cùng gốc với `/api/*`: **một ảnh Docker, một container, một
 cổng** cho cả API lẫn giao diện. **Tầng AI** (`cris/ai/`) cũng chỉ gọi vào tầng
 nghiệp vụ và chỉ ghi vào bảng `ai_*`. Lược đồ CSDL nằm ở `cris/migrations/0001`–
-`0017` (PostgreSQL 16, không ORM).
+`0019` (PostgreSQL 16, không ORM).
 
 | Thành phần | Công nghệ | Vai trò |
 |---|---|---|
-| Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3 | Không ORM — truy vấn SQL trực tiếp |
-| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0017` |
+| Lõi xử lý | Python 3.12, chỉ stdlib + `psycopg` 3; `openpyxl` (MIT) riêng cho xuất báo cáo kỳ ra XLSX | Không ORM — truy vấn SQL trực tiếp |
+| CSDL | PostgreSQL 16 | Migration SQL thuần `0001`–`0019` |
 | Đóng gói | sdist + wheel đính kèm mỗi Release (không gồm `frontend/`); ảnh `ghcr.io/maiychrus25/ictu-cris` là bản chạy đủ (`:<version>-ai` kèm thư viện AI) | Workflow `release.yml` kiểm phiên bản khớp tag; `docker.yml` đẩy ảnh theo semver |
 | Triển khai | `deploy/setup.sh` + `deploy/docker-compose.yml` | Một lệnh: DB, lược đồ, người dùng mặc định, giao diện; `--ai` tải mô hình |
 | API | FastAPI + `uvicorn` | Router `/api/*`, tài liệu OpenAPI tương tác ở `/docs` |
@@ -119,6 +119,11 @@ python -m cris user create --email --name --roles a,b [--unit CODE] [--password]
 python -m cris user set-unit --email --unit CODE
 python -m cris user create-lecturers [--unit CODE] [--dry-run]     # tài khoản lecturer (H3)
 ```
+
+Vận hành máy chủ: `bash deploy/pipeline.sh [--nightly]` gộp cả đường ống dữ
+liệu (đồng bộ → chuẩn hoá → liên kết → gộp trùng → AI → quét bất thường)
+thành một script idempotent, `--nightly` bỏ hai bước AI nặng nhất cho cron
+đêm thường (đêm chủ nhật chạy đủ) — xem [docs/deploy-prod.md](docs/deploy-prod.md).
 
 ## ✨ Tính năng (Features)
 
@@ -177,6 +182,26 @@ python -m cris user create-lecturers [--unit CODE] [--dry-run]     # tài khoả
   gộp/giữ riêng, mở/đóng/huỷ kỳ báo cáo) đọc lại được kèm người thực hiện.
 - **Kỳ báo cáo** (`/ky-bao-cao/`) — mở, đóng, huỷ kỳ và xem tiến độ kê khai
   theo đơn vị.
+- **Báo cáo kỳ đóng băng, có phiên bản** (`/bao-cao/?id=`, điểm BA "P") —
+  chốt kỳ tự sinh một bản báo cáo mới không đổi về sau, chụp lại toàn bộ hồ
+  sơ kê khai (mọi trạng thái) cùng công trình/tác giả/minh chứng tại thời
+  điểm chốt; mỗi phiên bản kèm mã băm `sha256` để kiểm lại không bị sửa
+  ngầm, tải về CSV (UTF-8 BOM) hoặc XLSX (sheet tổng hợp đơn vị × trạng
+  thái + sheet chi tiết); cấp khoa chỉ xem/xuất được hồ sơ của đơn vị mình
+  trong một báo cáo.
+- **Thông báo trong ứng dụng** (chuông ở topbar, `/thong-bao/`, điểm BA "H")
+  — người dùng biết ngay hồ sơ của mình đổi trạng thái, kỳ báo cáo
+  mở/đóng/chốt, hoặc công trình vừa được nối vào hồ sơ của mình; không bao
+  giờ tự báo cho chính người thao tác.
+- **Góc nhìn theo khoa** (`/khoa/?id=`) — thẻ số công trình theo loại/5 năm
+  gần nhất, top 10 giảng viên, lượt tác giả đang chờ xác nhận, hồ sơ kê
+  khai theo trạng thái của kỳ đang mở, số giảng viên chưa có công trình
+  liên kết; cấp khoa chỉ xem đơn vị mình, `rd_officer`/lãnh đạo xem mọi
+  đơn vị.
+- **Sức khoẻ hệ thống** — `GET /api/health` mở rộng (`db`, `model`
+  `loaded|missing|disabled|loading`, `last_sync_age_h`, `version`), phản
+  hồi API nén gzip (`/api/*`, bản đồ tri thức ~1,5 MB còn ~300 KB), mô hình
+  AI cục bộ nạp ở luồng nền lúc khởi động thay vì chặn request đầu tiên.
 - **Rà soát trùng đề tài theo khoá** (`/doi-chieu/ra-soat/`) — so đề tài đồ án
   của một khoá với toàn bộ khoá trước, gắn cờ theo mức "cao/vừa/thấp"; ngưỡng
   hiệu chuẩn 0,90/0,80 trên phân bố điểm thật (47/529 đồ án khoá 21 được gắn
@@ -308,6 +333,11 @@ trúc máy chủ, secrets GitHub cần tạo, quy trình phát hành và quay lu
       APA/IEEE/BibTeX, lý lịch khoa học in được, mới cập nhật + RSS, cảnh báo
       bất thường dữ liệu (K) — xem
       [docs/release-notes/v0.5.0.md](docs/release-notes/v0.5.0.md)
+- [ ] **0.6.0 đang chốt (lát cắt L)** — báo cáo kỳ đóng băng có phiên bản
+      (điểm BA "P"), thông báo trong ứng dụng (điểm BA "H"), góc nhìn theo
+      khoa, sức khoẻ hệ thống mở rộng và `deploy/pipeline.sh` thay đường
+      ống vận hành tay trên máy chủ — dự thảo ghi chú phát hành ở
+      [docs/release-notes/v0.6.0.md](docs/release-notes/v0.6.0.md)
 - [ ] Còn lại: SSO trường thật, biểu mẫu Bộ
 
 ## 📚 Tài liệu (Documentation)
@@ -317,7 +347,7 @@ trúc máy chủ, secrets GitHub cần tạo, quy trình phát hành và quay lu
 | 🎯 | [docs/BRD.md](docs/BRD.md) | Yêu cầu nghiệp vụ: 6 vấn đề đo được, YN-01..10, ràng buộc cuộc thi |
 | 📐 | [docs/SRS.md](docs/SRS.md) | Đặc tả phần mềm: FR theo giai đoạn, tích hợp AI, ma trận truy vết YN → FR → UC → US |
 | 🤖 | [docs/ai.md](docs/ai.md) | AI làm gì và không làm gì, ba nhà cung cấp, mô hình, thuật toán, giới hạn |
-| 🏷️ | [docs/release-notes/v0.5.0.md](docs/release-notes/v0.5.0.md) | Ghi chú phát hành bản hiện tại (cũ hơn: [v0.4.0](docs/release-notes/v0.4.0.md), [v0.3.0](docs/release-notes/v0.3.0.md), [v0.2.0](docs/release-notes/v0.2.0.md), [v0.1.0](docs/release-notes/v0.1.0.md)) |
+| 🏷️ | [docs/release-notes/v0.6.0.md](docs/release-notes/v0.6.0.md) | Dự thảo ghi chú phát hành bản đang chốt (lát cắt L); bản đã phát hành gần nhất: [v0.5.0](docs/release-notes/v0.5.0.md) (cũ hơn: [v0.4.0](docs/release-notes/v0.4.0.md), [v0.3.0](docs/release-notes/v0.3.0.md), [v0.2.0](docs/release-notes/v0.2.0.md), [v0.1.0](docs/release-notes/v0.1.0.md)) |
 | 🛰️ | [docs/deploy-prod.md](docs/deploy-prod.md) | Triển khai máy chủ thật: kiến trúc, secrets, quy trình phát hành, quay lui |
 | 📋 | [docs/ba/00-README.md](docs/ba/00-README.md) | Bộ tài liệu phân tích nghiệp vụ (BA) — 18 tệp |
 | 🗄️ | [docs/ba/17-mo-hinh-du-lieu.md](docs/ba/17-mo-hinh-du-lieu.md) | Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 |
