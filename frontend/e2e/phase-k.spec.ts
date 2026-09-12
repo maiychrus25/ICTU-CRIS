@@ -5,12 +5,45 @@ import { expect, test } from "@playwright/test";
 
 const notice = "Dữ liệu được lấy từ DSpace của Trường CNTT&TT – ĐH Thái Nguyên";
 
-test("footer nguồn dữ liệu hiện ở app-shell và cổng công khai", async ({ page }) => {
+test("footer nguồn dữ liệu cố định và không che bảng tra cứu", async ({ page }) => {
   test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/tra-cuu/");
-  await expect(page.locator("footer").filter({ hasText: notice })).toBeVisible({ timeout: 30_000 });
+  const footer = page.locator("footer").filter({ hasText: notice });
+  const lastRow = page.locator("tbody tr").last();
+  await expect(lastRow).toBeVisible({ timeout: 30_000 });
+  await expect(footer).toHaveCSS("position", "fixed");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await lastRow.scrollIntoViewIfNeeded();
+
+  const footerBox = await footer.boundingBox();
+  const rowBox = await lastRow.boundingBox();
+  expect(footerBox).not.toBeNull();
+  expect(rowBox).not.toBeNull();
+  expect(footerBox!.x).toBe(240);
+  expect(footerBox!.y + footerBox!.height).toBeLessThanOrEqual(page.viewportSize()!.height + 1);
+  expect(rowBox!.y + rowBox!.height).toBeLessThanOrEqual(footerBox!.y + 1);
+
   await page.goto("/kiem-tra-de-tai/");
-  await expect(page.locator("footer").filter({ hasText: notice })).toBeVisible();
+  const publicFooter = page.locator("footer").filter({ hasText: notice });
+  await expect(publicFooter).toHaveCSS("position", "fixed");
+  await page.getByLabel("Tên đề tài dự định").fill("Xây dựng website bán hàng");
+  await page.getByRole("button", { name: "Kiểm tra", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Đề tài tương tự các khoá trước" })).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const publicFooterBox = await publicFooter.boundingBox();
+  expect(publicFooterBox).not.toBeNull();
+  expect(publicFooterBox!.x).toBe(0);
+  expect(publicFooterBox!.y + publicFooterBox!.height).toBeLessThanOrEqual(page.viewportSize()!.height + 1);
+
+  for (const width of [390, 768]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/tra-cuu/");
+    const responsiveBox = await page.locator("footer").filter({ hasText: notice }).boundingBox();
+    expect(responsiveBox).not.toBeNull();
+    expect(responsiveBox!.x).toBe(0);
+    expect(responsiveBox!.width).toBe(width);
+  }
 });
 
 test("tổng quan hiển thị công trình mới, công trình đổi và RSS", async ({ page }) => {
@@ -36,7 +69,10 @@ test("hồ sơ có học hàm, Scholar, lý lịch và trích dẫn từng bài"
   await expect(page.locator("aside")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "In / Lưu PDF" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sao chép trích dẫn tất cả" })).toBeVisible();
-  await expect(page.locator("footer").filter({ hasText: notice })).toBeVisible();
+  const footer = page.locator("footer").filter({ hasText: notice });
+  await expect(footer).toHaveCSS("position", "fixed");
+  await page.emulateMedia({ media: "print" });
+  await expect(footer).toHaveCSS("position", "static");
 });
 
 test("cảnh báo lọc được và bỏ qua bắt buộc lý do", async ({ page }) => {

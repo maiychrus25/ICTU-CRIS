@@ -40,7 +40,7 @@ function CvContent() {
   if (!person.data || !content.body) return <main className="mx-auto max-w-3xl p-6"><EmptyView description="Không có dữ liệu lý lịch khoa học cho giảng viên này." /></main>;
 
   return (
-    <div className="cv-page min-h-screen bg-muted/40 py-5 print:bg-white print:py-0">
+    <div className="cv-page data-footer-layout min-h-screen bg-muted/40 py-5 print:bg-white print:py-0">
       <nav aria-label="Thao tác lý lịch khoa học" className="cv-toolbar mx-auto mb-4 flex max-w-[210mm] flex-wrap items-center justify-between gap-2 px-4 print:hidden">
         <Button render={<Link href={`/giang-vien/?id=${id}`} />} variant="ghost"><ArrowLeft />Về hồ sơ</Button>
         <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={() => void copyAllCitations()} disabled={!content.citations.length}><Copy />Sao chép trích dẫn tất cả</Button><Button type="button" onClick={() => window.print()}><Printer />In / Lưu PDF</Button></div>
