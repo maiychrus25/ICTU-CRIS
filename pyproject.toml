@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10", "httpx>=0.27,<1"]
+dev = ["pytest>=9.1.1,<10", "httpx>=0.27,<1"]
 # Thư viện AI là tuỳ chọn: provider none/fake chạy không cần chúng.
 # Giấy phép: onnxruntime MIT, tokenizers Apache-2.0, numpy BSD-3 (xem DEPENDENCIES.md).
 ai = ["onnxruntime>=1.17,<2", "tokenizers>=0.15,<1", "numpy>=1.26,<3"]
