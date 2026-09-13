@@ -154,6 +154,7 @@ class WorksFacetsOut(BaseModel):
     years: list[FacetYear]
     units: list[FacetUnit]
     scores: list[FacetScore] = Field(default_factory=list)
+    venue_kinds: list[FacetValue] = Field(default_factory=list)   # loại nơi công bố, chỉ đếm bài báo
 
 
 class FieldEditIn(BaseModel):
@@ -204,6 +205,8 @@ class PersonProfile(BaseModel):
     position: str | None = None        # chức vụ (Hiệu trưởng, Trưởng khoa…) — tách khỏi đơn vị
     unit: UnitRef | None = None
     unit_source: str | None = None     # 'auto' (suy từ đa số công trình) | 'manual' (gán tay)
+    avatar_url: str | None = None      # ảnh đại diện ở kho nguồn (person.avatar_url)
+    field: str | None = None           # lĩnh vực (archive.knowsAbout, person.field)
 
 
 class PersonSearchRow(BaseModel):
@@ -213,6 +216,7 @@ class PersonSearchRow(BaseModel):
     unit_code: str | None = None
     kind: str
     works: int
+    avatar_url: str | None = None
 
 
 class Topic(BaseModel):

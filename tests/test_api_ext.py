@@ -147,6 +147,19 @@ def test_export_works_csv_filters_doc_type(client, conn, user_id):
     assert "bai_bao" in lines[1] and "Đồ án 1" not in text
 
 
+def test_export_works_csv_filters_venue_kind(client, conn, user_id):
+    w1 = mk_work(conn, "Bài quốc tế", doc_type="bai_bao")
+    w2 = mk_work(conn, "Bài trong nước", doc_type="bai_bao")
+    q(conn, "UPDATE work SET venue_kind='journal_intl' WHERE id=%s", w1)
+    q(conn, "UPDATE work SET venue_kind='journal_domestic' WHERE id=%s", w2)
+    conn.commit()
+    resp = client.get("/api/works.csv", params={"venue_kind": "journal_intl"})
+    text = resp.content.decode("utf-8-sig")
+    lines = [ln for ln in text.splitlines() if ln]
+    assert len(lines) == 2
+    assert "Bài quốc tế" in text and "Bài trong nước" not in text
+
+
 def test_export_person_publications_csv_404_and_authors_joined(client, conn, user_id):
     assert client.get("/api/persons/999999/publications.csv").status_code == 404
     pid = mk_person(conn, "Trần Thị Bích")

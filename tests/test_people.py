@@ -125,6 +125,61 @@ def test_position_from_job_title_normalizes_known_variants():
     assert people.position_from_job_title("Chuyên viên") == "Chuyên viên"   # giữ nguyên, không có trong bảng chuẩn hoá
 
 
+# ---------- lát cắt N: ảnh đại diện + lĩnh vực từ kho nguồn ----------
+def test_avatar_url_from_archive_accepts_only_repository_domain():
+    good = "https://repository.ictu.edu.vn/wp-content/uploads/2026/06/unnamed-150x150.webp"
+    assert people.avatar_url_from_archive(good) == good
+    assert people.avatar_url_from_archive("https://ui-avatars.com/api/?name=X") is None
+    assert people.avatar_url_from_archive(None) is None
+    assert people.avatar_url_from_archive("") is None
+    assert people.avatar_url_from_archive("  ") is None
+
+
+def test_field_from_archive_trims_and_keeps_raw_codes():
+    assert people.field_from_archive("  CNTT  ") == "CNTT"
+    assert people.field_from_archive("Toán học tính toán, Khoa học máy tính") == "Toán học tính toán, Khoa học máy tính"
+    assert people.field_from_archive(None) is None
+    assert people.field_from_archive("") is None
+
+
+def test_import_sets_avatar_url_and_field(conn):
+    rules.seed_rules(conn, None)
+    gv = {"archive": dict(GV["archive"],
+                          avatar="https://repository.ictu.edu.vn/wp-content/uploads/2026/06/mau.webp",
+                          knowsAbout="CNTT")}
+    sync.run_sync(conn, source="repository", scope="giang-vien", doc_type="giang_vien",
+                  records=[("https://r/giang-vien/mau/", gv)], expected=1, full=True)
+    people.import_people(conn)
+    p = q(conn, "SELECT avatar_url, field FROM person")[0]
+    assert p["avatar_url"] == "https://repository.ictu.edu.vn/wp-content/uploads/2026/06/mau.webp"
+    assert p["field"] == "CNTT"
+
+
+def test_import_drops_avatar_from_unknown_domain_and_missing_field(conn):
+    rules.seed_rules(conn, None)
+    gv = {"archive": dict(GV["archive"], avatar="https://ui-avatars.com/api/?name=X", knowsAbout=None)}
+    sync.run_sync(conn, source="repository", scope="giang-vien", doc_type="giang_vien",
+                  records=[("https://r/giang-vien/mau/", gv)], expected=1, full=True)
+    people.import_people(conn)
+    p = q(conn, "SELECT avatar_url, field FROM person")[0]
+    assert p["avatar_url"] is None and p["field"] is None
+
+
+def test_import_avatar_and_field_update_is_idempotent(conn):
+    """Chạy lại `import_people` với cùng dữ liệu không đổi kết quả (410 hồ sơ
+    thật ở sản xuất phải cập nhật lại an toàn nhiều lần)."""
+    rules.seed_rules(conn, None)
+    gv = {"archive": dict(GV["archive"],
+                          avatar="https://repository.ictu.edu.vn/x.webp", knowsAbout="CNTT")}
+    sync.run_sync(conn, source="repository", scope="giang-vien", doc_type="giang_vien",
+                  records=[("https://r/giang-vien/mau/", gv)], expected=1, full=True)
+    people.import_people(conn)
+    people.import_people(conn)
+    rows = q(conn, "SELECT avatar_url, field FROM person")
+    assert len(rows) == 1
+    assert rows[0]["avatar_url"] == "https://repository.ictu.edu.vn/x.webp" and rows[0]["field"] == "CNTT"
+
+
 def _mk_unit(conn, code, name=None):
     with conn.cursor() as cur:
         cur.execute("INSERT INTO unit(code, name) VALUES (%s,%s) ON CONFLICT (code) DO NOTHING RETURNING id",

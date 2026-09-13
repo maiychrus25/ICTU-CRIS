@@ -37,8 +37,8 @@ def _csv_response(rows, filename):
 
 @router.get("/works.csv")
 def export_works_csv(conn: Conn, q: str = "", doc_type: str = "", year: int | None = None,
-                      unit: str = "", topic: int | None = None):
-    from_sql, where_sql, params = _works_query(q, doc_type, year, unit, topic)
+                      unit: str = "", topic: int | None = None, venue_kind: str = ""):
+    from_sql, where_sql, params = _works_query(q, doc_type, year, unit, topic, venue_kind=venue_kind)
     with conn.cursor() as cur:
         cur.execute(
             f"SELECT DISTINCT w.id, w.year_issue {from_sql} WHERE {where_sql} "

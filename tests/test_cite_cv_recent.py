@@ -171,6 +171,74 @@ def test_citation_route_404_for_unknown_work(client):
     assert client.get("/api/works/999999/citation").status_code == 404
 
 
+# ---------- lát cắt N: GET /api/persons/{id}/citations ----------
+
+def test_person_citations_apa_sorted_by_year_desc(client, conn):
+    pid = mk_person(conn, "Phùng Trung Nghĩa")
+    w_old = mk_work(conn, "Công trình cũ", year=2018, journal="Tạp chí A")
+    w_new = mk_work(conn, "Công trình mới", year=2023, journal="Tạp chí B")
+    link_work_to_person(conn, w_old, pid)
+    link_work_to_person(conn, w_new, pid)
+    r = client.get(f"/api/persons/{pid}/citations", params={"style": "apa"})
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/plain")
+    idx_new = r.text.index("Công trình mới")
+    idx_old = r.text.index("Công trình cũ")
+    assert idx_new < idx_old       # năm giảm dần
+    assert "\n\n" in r.text        # mỗi mục cách nhau một dòng trống
+
+
+def test_person_citations_bibtex_media_type_and_filename(client, conn):
+    pid = mk_person(conn, "Phùng Trung Nghĩa")
+    wid = mk_work(conn, "Học sâu cho thị giác máy tính", year=2023, journal="Tạp chí CNTT", doi="10.1/a")
+    link_work_to_person(conn, wid, pid)
+    r = client.get(f"/api/persons/{pid}/citations", params={"style": "bibtex"})
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("application/x-bibtex")
+    assert r.headers["content-disposition"] == 'attachment; filename="phung-trung-nghia.bib"'
+    assert "@article{" in r.text
+
+
+def test_person_citations_bibtex_keys_deduplicated_with_suffix(client, conn):
+    """Ba công trình cùng tác giả đầu + năm + từ đầu tiêu đề sinh cùng khoá
+    BibTeX gốc (`link_work_to_person` luôn gắn tác giả "Tác giả") — mục thứ
+    hai và ba phải được thêm hậu tố a/b để không trùng trong tệp."""
+    pid = mk_person(conn, "Nguyễn Văn A")
+    w1 = mk_work(conn, "Học sâu ứng dụng một", year=2023)
+    w2 = mk_work(conn, "Học sâu ứng dụng hai", year=2023)
+    w3 = mk_work(conn, "Học sâu ứng dụng ba", year=2023)
+    for wid in (w1, w2, w3):
+        link_work_to_person(conn, wid, pid)
+    r = client.get(f"/api/persons/{pid}/citations", params={"style": "bibtex"})
+    keys = [line.split("{", 1)[1].split(",", 1)[0] for line in r.text.splitlines() if line.startswith("@")]
+    assert len(keys) == len(set(keys)) == 3
+    assert all(k.startswith("Tac2023Hoc") for k in keys)
+    assert keys[1].endswith("a") and keys[2].endswith("b")   # mục thứ nhất giữ khoá gốc
+
+
+def test_person_citations_only_includes_linked_states(client, conn):
+    """Chỉ công trình ở trạng thái liên kết `DaNoiTuDong`/`DaXacNhan` xuất hiện —
+    hàng đợi chờ xác nhận (`ChoXacNhan`) và mention chưa liên kết đều bị loại."""
+    pid = mk_person(conn, "Trần Thị B")
+    w_confirmed = mk_work(conn, "Công trình đã xác nhận", year=2022)
+    w_pending = mk_work(conn, "Công trình chờ xác nhận", year=2022)
+    w_unlinked = mk_work(conn, "Công trình chưa liên kết", year=2022)
+    link_work_to_person(conn, w_confirmed, pid)   # DaXacNhan, xem link_work_to_person
+    mid = q(conn, "INSERT INTO author_mention(work_id, role, position, raw_name, name_norm, name_key) "
+                  "VALUES (%s,'author',1,'Tác giả','tac gia','tac gia') RETURNING id", w_pending)[0]["id"]
+    q(conn, "INSERT INTO author_link(mention_id, person_id, confidence, state) "
+            "VALUES (%s,%s,'ten_day_du_duy_nhat','ChoXacNhan')", mid, pid)
+    mk_mention(conn, w_unlinked, "Trần Thị B", 1)   # không author_link
+    r = client.get(f"/api/persons/{pid}/citations", params={"style": "apa"})
+    assert "Công trình đã xác nhận" in r.text
+    assert "Công trình chờ xác nhận" not in r.text
+    assert "Công trình chưa liên kết" not in r.text
+
+
+def test_person_citations_404_for_unknown_person(client):
+    assert client.get("/api/persons/999999/citations").status_code == 404
+
+
 # ---------- keywords ở WorkSummary/WorkDetail ----------
 
 def test_work_summary_keywords_split_and_capped_at_6(client, conn):

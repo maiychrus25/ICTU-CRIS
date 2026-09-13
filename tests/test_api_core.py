@@ -50,7 +50,7 @@ def test_health_and_openapi(client):
               "/api/declarations/{did}/evidence",
               "/api/ai/experts", "/api/ai/experts/{qid}", "/api/public/check-topic",
               "/api/ai/map", "/api/ai/trends", "/api/ai/coauthors",
-              "/api/works/{wid}/citation", "/api/works/facets", "/api/persons/{pid}/cv",
+              "/api/works/{wid}/citation", "/api/persons/{pid}/citations", "/api/works/facets", "/api/persons/{pid}/cv",
               "/api/recent", "/api/feed.xml",
               "/api/periods/{pid}/reports", "/api/reports/{rid}", "/api/reports/{rid}/export",
               "/api/notifications", "/api/notifications/{nid}/read", "/api/notifications/read-all",
@@ -218,3 +218,58 @@ def test_person_profile_unit_is_null_when_unassigned(client, conn, user_id):
     conn.commit()
     r = client.get(f"/api/persons/{pid}").json()
     assert r["unit"] is None and r["position"] is None and r["unit_source"] == "auto"
+
+
+# ---------- lát cắt N: avatar/lĩnh vực giảng viên, lọc/facet loại nơi công bố ----------
+def test_person_profile_and_search_include_avatar_and_field(client, conn, user_id):
+    pid = q(conn, "INSERT INTO person(kind, display_name, name_norm, name_keys, avatar_url, field) "
+                  "VALUES ('lecturer','Phùng Trung Nghĩa','phung trung nghia',ARRAY['phung trung nghia'],"
+                  "'https://repository.ictu.edu.vn/x.webp','CNTT') RETURNING id")[0]["id"]
+    conn.commit()
+    r = client.get(f"/api/persons/{pid}").json()
+    assert r["avatar_url"] == "https://repository.ictu.edu.vn/x.webp" and r["field"] == "CNTT"
+    rows = client.get("/api/persons", params={"q": "Phùng Trung Nghĩa"}).json()
+    row = next(x for x in rows if x["id"] == pid)
+    assert row["avatar_url"] == "https://repository.ictu.edu.vn/x.webp"
+
+
+def test_person_profile_avatar_and_field_null_when_absent(client, conn, user_id):
+    pid = q(conn, "INSERT INTO person(kind, display_name, name_norm, name_keys) "
+                  "VALUES ('lecturer','Lê Văn C','le van c',ARRAY['le van c']) RETURNING id")[0]["id"]
+    conn.commit()
+    r = client.get(f"/api/persons/{pid}").json()
+    assert r["avatar_url"] is None and r["field"] is None
+
+
+def test_works_filter_by_venue_kind_including_none(client, conn, user_id):
+    w1 = mk_work(conn, "Bài quốc tế", doc_type="bai_bao")
+    w2 = mk_work(conn, "Bài trong nước", doc_type="bai_bao")
+    w3 = mk_work(conn, "Bài chưa xác định", doc_type="bai_bao")
+    q(conn, "UPDATE work SET venue_kind='journal_intl' WHERE id=%s", w1)
+    q(conn, "UPDATE work SET venue_kind='conference_natl' WHERE id=%s", w2)
+    conn.commit()          # w3 giữ venue_kind NULL
+
+    r = client.get("/api/works", params={"doc_type": "bai_bao", "venue_kind": "journal_intl"}).json()
+    assert [i["id"] for i in r["items"]] == [w1]
+
+    r2 = client.get("/api/works", params={"doc_type": "bai_bao", "venue_kind": "conference_natl"}).json()
+    assert [i["id"] for i in r2["items"]] == [w2]
+
+    r_none = client.get("/api/works", params={"doc_type": "bai_bao", "venue_kind": "none"}).json()
+    assert {i["id"] for i in r_none["items"]} == {w3}
+
+
+def test_works_facets_include_venue_kinds_with_vietnamese_labels(client, conn, user_id):
+    w1 = mk_work(conn, "Bài quốc tế", doc_type="bai_bao")
+    w2 = mk_work(conn, "Bài trong nước", doc_type="bai_bao")
+    mk_work(conn, "Bài chưa xác định", doc_type="bai_bao")           # venue_kind NULL
+    mk_work(conn, "Đồ án không tính", doc_type="do_an")               # không phải bài báo — không đếm
+    q(conn, "UPDATE work SET venue_kind='journal_intl' WHERE id=%s", w1)
+    q(conn, "UPDATE work SET venue_kind='journal_domestic' WHERE id=%s", w2)
+    conn.commit()
+    r = client.get("/api/works/facets").json()
+    by_value = {x["value"]: x for x in r["venue_kinds"]}
+    assert by_value["journal_intl"]["n"] == 1 and by_value["journal_intl"]["label"] == "Tạp chí quốc tế"
+    assert by_value["journal_domestic"]["label"] == "Tạp chí trong nước"
+    assert by_value["none"]["n"] == 1 and by_value["none"]["label"] == "Chưa xác định"
+    assert sum(x["n"] for x in r["venue_kinds"]) == 3   # chỉ đếm 3 bài báo, không tính đồ án

@@ -42,6 +42,25 @@ def position_from_job_title(job_title):
     return POSITION_NORMALIZE.get(key, squashed)
 
 
+# Ảnh đại diện (lát cắt N): chỉ nhận URL của chính kho nguồn — link ảnh lạ (CDN
+# khác, ảnh đặt chỗ do theme sinh) bị bỏ thay vì lưu một URL không kiểm soát được.
+AVATAR_URL_PREFIX = "https://repository.ictu.edu.vn/"
+
+
+def avatar_url_from_archive(avatar):
+    """`archive.avatar` → `person.avatar_url`: chỉ giữ URL bắt đầu bằng
+    `AVATAR_URL_PREFIX`; giá trị khác (rỗng, domain lạ) → `None`."""
+    avatar = (avatar or "").strip()
+    return avatar if avatar.startswith(AVATAR_URL_PREFIX) else None
+
+
+def field_from_archive(knows_about):
+    """`archive.knowsAbout` (lĩnh vực) → `person.field`: chỉ gọn khoảng trắng,
+    giữ nguyên mã như đã ghi ở nguồn ("CNTT", "Toán; CNTT"...). Rỗng → `None`."""
+    squashed = " ".join((knows_about or "").split())
+    return squashed or None
+
+
 def ensure_unit(conn, name):
     name = (name or "").strip()
     if not name:
@@ -100,7 +119,9 @@ def import_people(conn):
                     # cột mới ở migration 0016 (nguồn: archive.rank, xem cris/source/repository.py).
                     vals = dict(display_name=display, name_norm=nn, degree_raw=a.get("degree") or deg,
                                 email=a.get("email"), orcid=(rec["raw"].get("detail") or {}).get("orcid") or a.get("orcid"),
-                                phone=a.get("phone"), dob=_dob(a.get("dob")), rank=a.get("rank"), position=position)
+                                phone=a.get("phone"), dob=_dob(a.get("dob")), rank=a.get("rank"), position=position,
+                                avatar_url=avatar_url_from_archive(a.get("avatar")),
+                                field=field_from_archive(a.get("knowsAbout")))
                     cur.execute("SELECT id, name_keys FROM person WHERE source_record_id IN (SELECT id FROM source_record WHERE source=%s AND source_key=%s)",
                                 (rec["source"], rec["source_key"]))
                     row = cur.fetchone()
@@ -108,12 +129,13 @@ def import_people(conn):
                     if row:
                         keys = sorted(set(row["name_keys"]) | {key})
                         cur.execute("""UPDATE person SET display_name=%s, name_norm=%s, degree_raw=%s, email=%s, orcid=%s,
-                                       phone=%s, dob=%s, rank=%s, position=%s, name_keys=%s, source_record_id=%s WHERE id=%s""",
+                                       phone=%s, dob=%s, rank=%s, position=%s, avatar_url=%s, field=%s,
+                                       name_keys=%s, source_record_id=%s WHERE id=%s""",
                                     (*vals.values(), keys, rec["id"], row["id"]))
                         out["updated"] += 1
                     else:
-                        cur.execute("""INSERT INTO person(kind, source_record_id, display_name, name_norm, degree_raw, email, orcid, phone, dob, rank, position, name_keys)
-                                       VALUES ('lecturer',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", (rec["id"], *vals.values(), [key]))
+                        cur.execute("""INSERT INTO person(kind, source_record_id, display_name, name_norm, degree_raw, email, orcid, phone, dob, rank, position, avatar_url, field, name_keys)
+                                       VALUES ('lecturer',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", (rec["id"], *vals.values(), [key]))
                         out["created"] += 1
             except psycopg.errors.IntegrityError as e:
                 out["errors"].append({"source_key": rec["source_key"], "error": str(e).splitlines()[0]})

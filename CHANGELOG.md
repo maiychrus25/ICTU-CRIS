@@ -29,6 +29,21 @@
   bản ghi cũ (ĐTVT, ĐTTT, TĐH, HTTTKT, KHCB, TTĐPT) — migration `0020_units_from_source.sql`;
   giao diện đổi nhãn "Đơn vị" thành "Khoa" ở bộ lọc, chip, hồ sơ giảng viên và trang
   quản trị (`/don-vi/` → "Quản trị khoa").
+- Hồ sơ giảng viên hiện ảnh đại diện và lĩnh vực đã có sẵn ở kho nguồn (lát cắt N):
+  migration `0021_person_avatar_field.sql` (`person.avatar_url`, `person.field`);
+  `cris.people.import_people` nhập `archive.avatar` (chỉ nhận URL của chính kho,
+  `https://repository.ictu.edu.vn/…` — bỏ ảnh đặt chỗ do theme sinh ở domain khác)
+  và `archive.knowsAbout` (trim, giữ nguyên mã như "CNTT"); `GET /api/persons/{id}`
+  và `GET /api/persons?q=` (`PersonSearchRow`) thêm `avatar_url`, hồ sơ thêm `field`.
+- `GET /api/persons/{id}/citations?style=apa|ieee|bibtex` (mới): trích dẫn toàn bộ
+  công trình đã liên kết (`DaNoiTuDong`/`DaXacNhan`) của một giảng viên, sắp theo
+  năm giảm dần, mỗi mục cách nhau một dòng trống, tải về với tên tệp không dấu của
+  giảng viên (`.bib`/`.txt`); khoá BibTeX trùng trong cùng tệp được thêm hậu tố
+  a/b/c… Tái dùng `cris.cite.apa/ieee/bibtex` đã có ở `/api/works/{id}/citation`.
+- Lọc công trình theo loại nơi công bố (`work.venue_kind` — tạp chí/hội thảo,
+  quốc tế/trong nước, "chưa xác định"): `GET /api/works?venue_kind=`; facet
+  `venue_kinds` (nhãn tiếng Việt, chỉ đếm bài báo) ở `GET /api/works/facets`;
+  `GET /api/works.csv` nhận thêm tham số `venue_kind`.
 
 ## [0.6.1] - 2026-09-13
 

@@ -54,7 +54,7 @@ def search_persons(conn: Conn, q: str = "", kind: str = "", limit: int = Query(2
         params.append(kind)
     where_sql = " AND ".join(where) if where else "TRUE"
     sql = f"""SELECT p.id, p.display_name, p.degree_raw AS degree, u.code AS unit_code, p.kind,
-                     COALESCE(wc.n, 0) AS works, {exact_sql} AS is_exact
+                     p.avatar_url, COALESCE(wc.n, 0) AS works, {exact_sql} AS is_exact
               FROM person p
               LEFT JOIN unit u ON u.id = p.unit_id
               LEFT JOIN (SELECT person_id, count(*) AS n FROM v_person_publications
@@ -66,7 +66,8 @@ def search_persons(conn: Conn, q: str = "", kind: str = "", limit: int = Query(2
         cur.execute(sql, exact_params + params + [limit])
         rows = cur.fetchall()
     return [PersonSearchRow(id=r["id"], display_name=r["display_name"], degree=r["degree"],
-                            unit_code=r["unit_code"], kind=r["kind"], works=r["works"]) for r in rows]
+                            unit_code=r["unit_code"], kind=r["kind"], works=r["works"],
+                            avatar_url=r["avatar_url"]) for r in rows]
 
 
 @router.get("/persons/{pid}/cv")
