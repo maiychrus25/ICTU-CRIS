@@ -7,6 +7,7 @@ export interface WorkSummary {
   id: number; title: string | null; doc_type: string; doc_type_label: string;
   year: number | null; doi: string | null; state: string; needs_review: boolean;
   score?: number | null; units?: WorkUnit[]; keywords?: string[]; first_seen_at?: string; version?: number;
+  venue_kind?: string | null;
 }
 export interface WorkList { items: WorkSummary[]; page: PageInfo; mode?: "keyword" | "semantic"; note?: string | null }
 export interface FieldRow { field: string; label: string; value: string | null; raw: string | null; source: string }
@@ -36,9 +37,11 @@ export interface PersonProfile {
   pending_count: number; last_sync: LastSync | null;
   rank?: string | null; scholar_url?: string | null; citation_stats?: Record<string, number> | null;
   position?: string | null; unit?: Pick<Unit, "id" | "code" | "name"> | null; unit_source?: "auto" | "manual" | null;
+  avatar_url?: string | null; field?: string | null;
 }
 export interface PersonSearchRow {
   id: number; display_name: string; degree: string | null; unit_code: string | null; kind: string; works: number;
+  avatar_url?: string | null;
 }
 export interface Topic { id: number; label: string; size: number; keywords: string[]; built_at: string | null }
 export interface TopicKeyword { keyword: string; weight: number }
@@ -254,12 +257,12 @@ export interface FacetYear { value: number; n: number }
 export interface FacetUnit { value: number; code: string; name: string; n: number }
 export interface WorkFacets {
   pub_types: FacetOption[]; quartiles: FacetOption[]; cohorts: FacetOption[];
-  years: FacetYear[]; units: FacetUnit[]; scores?: FacetOption[];
+  years: FacetYear[]; units: FacetUnit[]; scores?: FacetOption[]; venue_kinds?: FacetOption[];
 }
 export interface WorkFilters {
   q?: string; mode?: "keyword" | "semantic"; doc_type?: string; year?: number; unit?: string;
   topic?: number; pub_type?: string; quartile?: string; cohort?: string; keyword?: string;
-  score?: "0.5" | "0.75" | "1" | "none"; min_score?: number; page?: number;
+  score?: "0.5" | "0.75" | "1" | "none"; min_score?: number; venue_kind?: string; page?: number;
 }
 export interface ExpertEvidence { work_id: number; title: string | null; doc_type: string; year: number | null; score: number }
 export interface ExpertResult {

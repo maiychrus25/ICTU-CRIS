@@ -8,6 +8,7 @@ import { useEffect, useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PersonAvatar } from "@/components/person-avatar";
 import { usePersonSearch } from "@/lib/queries";
 import type { PersonSearchRow } from "@/lib/types";
 
@@ -48,9 +49,10 @@ export function PersonCombobox({ id, onValueChange, onSelect }: { id?: string; o
           {people.isFetching ? <p className="px-3 py-2 text-sm text-muted-foreground">Đang tìm người…</p>
             : people.isError ? <div className="flex items-center justify-between gap-2 px-3 py-2 text-sm text-destructive"><span>Không thể tìm người.</span><Button type="button" variant="ghost" size="sm" onMouseDown={(event) => event.preventDefault()} onClick={() => people.refetch()}>Thử lại</Button></div>
             : people.data?.length ? people.data.map((person) => (
-              <button key={person.id} type="button" role="option" aria-selected="false" className="block w-full rounded-md px-3 py-2 text-left hover:bg-accent focus:bg-accent focus:outline-none" onMouseDown={(event) => event.preventDefault()} onClick={() => { setText(person.display_name); onValueChange(person.id); onSelect?.(person); setOpen(false); }}>
-                <span className="block font-medium">{person.display_name}</span>
-                <span className="block text-xs text-muted-foreground">{[person.degree, person.unit_code, `${person.works} công trình`].filter(Boolean).join(" · ")}</span>
+              <button key={person.id} type="button" role="option" aria-selected="false" className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left hover:bg-accent focus:bg-accent focus:outline-none" onMouseDown={(event) => event.preventDefault()} onClick={() => { setText(person.display_name); onValueChange(person.id); onSelect?.(person); setOpen(false); }}>
+                <PersonAvatar name={person.display_name} src={person.avatar_url} small />
+                <span className="min-w-0"><span className="block truncate font-medium">{person.display_name}</span>
+                <span className="block truncate text-xs text-muted-foreground">{[person.degree, person.unit_code, `${person.works} công trình`].filter(Boolean).join(" · ")}</span></span>
               </button>
             )) : <p className="px-3 py-2 text-sm text-muted-foreground">Không tìm thấy người phù hợp.</p>}
         </div>

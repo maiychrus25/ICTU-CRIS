@@ -105,6 +105,7 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const topic = Number(url.searchParams.get("topic")) || null;
     const mode = url.searchParams.get("mode") === "semantic" ? "semantic" : "keyword";
     const pubType = url.searchParams.get("pub_type");
+    const venueKind = url.searchParams.get("venue_kind");
     const quartile = url.searchParams.get("quartile");
     const cohort = url.searchParams.get("cohort");
     const unit = url.searchParams.get("unit");
@@ -112,7 +113,7 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const minScore = Number(url.searchParams.get("min_score")) || null;
     const keyword = url.searchParams.get("keyword")?.toLocaleLowerCase("vi");
     const topicWorkIds = topic ? new Set(topicDetailsFixture[topic]?.works.map((work) => work.id) ?? []) : null;
-    const filtered = mockWorks.items.filter((work) => (mode === "semantic" || !q || work.title?.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)) && (!docType || work.doc_type === docType) && (!year || work.year === Number(year)) && (!unit || work.units?.some((item) => item.code === unit || String(item.id) === unit)) && (!score || (score === "none" ? work.score == null : work.score === Number(score))) && (!minScore || (work.score ?? -Infinity) >= minScore) && (!topicWorkIds || topicWorkIds.has(work.id)) && (!pubType || pubType === "journal_intl") && (!quartile || quartile === "Q1") && (!cohort || work.doc_type === "do_an") && (!keyword || work.keywords?.some((item) => item.toLocaleLowerCase("vi").includes(keyword))));
+    const filtered = mockWorks.items.filter((work) => (mode === "semantic" || !q || work.title?.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)) && (!docType || work.doc_type === docType) && (!year || work.year === Number(year)) && (!unit || work.units?.some((item) => item.code === unit || String(item.id) === unit)) && (!score || (score === "none" ? work.score == null : work.score === Number(score))) && (!minScore || (work.score ?? -Infinity) >= minScore) && (!topicWorkIds || topicWorkIds.has(work.id)) && (!pubType || pubType === "journal_intl") && (!venueKind || (venueKind === "none" ? !work.venue_kind : work.venue_kind === venueKind)) && (!quartile || quartile === "Q1") && (!cohort || work.doc_type === "do_an") && (!keyword || work.keywords?.some((item) => item.toLocaleLowerCase("vi").includes(keyword))));
     const items = mode === "semantic" ? filtered.map((work) => ({ ...work, score: Number((0.93 - (work.id - 1) * 0.045).toFixed(3)) })) : filtered;
     data = { items, mode, note: mode === "semantic" ? "Tìm theo nghĩa (AI): kết quả có thể không chứa từ đã gõ." : null, page: { ...mockWorks.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
   } else if (/^\/api\/works\/\d+\/fields$/.test(url.pathname) && init?.method === "PATCH") {
@@ -146,6 +147,10 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const style = url.searchParams.get("style") as keyof typeof citationsFixture;
     data = citationsFixture[style] ?? citationsFixture.apa;
   } else if (/^\/api\/works\/\d+$/.test(url.pathname)) data = mockWorkDetails[id];
+  else if (/^\/api\/persons\/\d+\/citations$/.test(url.pathname)) {
+    const style = url.searchParams.get("style") as keyof typeof citationsFixture;
+    data = citationsFixture[style] ?? citationsFixture.apa;
+  }
   else if (/^\/api\/persons\/\d+$/.test(url.pathname)) data = id === personFixture.id ? personFixture : undefined;
   else if (url.pathname === "/api/persons") {
     const q = url.searchParams.get("q")?.toLocaleLowerCase("vi") ?? "";
@@ -522,7 +527,7 @@ export const api = {
   getMe: () => apiRequest<MeOut>("/api/auth/me"),
   login: (input: LoginIn) => apiRequest<UserOut>("/api/auth/login", { method: "POST", body: JSON.stringify(input) }),
   logout: () => apiRequest<LogoutOut>("/api/auth/logout", { method: "POST" }),
-  getWorks: (filters: WorkFilters = {}) => apiRequest<WorkList>(`/api/works${queryString({ q: filters.q, mode: filters.mode, doc_type: filters.doc_type, year: filters.year, unit: filters.unit, topic: filters.topic, pub_type: filters.pub_type, quartile: filters.quartile, cohort: filters.cohort, keyword: filters.keyword, score: filters.score, min_score: filters.min_score, page: filters.page })}`),
+  getWorks: (filters: WorkFilters = {}) => apiRequest<WorkList>(`/api/works${queryString({ q: filters.q, mode: filters.mode, doc_type: filters.doc_type, year: filters.year, unit: filters.unit, topic: filters.topic, pub_type: filters.pub_type, quartile: filters.quartile, cohort: filters.cohort, keyword: filters.keyword, score: filters.score, min_score: filters.min_score, venue_kind: filters.venue_kind, page: filters.page })}`),
   getWorkFacets: () => apiRequest<WorkFacets>("/api/works/facets"),
   getUnits: () => apiRequest<Unit[]>("/api/units"),
   renameUnit: (id: number, input: UnitRenameIn) => apiRequest<Unit>(`/api/units/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
@@ -531,6 +536,7 @@ export const api = {
   getCitation: (id: number, style: "apa" | "ieee" | "bibtex") => apiTextRequest(`/api/works/${id}/citation${queryString({ style })}`),
   editWorkField: (id: number, input: FieldEditIn) => apiRequest<FieldEditOut>(`/api/works/${id}/fields`, { method: "PATCH", body: JSON.stringify(input) }),
   getPerson: (id: number) => apiRequest<PersonProfile>(`/api/persons/${id}`),
+  getPersonCitation: (id: number, style: "apa" | "ieee" | "bibtex") => apiTextRequest(`/api/persons/${id}/citations${queryString({ style })}`),
   searchPersons: (q: string, limit = 20) => apiRequest<PersonSearchRow[]>(`/api/persons${queryString({ q, limit })}`),
   getTopics: () => apiRequest<Topic[]>("/api/topics"),
   getTopic: (id: number) => apiRequest<TopicDetail>(`/api/topics/${id}`),

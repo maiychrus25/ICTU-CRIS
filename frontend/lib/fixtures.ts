@@ -52,8 +52,9 @@ workItems.forEach((work, index) => {
   work.units = [{ id: index % 3 + 1, code: unitsFixture[index % 3].code }];
 });
 Object.assign(workItems[1], { score: 0.75, units: [{ id: 1, code: "CNTT" }] });
-Object.assign(workItems[5], { score: 1, units: [{ id: 2, code: "ĐTVT" }] });
-Object.assign(workItems[8], { score: 0.5, units: [{ id: 3, code: "HTTTKT" }] });
+Object.assign(workItems[1], { venue_kind: "journal_intl" });
+Object.assign(workItems[5], { score: 1, venue_kind: "journal_domestic", units: [{ id: 2, code: "ĐTVT" }] });
+Object.assign(workItems[8], { score: 0.5, venue_kind: null, units: [{ id: 3, code: "HTTTKT" }] });
 
 export const worksFixture: WorkList = { items: workItems, page: { page: 1, per_page: 50, total: workItems.length } };
 
@@ -116,19 +117,20 @@ export const topicDetailsFixture: Record<number, TopicDetail> = Object.fromEntri
 }])) as Record<number, TopicDetail>;
 
 export const personFixture: PersonProfile = {
-  id: 1, display_name: "TS. Nguyễn Văn A", degree: "Tiến sĩ", email: "nguyenvana@ictu.edu.vn",
+  id: 1, display_name: "TS. Nguyễn Văn A", degree: "TS", email: "nguyenvana@ictu.edu.vn",
   position: "Hiệu trưởng", unit: { id: 1, code: "CNTT", name: "Khoa Công nghệ thông tin" }, unit_source: "auto",
+  avatar_url: "https://repository.ictu.edu.vn/avatar/phung-trung-nghia.jpg", field: "Trí tuệ nhân tạo và khai phá dữ liệu",
   orcid: "0000-0002-1825-0097", by_type: { bai_bao: 8, do_an: 14, hoc_lieu: 2 },
   by_year: { "2022": 3, "2023": 5, "2024": 7, "2025": 9 },
   publications: workItems.slice(0, 6).map((work) => ({ work_id: work.id, title: work.title, doc_type: work.doc_type, year: work.year, doi: work.doi, link_state: "DaXacNhan", confidence: "cao" })),
-  pending_count: 2, rank: "Phó giáo sư", scholar_url: "https://scholar.google.com/", citation_stats: null,
+  pending_count: 2, rank: "PGS", scholar_url: "https://scholar.google.com/", citation_stats: null,
   last_sync: { id: 18, source: "Kho dữ liệu ICTU", scope: "Hồ sơ giảng viên", status: "success", started_at: "2026-09-10T01:00:00Z", finished_at: "2026-09-10T01:04:12Z" },
 };
 
 export const personsFixture: PersonSearchRow[] = [
-  { id: 1, display_name: "TS. Nguyễn Văn A", degree: "Tiến sĩ", unit_code: "CNTT", kind: "giang_vien", works: 42 },
-  { id: 2, display_name: "TS. Nguyễn Văn An", degree: "Tiến sĩ", unit_code: "ĐTVT", kind: "giang_vien", works: 31 },
-  { id: 3, display_name: "ThS. Trần Thị Bình", degree: "Thạc sĩ", unit_code: "HTTTKT", kind: "giang_vien", works: 24 },
+  { id: 1, display_name: "TS. Nguyễn Văn A", degree: "Tiến sĩ", unit_code: "CNTT", kind: "giang_vien", works: 42, avatar_url: "https://repository.ictu.edu.vn/avatar/phung-trung-nghia.jpg" },
+  { id: 2, display_name: "TS. Nguyễn Văn An", degree: "Tiến sĩ", unit_code: "ĐTVT", kind: "giang_vien", works: 31, avatar_url: "https://repository.ictu.edu.vn/avatar/nguyen-van-an.jpg" },
+  { id: 3, display_name: "ThS. Trần Thị Bình", degree: "Thạc sĩ", unit_code: "HTTTKT", kind: "giang_vien", works: 24, avatar_url: null },
 ];
 
 export const authorQueueFixture: AuthorQueueList = {
@@ -362,6 +364,13 @@ export const syncRunDetailsFixture: Record<number, SyncRunDetail> = Object.fromE
 
 export const facetsFixture: WorkFacets = {
   pub_types: [{ value: "journal_intl", label: "Tạp chí quốc tế", n: 126 }, { value: "conference", label: "Hội thảo", n: 84 }],
+  venue_kinds: [
+    { value: "journal_intl", label: "Tạp chí quốc tế", n: 1 },
+    { value: "journal_domestic", label: "Tạp chí trong nước", n: 1 },
+    { value: "conference_intl", label: "Hội thảo quốc tế", n: 0 },
+    { value: "conference_natl", label: "Hội thảo trong nước", n: 0 },
+    { value: "none", label: "Chưa xác định", n: 1 },
+  ],
   quartiles: ["Q1", "Q2", "Q3", "Q4"].map((value, index) => ({ value, label: value, n: 42 - index * 7 })),
   cohorts: ["21", "20", "19"].map((value, index) => ({ value, label: `Khoá ${value}`, n: 174 - index * 12 })),
   years: [2025, 2024, 2023].map((value, index) => ({ value, n: 307 - index * 28 })),
