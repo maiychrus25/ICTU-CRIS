@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-13
+
 ### Added
 
 - Đơn vị thật (khoa/trung tâm) đọc từ bộ lọc `dept` của kho nguồn thay vì chức vụ
