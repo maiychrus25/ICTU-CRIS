@@ -166,6 +166,11 @@ hợp với việc chia sẻ hoặc in.
 - **In**: hai trang thiết kế để in trực tiếp bằng `Ctrl/Cmd+P` (hoặc nút **In / Lưu PDF**) —
   **Lý lịch khoa học** (khổ A4) và trang **Báo cáo đóng băng** (nút **In**, ẩn thanh hành
   động khi in).
+- **Trích dẫn**: nút hoặc biểu tượng **Trích dẫn** xuất hiện ở bốn nơi — chi tiết công trình
+  (mục 2.3), mỗi dòng kết quả tra cứu (mục 2.2), bảng công trình trên hồ sơ giảng viên (mục
+  2.13), và lý lịch khoa học (mục 2.13.1). Ba nơi đầu mở cùng một hộp thoại 3 định dạng
+  **APA** / **IEEE** / **BibTeX** cho một công trình; riêng lý lịch khoa học có nút **"Sao
+  chép trích dẫn tất cả"** (APA, toàn bộ danh sách công trình cùng lúc, không mở hộp thoại).
 
 ---
 
@@ -220,14 +225,20 @@ trùng từ), kèm bộ lọc và xuất CSV.
 - Công tắc **"Theo từ khoá"** / **"Theo nghĩa (AI)"** ngay cạnh ô tìm.
 - Ô **Từ khoá** (placeholder đổi theo chế độ: *"Tiêu đề (không dấu cũng được) hoặc tên tác
   giả…"* ở chế độ từ khoá, *"Mô tả điều bạn tìm, ví dụ: app dạy trẻ phát âm"* ở chế độ AI).
-- Bộ lọc chính: **Loại tài liệu**, **Năm**, **Khoa**, **Điểm quy đổi**, **Chủ đề** (mỗi
-  lựa chọn kèm số lượng công trình khớp, ví dụ *"Bài báo (1.907)"*). **Khoa** đọc từ danh
-  mục khoa thật (`GET /api/units`) — mỗi lựa chọn hiện *"Mã — Tên"* (ví dụ *"CNTT — Khoa
-  Công nghệ thông tin"*).
+- Bộ lọc chính: **Loại tài liệu**, **Năm**, **Khoa**, **Loại nơi công bố**, **Chỉ mục**,
+  **Điểm quy đổi** (mỗi lựa chọn kèm số lượng công trình khớp, ví dụ *"Bài báo (1.907)"*).
+  **Khoa** đọc từ danh mục khoa thật (`GET /api/units`) — mỗi lựa chọn hiện *"Mã — Tên"*
+  (ví dụ *"CNTT — Khoa Công nghệ thông tin"*).
+- **Loại nơi công bố**: chỉ hiện khi **Loại tài liệu** đang là *"Bài báo"* hoặc *"Tất cả"* —
+  phân biệt **Tạp chí quốc tế**, **Tạp chí trong nước**, **Hội thảo quốc tế**, **Hội thảo
+  trong nước**, hoặc **Chưa xác định**; ô này mới chuyển từ "Bộ lọc nâng cao" lên tầng
+  chính vì hay dùng.
+- **Chỉ mục**: lọc theo chỉ mục ghi tại nguồn (ví dụ Scopus, ISI) — cũng vừa chuyển từ "Bộ
+  lọc nâng cao" lên tầng chính.
 - **Điểm quy đổi**: lọc bài báo theo mức điểm ghi tại nguồn — **0,5**, **0,75**, **1**, hoặc
   **Chưa xác định**, mỗi mức kèm số lượng khớp lấy từ facet `scores`.
-- Khung **"Bộ lọc nâng cao"** (đóng mặc định, bấm mở): **Loại bài/chỉ mục**, **Quartile**,
-  **Khoá**.
+- Khung **"Bộ lọc nâng cao"** (đóng mặc định, bấm mở): **Quartile**, **Khoá**, **Chủ đề**
+  (Chủ đề chuyển từ tầng chính xuống đây để nhường chỗ cho Loại nơi công bố và Chỉ mục).
 - Chip từ khoá và chip **khoa** (mã khoa): mỗi công trình trong bảng kết quả hiện chip
   khoa (di chuột vào để thấy tên đầy đủ) rồi tối đa 3 từ khoá dạng huy hiệu; bấm vào một
   chip khoa hoặc một từ khoá để lọc tiếp theo đúng giá trị đó.
@@ -236,16 +247,20 @@ trùng từ), kèm bộ lọc và xuất CSV.
 - Bảng kết quả: cột **Công trình** (tiêu đề + DOI nếu có + chip khoa + chip từ khoá), cột
   **Độ gần** (chỉ hiện ở chế độ AI — thanh phần trăm), cột **Điểm** (chỉ hiện ở chế độ từ
   khoá — điểm quy đổi của bài báo: **0,5**/**0,75**/**1**, để trống nếu công trình không
-  phải bài báo hoặc chưa xác định điểm), **Loại**, **Năm**, **Trạng thái**.
+  phải bài báo hoặc chưa xác định điểm), **Loại**, **Năm**, **Trạng thái**, và cột **Trích
+  dẫn** — một nút biểu tượng trên từng dòng, mở cùng hộp thoại 3 định dạng APA/IEEE/BibTeX
+  như ở trang chi tiết công trình, không cần rời khỏi bảng kết quả.
 
 **Cách sử dụng.**
 1. Gõ từ khoá vào ô tìm; giữ mặc định **Theo từ khoá** hoặc bấm **Theo nghĩa (AI)** nếu
    muốn tìm theo mô tả gần nghĩa.
-2. Chọn thêm **Loại tài liệu**, **Năm**, **Khoa**, **Điểm quy đổi**, **Chủ đề** nếu cần;
-   mở **Bộ lọc nâng cao** để lọc theo chỉ mục/quartile/khoá.
+2. Chọn thêm **Loại tài liệu**, **Năm**, **Khoa**, **Loại nơi công bố** (nếu đang xem bài
+   báo), **Chỉ mục**, **Điểm quy đổi** nếu cần; mở **Bộ lọc nâng cao** để lọc thêm theo
+   quartile/khoá/chủ đề.
 3. Bấm **Tra cứu**. Bảng kết quả cập nhật theo trang (phân trang 50 dòng).
 4. Bấm tiêu đề một công trình để mở chi tiết; bấm một chip khoa hoặc một chip từ khoá để
-   lọc theo đúng giá trị đó; bấm **Tải CSV** để xuất danh sách đang lọc.
+   lọc theo đúng giá trị đó; bấm nút **Trích dẫn** trên một dòng để lấy ngay APA/IEEE/BibTeX
+   mà không cần mở chi tiết; bấm **Tải CSV** để xuất danh sách đang lọc.
 
 **Ai được dùng.** Công khai — không cần đăng nhập để tra cứu.
 
@@ -265,6 +280,9 @@ trùng từ), kèm bộ lọc và xuất CSV.
   `dept` của bài báo) **và** khoa của (các) tác giả đã liên kết với công trình đó — một
   công trình có thể có nhiều chip khoa hoặc không chip nào nếu chưa xác định được khoa
   từ cả hai nguồn.
+- **Loại nơi công bố** chỉ đếm **bài báo** — đồ án, luận văn, luận án và học liệu không có
+  `venue_kind` nên không xuất hiện trong bộ lọc này dù đang chọn "Tất cả" ở **Loại tài
+  liệu**.
 
 **Ảnh.** `docs/huong-dan/tra-cuu.png`.
 
@@ -845,26 +863,41 @@ mình. **Phòng KH-CN**, **Lãnh đạo** — xem được mọi đơn vị.
 giảng viên thành một hồ sơ công bố, cùng số liệu theo loại và theo năm.
 
 **Cung cấp gì.**
+- **Ảnh đại diện** ở đầu trang: ảnh thật lấy từ kho nguồn (`avatar_url`) nếu giảng viên có
+  lưu ảnh riêng ở đó; nếu không, hiện **chữ cái đầu** của tên trong một hình tròn — hiện
+  tại chỉ **6/400** giảng viên có ảnh riêng ở kho, **394/400** còn lại hiện chữ cái đầu.
+- **Tên** hiện kèm học hàm/học vị viết tắt ngay phía trước nếu kho có ghi (ví dụ *"PGS.TS.
+  Nguyễn Văn A"*); dòng ngay dưới tên là học hàm/học vị viết đầy đủ (ví dụ *"Phó giáo sư ·
+  Tiến sĩ"*).
 - **Chức vụ** (nếu có, ví dụ *"Hiệu trưởng"*, *"Phó Hiệu trưởng"*, *"Trưởng khoa"*) hiện
   ngay dưới tên, **tách riêng** khỏi khoa — chức vụ không còn được coi là một khoa.
 - **Khoa** (mã + tên, ví dụ *"CNTT — Khoa Công nghệ thông tin"*), kèm icon toà nhà; nếu
   khoa này do hệ thống tự suy ra (chưa có ai gán tay), di chuột vào dòng khoa hiện chú
   giải **"Suy từ đa số công trình đã liên kết"**. Không hiện dòng khoa nếu giảng viên chưa
   đủ tín hiệu để suy ra hoặc chưa được gán.
+- **Lĩnh vực** (nếu có, kèm icon sách) — lấy nguyên từ kho nguồn (trường *knowsAbout*), giữ
+  nguyên mã như ghi tại đó (ví dụ *"CNTT"*, *"Khoa học máy tính"*).
 - Thông tin liên hệ: ORCID, Google Scholar, email (nếu có).
 - Cảnh báo nếu có công trình đang chờ xác nhận liên kết với hồ sơ này, kèm liên kết mở hàng
   đợi tác giả.
 - Khối **"Công trình theo loại"** và **"Công trình theo năm"** (biểu đồ cột).
 - Bảng **"Danh sách công trình"** — mỗi dòng có nút **Trích dẫn** mở hộp thoại 3 định dạng.
-- Nút **"Lý lịch khoa học"** và **"Tải CSV"** ở đầu trang.
+- Nút **"Lý lịch khoa học"**, **"Tải BibTeX (tất cả)"**, **"Sao chép APA (tất cả)"** và
+  **"Tải CSV"** ở đầu trang. Hai nút trích dẫn toàn bộ xuất/sao chép trích dẫn của **mọi**
+  công trình đã liên kết của giảng viên trong một lần, sắp theo năm giảm dần — khác nút
+  **Trích dẫn** ở từng dòng của bảng, vốn chỉ trích dẫn một công trình.
 
 **Cách sử dụng.**
 1. Mở hồ sơ một giảng viên từ Tổng quan, Tra cứu, hàng đợi, hoặc chi tiết công trình.
-2. Xem thống kê theo loại và theo năm; nếu có cảnh báo liên kết đang chờ, bấm mở hàng đợi
+2. Xem ảnh đại diện (hoặc chữ cái đầu nếu giảng viên chưa có ảnh riêng ở kho), tên kèm học
+   hàm/học vị, chức vụ, khoa và lĩnh vực (nếu có) ở đầu trang.
+3. Xem thống kê theo loại và theo năm; nếu có cảnh báo liên kết đang chờ, bấm mở hàng đợi
    tác giả để xử lý.
-3. Ở bảng danh sách công trình, bấm **Trích dẫn** trên một dòng để lấy APA/IEEE/BibTeX.
-4. Bấm **"Tải CSV"** để xuất toàn bộ danh sách công bố của giảng viên này.
-5. Bấm **"Lý lịch khoa học"** để mở bản in được (xem mục 2.13.1).
+4. Ở bảng danh sách công trình, bấm **Trích dẫn** trên một dòng để lấy APA/IEEE/BibTeX của
+   riêng công trình đó; hoặc bấm **"Tải BibTeX (tất cả)"** / **"Sao chép APA (tất cả)"** ở
+   đầu trang để lấy trích dẫn của toàn bộ công trình đã liên kết cùng một lúc.
+5. Bấm **"Tải CSV"** để xuất toàn bộ danh sách công bố của giảng viên này.
+6. Bấm **"Lý lịch khoa học"** để mở bản in được (xem mục 2.13.1).
 
 **Ai được dùng.** Công khai.
 
@@ -878,6 +911,16 @@ giảng viên thành một hồ sơ công bố, cùng số liệu theo loại v�
   (`unit_source = manual`, không hiện chú giải "Suy từ đa số công trình").
 - Chức vụ lấy từ dữ liệu gốc của kho nguồn (trường *jobTitle*) — phần lớn giảng viên không
   có chức vụ ghi ở nguồn nên trường này thường để trống.
+- **Ảnh đại diện** chỉ nhận URL của chính kho (`https://repository.ictu.edu.vn/…`) khi nhập
+  dữ liệu — ảnh đặt chỗ do giao diện kho tự sinh theo tên (`ui-avatars.com`, ở domain khác)
+  bị bỏ qua, nên phần lớn hồ sơ hiện chữ cái đầu thay vì một ảnh placeholder khác nguồn.
+- **Lĩnh vực** đọc nguyên văn từ kho nguồn, không chuẩn hoá thành một danh mục cố định —
+  đo trên dữ liệu thật: 340/400 giảng viên có lĩnh vực, phổ biến nhất là Khoa học máy tính,
+  Công nghệ thông tin, CNTT, Kỹ thuật Điều khiển và Tự động hoá, Thể dục thể thao, Điện tử
+  viễn thông; mã viết tắt và tên đầy đủ có thể cùng xuất hiện ở các giảng viên khác nhau vì
+  kho ghi không thống nhất.
+- **Giới tính, ngày sinh, số điện thoại** của giảng viên **không hiện ở hồ sơ này** dù kho
+  nguồn có ghi các trường này — đây là dữ liệu cá nhân, xem README mục Quyền riêng tư.
 
 **Ảnh.** `docs/huong-dan/ho-so-giang-vien.png`.
 

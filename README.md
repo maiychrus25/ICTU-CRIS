@@ -157,9 +157,11 @@ thành một script idempotent, `--nightly` bỏ hai bước AI nặng nhất ch
   truy ngược được ai sửa và giá trị cũ.
 - **Tra cứu & hồ sơ** — tìm công trình theo từ khoá/loại/năm/đơn vị/chủ đề
   (gõ không dấu vẫn ra kết quả đúng), chi tiết có xuất xứ từng trường, hồ sơ
-  công bố giảng viên; lọc thêm theo chỉ mục/quartile/khoá/từ khoá riêng, và
-  theo **điểm quy đổi** (0,5/0,75/1/chưa xác định, ghi tại nguồn theo loại ấn
-  phẩm) (`GET /api/works/facets` đếm số lượng từng giá trị).
+  công bố giảng viên (ảnh đại diện lấy từ kho nguồn nếu có — 6/400 giảng
+  viên, còn lại hiện chữ cái đầu — và lĩnh vực); lọc thêm theo loại nơi công
+  bố (`venue_kind`)/chỉ mục/quartile/khoá/từ khoá riêng, và theo **điểm quy
+  đổi** (0,5/0,75/1/chưa xác định, ghi tại nguồn theo loại ấn phẩm) (`GET
+  /api/works/facets` đếm số lượng từng giá trị).
 - **Khoa thật & Quản trị khoa** (`/don-vi/`, `rd_officer`) — mã khoa đọc từ
   bộ lọc `dept` của kho nguồn thay vì chức vụ Ban Giám hiệu bị nhập nhầm
   thành khoa trước đây; tên chính thức của 5 khoa hiện tại và các khoa/bộ
@@ -172,7 +174,11 @@ thành một script idempotent, `--nightly` bỏ hai bước AI nặng nhất ch
   bật, không bao giờ trả lỗi.
 - **Trích dẫn công trình** — APA 7, IEEE, BibTeX dựng từ metadata đã chuẩn
   hoá (tác giả theo vai trong `author_mention`; đồ án/luận văn/luận án ghi
-  sinh viên là tác giả, GVHD là người hướng dẫn), tải trực tiếp tệp `.bib`.
+  sinh viên là tác giả, GVHD là người hướng dẫn), tải trực tiếp tệp `.bib`;
+  nút trích dẫn có ở chi tiết công trình, mỗi dòng kết quả tra cứu và bảng
+  công trình trên hồ sơ giảng viên, cùng một điểm cuối riêng xuất/sao chép
+  trích dẫn của **toàn bộ** công trình đã liên kết của một giảng viên
+  (`GET /api/persons/{id}/citations?style=apa|ieee|bibtex`).
 - **Lý lịch khoa học** — trang HTML in được (A4) cho từng giảng viên, gồm
   học hàm/học vị, số liệu công bố theo loại/năm và danh sách công trình dạng
   APA kèm liên kết DOI.
