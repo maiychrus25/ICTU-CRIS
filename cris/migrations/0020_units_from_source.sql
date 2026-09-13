@@ -23,18 +23,20 @@ CREATE INDEX work_unit_unit ON work_unit(unit_id);
 ALTER TABLE person ADD COLUMN position text;
 ALTER TABLE person ADD COLUMN unit_source text NOT NULL DEFAULT 'auto' CHECK (unit_source IN ('auto', 'manual'));
 
--- 10 đơn vị thật theo mã lọc `dept` (khảo sát 09/2026, xem kế hoạch lát cắt M).
--- Tên tạm dùng đề xuất đã được xác nhận; mã chưa rõ tên chính thức (đánh dấu
--- "?" trong kế hoạch) tạm dùng tên = mã, sửa sau bằng `units rename`.
+-- 10 khoa theo mã lọc `dept` của kho nguồn (khảo sát 09/2026, xem kế hoạch lát cắt M).
+-- Tên chính thức theo ictu.edu.vn (13/09/2026): trường hiện có 5 khoa — CNTT, KT&CN,
+-- KT&QT, NT&TT và Khoa Khoa học liên ngành (chưa có mã ở nguồn). Các mã còn lại là
+-- khoa/bộ môn tiền thân, còn xuất hiện ở bản ghi cũ: ĐTVT/ĐTTT → KT&CN, TĐH → KT&CN,
+-- HTTTKT → KT&QT (đổi tên 2011), KHCB → Khoa học liên ngành, TTĐPT → NT&TT.
 INSERT INTO unit(code, name) VALUES
   ('CNTT',   'Khoa Công nghệ thông tin'),
   ('ĐTVT',   'Khoa Công nghệ điện tử và truyền thông'),
-  ('ĐTTT',   'ĐTTT'),
+  ('ĐTTT',   'Khoa Điện tử truyền thông'),
   ('HTTTKT', 'Khoa Hệ thống thông tin kinh tế'),
   ('KHCB',   'Khoa Khoa học cơ bản'),
-  ('KT&CN',  'KT&CN'),
-  ('KT&QT',  'KT&QT'),
-  ('NT&TT',  'NT&TT'),
+  ('KT&CN',  'Khoa Kỹ thuật và Công nghệ'),
+  ('KT&QT',  'Khoa Kinh tế và Quản trị'),
+  ('NT&TT',  'Khoa Nghệ thuật và Truyền thông'),
   ('TĐH',    'Khoa Công nghệ tự động hoá'),
   ('TTĐPT',  'Khoa Truyền thông đa phương tiện')
 ON CONFLICT (code) DO NOTHING;
