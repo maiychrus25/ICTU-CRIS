@@ -90,6 +90,36 @@ def test_stats_by_unit_and_top_persons(client, conn, user_id):
     assert r["coverage"]["works_with_link_pct"] > 0
 
 
+# ---------- lát cắt M: đơn vị thật từ nguồn (work_unit) ----------
+def test_stats_by_unit_counts_work_unit_from_source_too(client, conn, user_id):
+    """`by_unit` nay đi qua `v_work_unit` — không chỉ đơn vị của tác giả đã liên
+    kết (test ở trên) mà cả đơn vị suy từ nguồn (`work_unit.source='source'`,
+    xem migration 0020/cris.normalize), không cần tác giả nào được liên kết."""
+    cntt = q(conn, "INSERT INTO unit(code, name) VALUES ('CNTT','Khoa Công nghệ thông tin') RETURNING id")[0]["id"]
+    wid = mk_work(conn, "Bài báo có đơn vị nguồn", doc_type="bai_bao")
+    q(conn, "INSERT INTO work_unit(work_id, unit_id, source) VALUES (%s,%s,'source')", wid, cntt)
+    conn.commit()
+    r = client.get("/api/stats").json()
+    assert any(u["unit_id"] == cntt and u["code"] == "CNTT" and u["works"] == 1 for u in r["by_unit"])
+
+
+def test_units_endpoint_lists_active_units_sorted_by_works(client, conn, user_id):
+    cntt = q(conn, "INSERT INTO unit(code, name) VALUES ('CNTT','Khoa Công nghệ thông tin') RETURNING id")[0]["id"]
+    q(conn, "INSERT INTO unit(code, name, active) VALUES ('KHCB','Khoa Khoa học cơ bản', false)")
+    for i in range(2):
+        wid = mk_work(conn, f"Bài {i}", doc_type="bai_bao")
+        q(conn, "INSERT INTO work_unit(work_id, unit_id, source) VALUES (%s,%s,'source')", wid, cntt)
+    mk_person(conn, "Nguyễn Văn A", unit_id=cntt)
+    conn.commit()
+    r = client.get("/api/units").json()
+    codes = [u["code"] for u in r]
+    assert "KHCB" not in codes                    # đã tắt, không liệt kê
+    cntt_row = next(u for u in r if u["code"] == "CNTT")
+    assert cntt_row["works"] == 2 and cntt_row["persons"] == 1 and cntt_row["active"] is True
+    # sắp theo works giảm dần: CNTT (2 công trình) phải đứng trước các đơn vị 0 công trình
+    assert r[0]["code"] == "CNTT"
+
+
 # ---------- E2: xuất CSV ----------
 def test_export_works_csv_bom_rows_and_diacritics(client, conn, user_id):
     mk_work(conn, "Hệ thống quản lý đào tạo", doc_type="bai_bao")

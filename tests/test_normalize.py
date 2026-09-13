@@ -308,6 +308,56 @@ def test_duplicate_names_in_one_record_keep_two_rows(conn, seeded):
     assert [m["position"] for m in ms] == [1, 2]
     assert ms[0]["id"] == ab_id
 
+# ── lát cắt M: work_unit từ archive.depts, view v_work_unit gộp nguồn + tác giả ──
+
+def test_normalize_writes_work_unit_from_archive_depts(conn, seeded):
+    raw = json.loads(json.dumps(BAI_BAO)); raw["archive"]["depts"] = ["CNTT"]
+    load(conn, "bai_bao", raw, "https://r/bai-bao/a/")
+    normalize.normalize_pending(conn)
+    work_id = q(conn, "SELECT id FROM work")[0]["id"]
+    rows_wu = q(conn, "SELECT u.code, wu.source FROM work_unit wu JOIN unit u ON u.id=wu.unit_id WHERE wu.work_id=%s", work_id)
+    assert [(r["code"], r["source"]) for r in rows_wu] == [("CNTT", "source")]
+
+
+def test_normalize_unknown_dept_code_creates_unit_named_after_code(conn, seeded):
+    raw = json.loads(json.dumps(BAI_BAO)); raw["archive"]["depts"] = ["MA_LA"]
+    load(conn, "bai_bao", raw, "https://r/bai-bao/a/")
+    normalize.normalize_pending(conn)
+    u = q(conn, "SELECT name FROM unit WHERE code='MA_LA'")
+    assert u and u[0]["name"] == "MA_LA"
+
+
+def test_normalize_removes_stale_work_unit_source_rows_when_depts_shrink(conn, seeded):
+    raw = json.loads(json.dumps(BAI_BAO)); raw["archive"]["depts"] = ["CNTT", "KHCB"]
+    load(conn, "bai_bao", raw, "https://r/bai-bao/a/")
+    normalize.normalize_pending(conn)
+    work_id = q(conn, "SELECT id FROM work")[0]["id"]
+    assert len(q(conn, "SELECT 1 FROM work_unit WHERE work_id=%s", work_id)) == 2
+
+    changed = json.loads(json.dumps(raw)); changed["archive"]["depts"] = ["KHCB"]
+    load(conn, "bai_bao", changed, "https://r/bai-bao/a/")
+    normalize.normalize_pending(conn)
+    codes = {r["code"] for r in q(conn, "SELECT u.code FROM work_unit wu JOIN unit u ON u.id=wu.unit_id WHERE wu.work_id=%s", work_id)}
+    assert codes == {"KHCB"}
+
+
+def test_v_work_unit_unions_source_depts_and_linked_authors(conn, seeded):
+    raw = json.loads(json.dumps(BAI_BAO)); raw["archive"]["depts"] = ["CNTT"]
+    load(conn, "bai_bao", raw, "https://r/bai-bao/a/")
+    normalize.normalize_pending(conn)
+    work_id = q(conn, "SELECT id FROM work")[0]["id"]
+    khcb_id = q(conn, "INSERT INTO unit(code, name) VALUES ('KHCB','Khoa Khoa học cơ bản') RETURNING id")[0]["id"]
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO person(kind, display_name, name_norm, unit_id) VALUES ('lecturer','X','x',%s) RETURNING id", (khcb_id,))
+        pid = cur.fetchone()["id"]
+        mention_id = q(conn, "SELECT id FROM author_mention WHERE work_id=%s LIMIT 1", work_id)[0]["id"]
+        cur.execute("INSERT INTO author_link(mention_id, person_id, confidence, state) VALUES (%s,%s,'ten_day_du_duy_nhat','DaXacNhan')",
+                    (mention_id, pid))
+    conn.commit()
+    codes = {r["code"] for r in q(conn, "SELECT u.code FROM v_work_unit vu JOIN unit u ON u.id=vu.unit_id WHERE vu.work_id=%s", work_id)}
+    assert codes == {"CNTT", "KHCB"}
+
+
 def test_two_orphans_from_different_cycles_do_not_collide(conn, seeded):
     v1 = {"archive": {"url": "https://r/bai-bao/j/", "title": "T6", "authors": "A B, C D, E F", "pub_type": "Scopus",
                       "year": "2021", "journal": "J", "volume": "V", "keywords": None},

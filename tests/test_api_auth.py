@@ -199,6 +199,16 @@ def test_expired_session_is_treated_as_logged_out(client, conn, user_id):
     assert r.status_code == 401
 
 
+def test_units_rename_and_alias_require_login_when_auth_required(client, conn, user_id):
+    """lát cắt M: `PATCH /api/units/{id}` và `POST /api/units/{id}/aliases`
+    dùng cùng `require_role("rd_officer")` với các endpoint quyết định khác —
+    401 khi chưa đăng nhập một khi đã có ai đặt mật khẩu (NFR-01)."""
+    uid = q(conn, "INSERT INTO unit(code, name) VALUES ('khoa-auth-m','Khoa Auth M') RETURNING id")[0]["id"]
+    auth.set_password(conn, "rd@ictu.test", "MatKhauManh!1")
+    assert client.patch(f"/api/units/{uid}", json={"name": "X"}).status_code == 401
+    assert client.post(f"/api/units/{uid}/aliases", json={"alias": "X"}).status_code == 401
+
+
 # ---------- CLI ----------
 
 def test_cli_user_set_password_and_list(conn, user_id, monkeypatch, capsys):

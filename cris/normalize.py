@@ -1,11 +1,14 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
 import json
+import logging
 import re
 
 from cris import audit
 from cris import rules as RU
 from cris.db import tx
+
+logger = logging.getLogger(__name__)
 
 WORK_TYPES = ("bai_bao", "do_an", "luan_van", "luan_an", "hoc_lieu")
 FIELDS = ("title", "title_norm", "doi", "journal", "volume", "year_issue", "abstract", "keywords_raw",
@@ -87,6 +90,43 @@ def _pending(cur, force=False, doc_types=None):
         ORDER BY s.id""", (types,))
     return cur.fetchall()
 
+def _unit_id_for_dept_code(conn, code):
+    """Mã đơn vị (`archive.depts`, xem `cris/source/repository.py facet_index`)
+    → `unit.id`, khớp theo `code` hoặc bí danh. Mã lạ (chưa seed ở migration
+    0020) → tạo đơn vị mới với tên = mã, ghi cảnh báo (rd_officer sửa tên sau
+    bằng `cris units rename`)."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT id FROM unit WHERE code=%s OR %s = ANY(aliases) LIMIT 1", (code, code))
+        row = cur.fetchone()
+        if row:
+            return row["id"]
+        cur.execute("INSERT INTO unit(code, name) VALUES (%s,%s) ON CONFLICT (code) DO NOTHING RETURNING id",
+                    (code, code))
+        row = cur.fetchone()
+        if row is None:  # race hiếm: đơn vị vừa được tạo ở chỗ khác giữa hai câu lệnh trên
+            cur.execute("SELECT id FROM unit WHERE code=%s", (code,))
+            row = cur.fetchone()
+        else:
+            logger.warning("mã đơn vị lạ từ nguồn (chưa seed ở migration 0020), đã tạo đơn vị mới: %s", code)
+        return row["id"]
+
+
+def _sync_work_units(conn, work_id, depts):
+    """UPSERT `work_unit(source='source')` từ `archive.depts` của bản ghi nguồn
+    hiện hành, xoá các dòng `source` không còn xuất hiện (đơn vị gán tay/qua
+    tác giả không đụng tới)."""
+    unit_ids = sorted({_unit_id_for_dept_code(conn, d) for d in depts if d})
+    with conn.cursor() as cur:
+        if unit_ids:
+            cur.execute("DELETE FROM work_unit WHERE work_id=%s AND source='source' AND unit_id <> ALL(%s)",
+                        (work_id, unit_ids))
+        else:
+            cur.execute("DELETE FROM work_unit WHERE work_id=%s AND source='source'", (work_id,))
+        for uid in unit_ids:
+            cur.execute("""INSERT INTO work_unit(work_id, unit_id, source) VALUES (%s,%s,'source')
+                           ON CONFLICT (work_id, unit_id, source) DO NOTHING""", (work_id, uid))
+
+
 def normalize_record(conn, rec, rules, actor_id=None):
     f = extract_fields(rec, rules)
     rs_id = rules["name_norm"][0]
@@ -121,6 +161,8 @@ def normalize_record(conn, rec, rules, actor_id=None):
                         (rec["doc_type"], rec["id"], rs_id, *cols.values()))
             work_id = cur.fetchone()["id"]
         arc = rec["raw"].get("archive") or {}
+        if rec["doc_type"] == "bai_bao":
+            _sync_work_units(conn, work_id, arc.get("depts") or [])
         raw_map = {"title": (rec["raw"].get("detail") or {}).get("title") or arc.get("title"),
                    "pub_type_raw": arc.get("pub_type"), "year_issue": arc.get("year"),
                    "doi": ",".join((rec["raw"].get("detail") or {}).get("doi") or [])}

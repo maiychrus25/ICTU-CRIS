@@ -5,6 +5,26 @@
 
 ## [Unreleased]
 
+### Added
+
+- Đơn vị thật (khoa/trung tâm) đọc từ bộ lọc `dept` của kho nguồn thay vì chức vụ
+  Ban Giám hiệu bị nhập nhầm thành đơn vị: migration `0020_units_from_source.sql`
+  (bảng `work_unit`, 10 đơn vị hạt giống, tắt đơn vị "Ban Giám hiệu"); `person.position`
+  (chức vụ: Hiệu trưởng, Trưởng khoa…) tách khỏi `person.unit_id`;
+  `cris.people.assign_units_by_works` gán đơn vị giảng viên theo đa số công trình
+  đã liên kết (CLI `people --assign-units`); `cris/units.py` + CLI
+  `units list|rename|alias` quản lý tên/bí danh đơn vị.
+- `cris.source.repository.facet_index` quét bộ lọc `dept` của `/bai-bao/`, gán vào
+  `archive.depts` khi đồng bộ (`sync_repository(..., with_facets=True)`, CLI
+  `sync --no-facets` để tắt); `cris.normalize` ghi các đơn vị này vào `work_unit`.
+- API: `GET /api/units` (đơn vị đang hoạt động, số công trình/giảng viên, `aliases`);
+  `PATCH /api/units/{id}` (đổi tên) và `POST /api/units/{id}/aliases` (thêm bí danh)
+  — chỉ `rd_officer`, dùng chung `cris/units.py` với CLI, ghi `audit_log`; trang
+  quản trị đơn vị `/don-vi/` (Codex) gọi ba endpoint này. Bộ lọc `score`/`min_score`
+  (điểm quy đổi 0,5/0,75/1/chưa xác định) ở `GET /api/works`; facet `scores` ở
+  `GET /api/works/facets`; `WorkSummary`/`WorkDetail` thêm `score` và `units` (chip
+  đơn vị); `PersonProfile` thêm `position`, `unit`, `unit_source`.
+
 ## [0.6.1] - 2026-09-13
 
 ### Added

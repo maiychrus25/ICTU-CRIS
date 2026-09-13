@@ -1,7 +1,9 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
 import hashlib
+
 from cris import people, rules, sync
+
 
 def q(conn, sql, *a):
     with conn.cursor() as cur:
@@ -12,7 +14,9 @@ GV = {"archive": {"url": "https://r/giang-vien/mau/", "name": "Nguyễn Văn M�
                   "jobTitle": "Khoa Công nghệ thông tin", "knowsAbout": None, "honorificPrefix": "TS.",
                   "orcid": "0000-0002-1825-0097", "phone": "0900000000", "dob": "01/01/1980"}}
 
-def test_import_creates_person_unit_and_keys(conn):
+def test_import_creates_person_position_and_keys(conn):
+    """jobTitle (lát cắt M) là CHỨC VỤ → person.position; import không còn gán/tạo
+    đơn vị (đơn vị nay đến từ assign_units_by_works hoặc gán tay)."""
     rules.seed_rules(conn, None)
     sync.run_sync(conn, source="repository", scope="giang-vien", doc_type="giang_vien",
                   records=[("https://r/giang-vien/mau/", GV)], expected=1, full=True)
@@ -22,20 +26,24 @@ def test_import_creates_person_unit_and_keys(conn):
     assert p["name_keys"] == ["mau nguyen van"] and p["orcid"] == "0000-0002-1825-0097" and p["orcid_verified"] is False
     assert p["degree_raw"] == "TS" and p["email"] == "mau@example.invalid"
     assert p["dob"].isoformat() == "1980-01-01"
-    u = q(conn, "SELECT code, name FROM unit WHERE id=%s", p["unit_id"])[0]
-    assert u["name"] == "Khoa Công nghệ thông tin"
+    assert p["position"] == "Khoa Công nghệ thông tin"     # giữ nguyên văn (không khớp bảng chuẩn hoá)
+    assert p["unit_id"] is None and p["unit_source"] == "auto"
 
-def test_import_is_idempotent_and_unit_alias_dedups(conn):
+def test_import_never_creates_or_touches_unit_from_job_title(conn):
+    """Khác hành vi cũ (unit_from_job_title): import không đụng tới bảng `unit`
+    dù trước/sau khi có sẵn đơn vị trùng tên với jobTitle."""
     rules.seed_rules(conn, None)
     with conn.cursor() as cur:
         cur.execute("INSERT INTO unit(code, name, aliases) VALUES ('CNTT','Khoa CNTT', ARRAY['Khoa Công nghệ thông tin'])")
     conn.commit()
+    before = len(q(conn, "SELECT 1 FROM unit"))
     sync.run_sync(conn, source="repository", scope="giang-vien", doc_type="giang_vien",
                   records=[("https://r/giang-vien/mau/", GV)], expected=1, full=True)
     people.import_people(conn)
     assert people.import_people(conn) == {"created": 0, "updated": 1, "errors": []}
-    assert len(q(conn, "SELECT 1 FROM unit")) == 1
-    assert q(conn, "SELECT code FROM unit")[0]["code"] == "CNTT"
+    assert len(q(conn, "SELECT 1 FROM unit")) == before
+    p = q(conn, "SELECT unit_id FROM person")[0]
+    assert p["unit_id"] is None
 
 def test_ensure_unit_collision_gets_deterministic_suffix(conn):
     with conn.cursor() as cur:
@@ -88,7 +96,9 @@ def test_lowercase_source_name_is_title_cased_for_display(conn):
 
 
 def test_job_title_positions_are_not_units(conn):
-    """`jobTitle` là chức vụ: hiệu trưởng/hiệu phó → Ban Giám hiệu; trưởng khoa → không gán đơn vị."""
+    """`jobTitle` là chức vụ (lát cắt M): hiệu trưởng/hiệu phó/trưởng khoa/tên khoa
+    tự do đều chỉ ghi vào `person.position`, KHÔNG bao giờ gán/tạo đơn vị — Ban
+    Giám hiệu (BGH) đã bị tắt ở migration 0020, không còn được suy ra ở đây nữa."""
     rules.seed_rules(conn, None)
     recs = []
     for i, jt in enumerate(["Hiệu trưởng", "Hiệu phó", "Trưởng khoa", "Khoa Công nghệ thông tin"]):
@@ -97,9 +107,111 @@ def test_job_title_positions_are_not_units(conn):
         recs.append((a["url"], {"archive": a}))
     sync.run_sync(conn, source="repository", scope="giang-vien", doc_type="giang_vien", records=recs, expected=4, full=True)
     people.import_people(conn)
-    rows = {r["display_name"]: r["code"] for r in q(conn, "SELECT p.display_name, u.code FROM person p LEFT JOIN unit u ON u.id=p.unit_id")}
-    assert rows["Người Số 0"] == "BGH" and rows["Người Số 1"] == "BGH"
-    assert rows["Người Số 2"] is None
-    assert rows["Người Số 3"] == "KHOACONGNGHETHON"[:16] or rows["Người Số 3"] is not None
-    assert q(conn, "SELECT name FROM unit WHERE code='BGH'")[0]["name"] == "Ban Giám hiệu"
+    rows = {r["display_name"]: (r["code"], r["position"]) for r in
+            q(conn, "SELECT p.display_name, p.position, u.code FROM person p LEFT JOIN unit u ON u.id=p.unit_id")}
+    assert rows["Người Số 0"] == (None, "Hiệu trưởng")
+    assert rows["Người Số 1"] == (None, "Phó Hiệu trưởng")
+    assert rows["Người Số 2"] == (None, "Trưởng khoa")
+    assert rows["Người Số 3"] == (None, "Khoa Công nghệ thông tin")
+    assert len(q(conn, "SELECT 1 FROM unit WHERE code='BGH'")) == 0
+
+
+def test_position_from_job_title_normalizes_known_variants():
+    assert people.position_from_job_title("Hiệu phó") == "Phó Hiệu trưởng"
+    assert people.position_from_job_title("  hiệu   trưởng ") == "Hiệu trưởng"
+    assert people.position_from_job_title("Giảng viên chính") == "Giảng viên chính"
+    assert people.position_from_job_title(None) is None
+    assert people.position_from_job_title("") is None
+    assert people.position_from_job_title("Chuyên viên") == "Chuyên viên"   # giữ nguyên, không có trong bảng chuẩn hoá
+
+
+def _mk_unit(conn, code, name=None):
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO unit(code, name) VALUES (%s,%s) ON CONFLICT (code) DO NOTHING RETURNING id",
+                    (code, name or code))
+        row = cur.fetchone()
+        if row is None:
+            cur.execute("SELECT id FROM unit WHERE code=%s", (code,))
+            row = cur.fetchone()
+    return row["id"]
+
+
+def _mk_lecturer(conn, name):
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO person(kind, display_name, name_norm, name_keys) VALUES ('lecturer',%s,%s,%s) RETURNING id",
+                    (name, name.lower(), [name.lower()]))
+        return cur.fetchone()["id"]
+
+
+def _mk_bai_bao(conn, title):
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO sync_run(source, scope) VALUES ('manual','t')")
+        cur.execute("INSERT INTO source_record(sync_run_id, source, source_key, doc_type, content_hash, raw) "
+                    "VALUES (currval('sync_run_id_seq'),'manual',%s,'bai_bao','h','{}') RETURNING id", (title,))
+        sr_id = cur.fetchone()["id"]
+        cur.execute("INSERT INTO work(doc_type, primary_source_record_id, title, title_norm, state) "
+                    "VALUES ('bai_bao',%s,%s,%s,'DaChuanHoa') RETURNING id", (sr_id, title, title.lower()))
+        return cur.fetchone()["id"]
+
+
+def _link_author(conn, work_id, person_id, state="DaXacNhan"):
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO author_mention(work_id, role, position, raw_name, name_norm, name_key) "
+                    "VALUES (%s,'author',1,'X','x','x') RETURNING id", (work_id,))
+        mid = cur.fetchone()["id"]
+        cur.execute("INSERT INTO author_link(mention_id, person_id, confidence, state) VALUES (%s,%s,'ten_day_du_duy_nhat',%s)",
+                    (mid, person_id, state))
+
+
+def _set_work_unit(conn, work_id, unit_id, source="source"):
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO work_unit(work_id, unit_id, source) VALUES (%s,%s,%s)", (work_id, unit_id, source))
+
+
+def test_assign_units_by_works_picks_majority(conn):
+    cntt = _mk_unit(conn, "CNTT")
+    khcb = _mk_unit(conn, "KHCB")
+    pid = _mk_lecturer(conn, "Nguyễn Văn A")
+    for title, unit_id in [("W1", cntt), ("W2", cntt), ("W3", khcb)]:
+        wid = _mk_bai_bao(conn, title)
+        _set_work_unit(conn, wid, unit_id)
+        _link_author(conn, wid, pid)
+    conn.commit()
+    out = people.assign_units_by_works(conn)
+    assert out["assigned"] == 1 and out["tied"] == 0
+    row = q(conn, "SELECT unit_id, unit_source FROM person WHERE id=%s", pid)[0]
+    assert row["unit_id"] == cntt and row["unit_source"] == "auto"
+
+
+def test_assign_units_by_works_tie_clears_unit(conn):
+    cntt = _mk_unit(conn, "CNTT")
+    khcb = _mk_unit(conn, "KHCB")
+    pid = _mk_lecturer(conn, "Trần Thị B")
+    for title, unit_id in [("W1", cntt), ("W2", khcb)]:
+        wid = _mk_bai_bao(conn, title)
+        _set_work_unit(conn, wid, unit_id)
+        _link_author(conn, wid, pid)
+    with conn.cursor() as cur:
+        cur.execute("UPDATE person SET unit_id=%s WHERE id=%s", (cntt, pid))
+    conn.commit()
+    out = people.assign_units_by_works(conn)
+    assert out["cleared"] == 1 and out["tied"] == 1
+    row = q(conn, "SELECT unit_id FROM person WHERE id=%s", pid)[0]
+    assert row["unit_id"] is None
+
+
+def test_assign_units_by_works_skips_manual_unit_source(conn):
+    cntt = _mk_unit(conn, "CNTT")
+    khcb = _mk_unit(conn, "KHCB")
+    pid = _mk_lecturer(conn, "Lê Văn C")
+    wid = _mk_bai_bao(conn, "W1")
+    _set_work_unit(conn, wid, khcb)
+    _link_author(conn, wid, pid)
+    with conn.cursor() as cur:
+        cur.execute("UPDATE person SET unit_id=%s, unit_source='manual' WHERE id=%s", (cntt, pid))
+    conn.commit()
+    out = people.assign_units_by_works(conn)
+    assert out == {"assigned": 0, "cleared": 0, "unchanged": 0, "tied": 0}
+    row = q(conn, "SELECT unit_id, unit_source FROM person WHERE id=%s", pid)[0]
+    assert row["unit_id"] == cntt and row["unit_source"] == "manual"
 

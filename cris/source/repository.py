@@ -206,6 +206,24 @@ def _iter_facet(path, facet, value, fetch, max_pages):
             return
         pg += 1
 
+# Đơn vị thật (khoa/trung tâm) đọc qua bộ lọc `dept` của `/bai-bao/` — hồ sơ
+# giảng viên ở nguồn không ghi khoa, nhưng mỗi bài báo có thể liệt kê dưới
+# nhiều giá trị dept nên phải quét từng giá trị rồi gộp lại theo bản ghi
+# (một work có thể thuộc nhiều đơn vị). "ICTU" và các giá trị bắt đầu bằng
+# "Trường" là toàn trường, không phải một khoa/trung tâm cụ thể → bỏ qua.
+def facet_index(path, facet, fetch, max_pages=400):
+    """Quét hết các giá trị của bộ lọc `facet` ở `path`, trả về
+    `{source_key: [giá trị facet, ...]}` (nhiều giá trị/bản ghi nếu nguồn liệt
+    kê dưới nhiều khoa)."""
+    first = fetch(f"{BASE}/{path}/")
+    out = {}
+    for value in facet_options(first, facet):
+        if value == "ICTU" or value.startswith("Trường"):
+            continue
+        for r in _iter_facet(path, facet, value, fetch, max_pages):
+            out.setdefault(r["url"], []).append(value)
+    return out
+
 def iter_archive(path, fetch=get, max_pages=400, backfill=True):
     seen, pg, total, first = set(), 1, None, None
     while pg <= max_pages:

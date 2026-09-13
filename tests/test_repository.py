@@ -1,6 +1,7 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
 import pathlib
+
 from cris.source import repository as R
 
 FX = pathlib.Path(__file__).parent / "fixtures"
@@ -120,3 +121,45 @@ def test_backfill_url_encodes_facet_value():
                 '<div class="dl-info-bar">tổng số <strong>9</strong> bài báo</div></main>')
     list(R.iter_archive("bai-bao", fetch=fetch))
     assert any("?dept=KT%26CN" in u for u in seen)
+
+# ── lát cắt M: đơn vị thật qua facet_index (dept) ───────────────────────────
+
+def _bb_row(n):
+    return (f'<tr class="bb-row"><td class="bb-col-title">'
+            f'<a class="bb-title-link" href="https://repository.ictu.edu.vn/bai-bao/b{n}/" title="Bai {n}"></a>'
+            f'</td></tr>')
+
+def _bb_archive(items, total, depts=None):
+    opts = "".join(f'<option value="{d}">{d}</option>' for d in (depts or []))
+    return ('<main class="site-main" id="main">'
+            + (f'<select name="dept">{opts}</select>' if depts is not None else "")
+            + f'<div class="dl-info-bar">tổng số <strong>{total}</strong> bài báo</div>'
+            + "".join(_bb_row(i) for i in items) + "</main>")
+
+def test_facet_index_maps_records_across_two_depts_two_pages_each():
+    base = "https://repository.ictu.edu.vn"
+    pages = {
+        f"{base}/bai-bao/": _bb_archive([], 0, depts=(
+            "CNTT", "KT&CN", "ICTU", "Trường ĐH CNTT&TT")),
+        f"{base}/bai-bao/?dept=CNTT": _bb_archive([1, 2], 3),
+        f"{base}/bai-bao/?dept=CNTT&pg=2": _bb_archive([3], 3),
+        f"{base}/bai-bao/?dept=KT%26CN": _bb_archive([4, 5], 3),
+        f"{base}/bai-bao/?dept=KT%26CN&pg=2": _bb_archive([1], 3),
+    }
+    calls = []
+    def fetch(url):
+        calls.append(url)
+        return pages[url]
+    idx = R.facet_index("bai-bao", "dept", fetch)
+    assert idx[f"{base}/bai-bao/b1/"] == ["CNTT", "KT&CN"]     # thuộc cả hai khoa
+    assert idx[f"{base}/bai-bao/b2/"] == ["CNTT"]
+    assert idx[f"{base}/bai-bao/b3/"] == ["CNTT"]
+    assert idx[f"{base}/bai-bao/b4/"] == ["KT&CN"]
+    assert idx[f"{base}/bai-bao/b5/"] == ["KT&CN"]
+    assert not any("dept=ICTU" in u or "dept=Tr" in u for u in calls)   # toàn trường: bỏ qua
+    assert sum(1 for u in calls if "dept=CNTT" in u) == 2               # 2 trang cho CNTT
+    assert sum(1 for u in calls if "dept=KT" in u) == 2                 # 2 trang cho KT&CN
+
+def test_facet_index_empty_when_no_facet_values():
+    idx = R.facet_index("bai-bao", "dept", lambda url: _bb_archive([], 0, depts=()))
+    assert idx == {}

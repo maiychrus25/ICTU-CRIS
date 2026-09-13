@@ -7,6 +7,7 @@ import os
 import sys
 
 from cris import anomaly, auth, db, dedup, link, normalize, people, quality, rules, sync
+from cris import units as units_mod
 from cris.source import repository as R
 
 
@@ -15,7 +16,10 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("migrate"); sub.add_parser("seed")
     s = sub.add_parser("sync"); s.add_argument("paths", nargs="*", default=list(R.DOC_TYPES)); s.add_argument("--no-details", action="store_true")
-    sub.add_parser("people")
+    s.add_argument("--no-facets", action="store_true", help="bỏ quét bộ lọc dept (đơn vị) cho bài báo")
+    pp = sub.add_parser("people")
+    pp.add_argument("--assign-units", action="store_true",
+                     help="gán đơn vị giảng viên theo đa số work_unit(source) của công trình đã liên kết, thay vì nhập giảng viên")
     np = sub.add_parser("normalize")
     np.add_argument("--redo", action="store_true", help="chuẩn hoá lại toàn bộ bản ghi sống, không chỉ phần đang chờ")
     np.add_argument("--doc-type", choices=list(normalize.WORK_TYPES), help="chỉ chuẩn hoá một loại (mặc định: tất cả)")
@@ -61,6 +65,13 @@ def main(argv=None):
     cl = us.add_parser("create-lecturers", help="tạo tài khoản lecturer từ person.kind='lecturer' có email (lát cắt H3)")
     cl.add_argument("--unit", help="mã đơn vị (unit.code), lọc theo person.unit_id")
     cl.add_argument("--dry-run", action="store_true", help="chỉ đếm, không ghi")
+    un = sub.add_parser("units", help="quản lý đơn vị thật (khoa/trung tâm)")
+    uns = un.add_subparsers(dest="units_cmd", required=True)
+    uns.add_parser("list", help="liệt kê đơn vị (mã, tên, số công trình/giảng viên)")
+    ur = uns.add_parser("rename", help="đổi tên một đơn vị")
+    ur.add_argument("--code", required=True); ur.add_argument("--name", required=True)
+    ua = uns.add_parser("alias", help="thêm bí danh cho một đơn vị")
+    ua.add_argument("--code", required=True); ua.add_argument("--alias", required=True)
     a = ap.parse_args(argv)
     if a.cmd == "serve":
         import uvicorn
@@ -79,12 +90,15 @@ def main(argv=None):
         print(rules.seed_rules(conn, None))
     elif a.cmd == "sync":
         for p in a.paths:
-            rid = sync.sync_repository(conn, p, with_details=not a.no_details)
+            rid = sync.sync_repository(conn, p, with_details=not a.no_details, with_facets=not a.no_facets)
             with conn.cursor() as cur:
                 cur.execute("SELECT status, added, changed, vanished, warnings FROM sync_run WHERE id=%s", (rid,))
                 print(p, dict(cur.fetchone()), file=sys.stderr)
     elif a.cmd == "people":
-        print(people.import_people(conn))
+        if a.assign_units:
+            print(people.assign_units_by_works(conn))
+        else:
+            print(people.import_people(conn))
     elif a.cmd == "normalize":
         print(normalize.normalize_pending(conn, force=a.redo, doc_type=a.doc_type))
     elif a.cmd == "link":
@@ -194,6 +208,22 @@ def main(argv=None):
             result = auth.create_lecturers(conn, unit_code=a.unit, dry_run=a.dry_run)
             verb = "sẽ tạo" if a.dry_run else "đã tạo"
             print(f"{verb} {result['created']} tài khoản lecturer, bỏ qua {result['skipped']} (đã có tài khoản)")
+    elif a.cmd == "units":
+        if a.units_cmd == "list":
+            for row in units_mod.list_units(conn, include_inactive=True):
+                print(json.dumps(dict(row), ensure_ascii=False))
+        elif a.units_cmd == "rename":
+            try:
+                uid = units_mod.rename_unit(conn, a.code, a.name)
+            except ValueError as e:
+                print(str(e), file=sys.stderr); conn.close(); sys.exit(1)
+            print(f"đã đổi tên đơn vị {a.code} (#{uid}) thành: {a.name}")
+        elif a.units_cmd == "alias":
+            try:
+                uid = units_mod.add_alias(conn, a.code, a.alias)
+            except ValueError as e:
+                print(str(e), file=sys.stderr); conn.close(); sys.exit(1)
+            print(f"đã thêm bí danh '{a.alias}' cho đơn vị {a.code} (#{uid})")
     conn.close()
 
 if __name__ == "__main__":

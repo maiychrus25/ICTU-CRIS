@@ -6,39 +6,40 @@ from datetime import datetime
 
 import psycopg
 
+from cris import audit
 from cris import rules as RU
 from cris.db import tx
 
-# `jobTitle` ở kho nguồn là CHỨC VỤ, không phải đơn vị. Ban Giám hiệu là đơn vị thật
-# của hiệu trưởng/hiệu phó; các chức vụ cấp khoa/phòng không cho biết khoa nào → không gán.
-POSITION_UNITS = {
-    "hiệu trưởng": ("BGH", "Ban Giám hiệu"),
-    "phó hiệu trưởng": ("BGH", "Ban Giám hiệu"),
-    "hiệu phó": ("BGH", "Ban Giám hiệu"),
+# `jobTitle` ở kho nguồn là CHỨC VỤ, không phải đơn vị (lát cắt M — đơn vị thật
+# nay đọc từ bộ lọc `dept` của kho, xem cris/normalize.py và migration 0020).
+# Chuẩn hoá vài biến thể thường gặp; giá trị lạ vẫn giữ nguyên làm chức vụ,
+# KHÔNG suy ra/tạo đơn vị từ đây nữa (đó là việc của assign_units_by_works).
+POSITION_NORMALIZE = {
+    "hiệu trưởng": "Hiệu trưởng",
+    "phó hiệu trưởng": "Phó Hiệu trưởng",
+    "hiệu phó": "Phó Hiệu trưởng",
+    "trưởng khoa": "Trưởng khoa",
+    "phó trưởng khoa": "Phó Trưởng khoa",
+    "phó khoa": "Phó Trưởng khoa",
+    "trưởng phòng": "Trưởng phòng",
+    "phó trưởng phòng": "Phó Trưởng phòng",
+    "trưởng bộ môn": "Trưởng bộ môn",
+    "phó trưởng bộ môn": "Phó Trưởng bộ môn",
+    "giảng viên": "Giảng viên",
+    "giảng viên chính": "Giảng viên chính",
+    "trợ giảng": "Trợ giảng",
 }
-POSITION_ONLY = {"trưởng khoa", "phó trưởng khoa", "phó khoa", "trưởng phòng", "phó trưởng phòng",
-                 "trưởng bộ môn", "phó trưởng bộ môn", "giảng viên", "giảng viên chính", "trợ giảng"}
 
 
-def unit_from_job_title(conn, job_title):
-    """Đơn vị suy từ `jobTitle` của nguồn: chức vụ Ban Giám hiệu → đơn vị BGH (tạo/tra theo mã);
-    chức vụ cấp khoa/phòng → None (không biết khoa); còn lại coi là tên đơn vị như trước."""
-    key = " ".join((job_title or "").split()).lower()
+def position_from_job_title(job_title):
+    """Chuẩn hoá `jobTitle` (chức vụ) của nguồn — biến thể đã biết (vd "Hiệu phó")
+    map về dạng chuẩn; giá trị khác giữ nguyên (chỉ gọn khoảng trắng). `None`/rỗng
+    → `None`."""
+    squashed = " ".join((job_title or "").split())
+    key = squashed.lower()
     if not key:
         return None
-    if key in POSITION_UNITS:
-        code, name = POSITION_UNITS[key]
-        with conn.cursor() as cur:
-            cur.execute("SELECT id FROM unit WHERE code=%s", (code,))
-            row = cur.fetchone()
-            if row:
-                return row["id"]
-            cur.execute("INSERT INTO unit(code, name, aliases) VALUES (%s,%s,%s) RETURNING id",
-                        (code, name, [k.title() for k, v in POSITION_UNITS.items() if v[0] == code]))
-            return cur.fetchone()["id"]
-    if key in POSITION_ONLY:
-        return None
-    return ensure_unit(conn, job_title)
+    return POSITION_NORMALIZE.get(key, squashed)
 
 
 def ensure_unit(conn, name):
@@ -90,27 +91,70 @@ def import_people(conn):
                             display = display[len(matched):].strip()
                             break
                     display = RU.title_case_name(display)
-                    unit_id = unit_from_job_title(conn, a.get("jobTitle"))
+                    # jobTitle là CHỨC VỤ (lát cắt M) → person.position; KHÔNG suy/gán đơn vị
+                    # từ đây nữa — đơn vị nay đến từ assign_units_by_works (đa số công trình
+                    # đã liên kết) hoặc gán tay (cris.units.set_person_unit), xem migration 0020.
+                    position = position_from_job_title(a.get("jobTitle"))
                     # `rank` (học hàm GS/PGS, khác `degree_raw` học vị): ngoại lệ tối thiểu
                     # ngoài phạm vi K1 thường không sửa `cris.people` — chỉ dòng vals dưới đây,
                     # cột mới ở migration 0016 (nguồn: archive.rank, xem cris/source/repository.py).
                     vals = dict(display_name=display, name_norm=nn, degree_raw=a.get("degree") or deg,
-                                email=a.get("email"), orcid=(rec["raw"].get("detail") or {}).get("orcid") or a.get("orcid"), unit_id=unit_id,
-                                phone=a.get("phone"), dob=_dob(a.get("dob")), rank=a.get("rank"))
+                                email=a.get("email"), orcid=(rec["raw"].get("detail") or {}).get("orcid") or a.get("orcid"),
+                                phone=a.get("phone"), dob=_dob(a.get("dob")), rank=a.get("rank"), position=position)
                     cur.execute("SELECT id, name_keys FROM person WHERE source_record_id IN (SELECT id FROM source_record WHERE source=%s AND source_key=%s)",
                                 (rec["source"], rec["source_key"]))
                     row = cur.fetchone()
                     key = RU.name_key(nn)
                     if row:
                         keys = sorted(set(row["name_keys"]) | {key})
-                        cur.execute("""UPDATE person SET display_name=%s, name_norm=%s, degree_raw=%s, email=%s, orcid=%s, unit_id=%s,
-                                       phone=%s, dob=%s, rank=%s, name_keys=%s, source_record_id=%s WHERE id=%s""",
+                        cur.execute("""UPDATE person SET display_name=%s, name_norm=%s, degree_raw=%s, email=%s, orcid=%s,
+                                       phone=%s, dob=%s, rank=%s, position=%s, name_keys=%s, source_record_id=%s WHERE id=%s""",
                                     (*vals.values(), keys, rec["id"], row["id"]))
                         out["updated"] += 1
                     else:
-                        cur.execute("""INSERT INTO person(kind, source_record_id, display_name, name_norm, degree_raw, email, orcid, unit_id, phone, dob, rank, name_keys)
+                        cur.execute("""INSERT INTO person(kind, source_record_id, display_name, name_norm, degree_raw, email, orcid, phone, dob, rank, position, name_keys)
                                        VALUES ('lecturer',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", (rec["id"], *vals.values(), [key]))
                         out["created"] += 1
             except psycopg.errors.IntegrityError as e:
                 out["errors"].append({"source_key": rec["source_key"], "error": str(e).splitlines()[0]})
+    return out
+
+
+def assign_units_by_works(conn, actor_id=None):
+    """Gán đơn vị giảng viên (`person.unit_id`) theo đa số `work_unit(source)`
+    của các công trình đã liên kết còn sống (`v_person_publications`, trạng thái
+    'DaNoiTuDong'/'DaXacNhan') — CLI `people --assign-units`. Chỉ động tới
+    `unit_source='auto'` (đơn vị gán tay qua `cris.units.set_person_unit` không
+    bị ghi đè). Hoà phiếu (nhiều đơn vị cùng số công trình cao nhất) → bỏ, để
+    `unit_id=NULL` thay vì đoán. Mỗi thay đổi ghi `audit_log('person.unit_auto')`."""
+    out = {"assigned": 0, "cleared": 0, "unchanged": 0, "tied": 0}
+    with tx(conn), conn.cursor() as cur:
+        cur.execute("SELECT id, unit_id FROM person WHERE kind='lecturer' AND unit_source='auto'")
+        people_rows = cur.fetchall()
+        for p in people_rows:
+            cur.execute("""
+                SELECT wu.unit_id, count(DISTINCT vp.work_id) AS n
+                FROM v_person_publications vp
+                JOIN work_unit wu ON wu.work_id = vp.work_id AND wu.source = 'source'
+                WHERE vp.person_id = %s AND vp.state IN ('DaNoiTuDong', 'DaXacNhan')
+                GROUP BY wu.unit_id ORDER BY n DESC
+            """, (p["id"],))
+            counts = cur.fetchall()
+            new_unit_id, tied = None, False
+            if counts:
+                top_n = counts[0]["n"]
+                leaders = [c for c in counts if c["n"] == top_n]
+                if len(leaders) == 1:
+                    new_unit_id = leaders[0]["unit_id"]
+                else:
+                    tied = True
+            if new_unit_id == p["unit_id"]:
+                out["unchanged"] += 1
+                continue
+            cur.execute("UPDATE person SET unit_id=%s WHERE id=%s", (new_unit_id, p["id"]))
+            audit.log(conn, actor_id, "person.unit_auto", "person", p["id"],
+                      before={"unit_id": p["unit_id"]}, after={"unit_id": new_unit_id})
+            out["assigned" if new_unit_id is not None else "cleared"] += 1
+            if tied:
+                out["tied"] += 1
     return out

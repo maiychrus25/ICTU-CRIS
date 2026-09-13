@@ -54,7 +54,7 @@ def test_health_and_openapi(client):
               "/api/recent", "/api/feed.xml",
               "/api/periods/{pid}/reports", "/api/reports/{rid}", "/api/reports/{rid}/export",
               "/api/notifications", "/api/notifications/{nid}/read", "/api/notifications/read-all",
-              "/api/units/{unit_id}/overview"):
+              "/api/units", "/api/units/{unit_id}", "/api/units/{unit_id}/aliases", "/api/units/{unit_id}/overview"):
         assert p in paths, p
 
 
@@ -140,3 +140,81 @@ def test_compare_never_touches_business_tables(client, conn, user_id):
 def test_503_when_no_rd_officer(client, conn):
     r = client.post("/api/compare", json={"title": "abc", "description": ""})
     assert r.status_code == 503 and "rd_officer" in r.json()["detail"]
+
+
+# ---------- lát cắt M: điểm quy đổi (score/min_score), chip đơn vị, chức vụ ----------
+def test_works_filter_by_exact_score_and_none(client, conn, user_id):
+    w1 = mk_work(conn, "Bài A", doc_type="bai_bao")
+    w2 = mk_work(conn, "Bài B", doc_type="bai_bao")
+    w3 = mk_work(conn, "Bài C", doc_type="bai_bao")
+    q(conn, "UPDATE work SET score=0.5 WHERE id=%s", w1)
+    q(conn, "UPDATE work SET score=1 WHERE id=%s", w2)
+    conn.commit()          # w3 giữ score NULL — "Chưa xác định"
+
+    r = client.get("/api/works", params={"doc_type": "bai_bao", "score": "0.5"}).json()
+    assert [i["id"] for i in r["items"]] == [w1]
+
+    r_none = client.get("/api/works", params={"doc_type": "bai_bao", "score": "none"}).json()
+    assert {i["id"] for i in r_none["items"]} == {w3}
+
+    r_all = client.get("/api/works", params={"doc_type": "bai_bao"}).json()
+    by_id = {i["id"]: i["score"] for i in r_all["items"]}
+    assert by_id[w1] == 0.5 and by_id[w2] == 1.0 and by_id[w3] is None
+
+
+def test_works_filter_by_min_score(client, conn, user_id):
+    w1 = mk_work(conn, "Bài A", doc_type="bai_bao")
+    w2 = mk_work(conn, "Bài B", doc_type="bai_bao")
+    q(conn, "UPDATE work SET score=0.5 WHERE id=%s", w1)
+    q(conn, "UPDATE work SET score=1 WHERE id=%s", w2)
+    conn.commit()
+    r = client.get("/api/works", params={"doc_type": "bai_bao", "min_score": 0.75}).json()
+    assert {i["id"] for i in r["items"]} == {w2}
+
+
+def test_works_facets_include_scores_with_labels(client, conn, user_id):
+    w1 = mk_work(conn, "Bài A", doc_type="bai_bao")
+    mk_work(conn, "Bài B", doc_type="bai_bao")     # giữ score NULL
+    q(conn, "UPDATE work SET score=0.75 WHERE id=%s", w1)
+    conn.commit()
+    r = client.get("/api/works/facets").json()
+    by_value = {s["value"]: s for s in r["scores"]}
+    assert by_value["0.75"]["n"] == 1 and by_value["0.75"]["label"] == "0,75 điểm"
+    assert by_value["none"]["n"] == 1 and by_value["none"]["label"] == "Chưa xác định"
+    # thứ tự cố định: 1, 0,75, 0,5, chưa xác định
+    assert [s["value"] for s in r["scores"]] == sorted(
+        (s["value"] for s in r["scores"]), key=lambda v: {"1": 0, "0.75": 1, "0.5": 2, "none": 3}.get(v, 4))
+
+
+def test_work_list_and_detail_include_unit_chips(client, conn, user_id):
+    wid = mk_work(conn, "Bài với đơn vị", doc_type="bai_bao")
+    cntt = q(conn, "INSERT INTO unit(code, name) VALUES ('CNTT','Khoa Công nghệ thông tin') RETURNING id")[0]["id"]
+    q(conn, "INSERT INTO work_unit(work_id, unit_id, source) VALUES (%s,%s,'source')", wid, cntt)
+    conn.commit()
+
+    items = client.get("/api/works", params={"doc_type": "bai_bao"}).json()["items"]
+    item = next(i for i in items if i["id"] == wid)
+    assert item["units"] == [{"id": cntt, "code": "CNTT"}]
+
+    detail = client.get(f"/api/works/{wid}").json()
+    assert detail["units"] == [{"id": cntt, "code": "CNTT"}]
+
+
+def test_person_profile_includes_position_and_unit(client, conn, user_id):
+    cntt = q(conn, "INSERT INTO unit(code, name) VALUES ('CNTT','Khoa Công nghệ thông tin') RETURNING id")[0]["id"]
+    pid = q(conn, "INSERT INTO person(kind, display_name, name_norm, name_keys, unit_id, unit_source, position) "
+                  "VALUES ('lecturer','Nguyễn Văn A','nguyen van a',ARRAY['nguyen van a'],%s,'auto','Trưởng bộ môn') "
+                  "RETURNING id", cntt)[0]["id"]
+    conn.commit()
+    r = client.get(f"/api/persons/{pid}").json()
+    assert r["position"] == "Trưởng bộ môn"
+    assert r["unit"] == {"id": cntt, "code": "CNTT", "name": "Khoa Công nghệ thông tin"}
+    assert r["unit_source"] == "auto"
+
+
+def test_person_profile_unit_is_null_when_unassigned(client, conn, user_id):
+    pid = q(conn, "INSERT INTO person(kind, display_name, name_norm, name_keys) "
+                  "VALUES ('lecturer','Trần Thị B','tran thi b',ARRAY['tran thi b']) RETURNING id")[0]["id"]
+    conn.commit()
+    r = client.get(f"/api/persons/{pid}").json()
+    assert r["unit"] is None and r["position"] is None and r["unit_source"] == "auto"

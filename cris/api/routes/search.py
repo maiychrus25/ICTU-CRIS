@@ -14,6 +14,7 @@ from cris.ai.provider import AIDisabled, get_provider
 from cris.api.deps import Conn, require_role
 from cris.api.schemas import (
     DOC_TYPE_LABELS,
+    FacetScore,
     FacetUnit,
     FacetValue,
     FacetYear,
@@ -28,6 +29,8 @@ from cris.api.schemas import (
     Topic,
     TopicDetail,
     TopicKeyword,
+    UnitChip,
+    UnitRef,
     WorkDetail,
     WorkList,
     WorksFacetsOut,
@@ -47,6 +50,10 @@ FIELD_LABELS = [
     ("needs_review", "Cần rà soát"), ("cohort", "Khoá/đợt"),
 ]
 ROLE_LABELS = {"author": "Tác giả", "mentor": "Người hướng dẫn", "student": "Sinh viên thực hiện"}
+# Điểm quy đổi (work.score, quy chế trường — không suy từ chỉ mục Scopus/ISI):
+# nhãn/tự sắp cho facet `scores` và bộ lọc `score` ở /api/works.
+SCORE_LABELS = {"1": "1 điểm", "0.75": "0,75 điểm", "0.5": "0,5 điểm", "none": "Chưa xác định"}
+SCORE_ORDER = {"1": 0, "0.75": 1, "0.5": 2, "none": 3}
 
 
 def _fmt_dt(v):
@@ -86,9 +93,12 @@ def _keyword_pattern(keyword):
 
 
 def _works_query(q: str, doc_type: str, year: int | None, unit: str, topic: int | None,
-                  pub_type: str = "", quartile: str = "", cohort: str = "", keyword: str = ""):
+                  pub_type: str = "", quartile: str = "", cohort: str = "", keyword: str = "",
+                  score: str = "", min_score: float | None = None):
     """Dựng `from_sql`/`where_sql`/`params` cho bộ lọc công trình dùng chung giữa
-    tra cứu (`list_works`) và xuất CSV (`routes/export.py`)."""
+    tra cứu (`list_works`) và xuất CSV (`routes/export.py`). `score` ∈
+    `{"0.5","0.75","1","none"}` (điểm quy đổi chính xác/"chưa xác định");
+    `min_score` là ngưỡng dưới (>=), độc lập với `score`."""
     from_sql = ("FROM v_work_current w "
                 "LEFT JOIN author_mention m ON m.work_id = w.id AND m.position > 0 "
                 "LEFT JOIN v_work_unit vu ON vu.work_id = w.id "
@@ -120,6 +130,13 @@ def _works_query(q: str, doc_type: str, year: int | None, unit: str, topic: int 
         where.append("w.cohort = %s"); params.append(cohort)
     if keyword.strip():
         where.append("w.keywords_raw ~* %s"); params.append(_keyword_pattern(keyword))
+    if score:
+        if score == "none":
+            where.append("w.score IS NULL")
+        else:
+            where.append("w.score = %s::numeric"); params.append(float(score))
+    if min_score is not None:
+        where.append("w.score >= %s::numeric"); params.append(min_score)
     where_sql = " AND ".join(where) if where else "TRUE"
     return from_sql, where_sql, params
 
@@ -129,15 +146,36 @@ def _summary(r):
                        doc_type_label=DOC_TYPE_LABELS.get(r["doc_type"], r["doc_type"]),
                        year=r["year_issue"], doi=r["doi"], state=r["state"],
                        needs_review=bool(r["needs_review"]), score=r.get("score"),
+                       units=r.get("units") or [],
                        keywords=_split_keywords(r.get("keywords_raw"), limit=6))
 
 
+def _units_for_works(conn, work_ids):
+    """`{work_id: [UnitChip, ...]}` cho một lô công trình (`v_work_unit`) —
+    dùng để gắn chip đơn vị vào kết quả tra cứu mà không truy vấn N+1 lần."""
+    ids = [w for w in work_ids if w is not None]
+    if not ids:
+        return {}
+    with conn.cursor() as cur:
+        cur.execute("""SELECT vu.work_id, u.id, u.code FROM v_work_unit vu
+                       JOIN unit u ON u.id = vu.unit_id
+                       WHERE vu.work_id = ANY(%s) ORDER BY u.code""", (ids,))
+        rows = cur.fetchall()
+    out: dict[int, list[UnitChip]] = {}
+    for r in rows:
+        out.setdefault(r["work_id"], []).append(UnitChip(id=r["id"], code=r["code"]))
+    return out
+
+
 def _semantic_work_list(conn, q: str, doc_type: str, year, unit: str, topic, page: int,
-                        pub_type: str = "", quartile: str = "", cohort: str = "", keyword: str = ""):
+                        pub_type: str = "", quartile: str = "", cohort: str = "", keyword: str = "",
+                        score: str = "", min_score: float | None = None):
     """`mode=semantic`: top-k id từ `semantic_works` (embed `q`), giao với
     `_works_query` (giữ mọi bộ lọc trừ `q`, đã dùng để tìm theo nghĩa), sắp
     theo score giảm dần, phân trang. `None` nếu AI chưa bật — người gọi rơi
-    về tra cứu từ khoá."""
+    về tra cứu từ khoá. Chú ý: `score`/`min_score` ở đây lọc theo điểm quy đổi
+    (`work.score`) như mode=keyword; giá trị `score` trả về trong từng
+    `WorkSummary` vẫn là độ tương đồng ngữ nghĩa (cosine), không phải điểm quy đổi."""
     try:
         ranked = ai_search.semantic_works(conn, get_provider(), q, k=SEMANTIC_TOP_K,
                                           doc_types=[doc_type] if doc_type else None)
@@ -148,7 +186,7 @@ def _semantic_work_list(conn, q: str, doc_type: str, year, unit: str, topic, pag
                         mode="semantic", note=ai_search.NOTE)
     score_of = {wid: score for wid, score in ranked}
     from_sql, where_sql, params = _works_query("", doc_type, year, unit, topic,
-                                               pub_type, quartile, cohort, keyword)
+                                               pub_type, quartile, cohort, keyword, score, min_score)
     ranked_ids = [wid for wid, _ in ranked]
     with conn.cursor() as cur:
         cur.execute(f"SELECT DISTINCT w.id {from_sql} WHERE {where_sql} AND w.id = ANY(%s)", params + [ranked_ids])
@@ -163,11 +201,12 @@ def _semantic_work_list(conn, q: str, doc_type: str, year, unit: str, topic, pag
             cur.execute("SELECT id, title, doc_type, year_issue, doi, state, needs_review, keywords_raw FROM work "
                         "WHERE id = ANY(%s)", (page_ids,))
             rows = {r["id"]: r for r in cur.fetchall()}
+        units_by_work = _units_for_works(conn, page_ids)
         for wid in page_ids:
             r = rows.get(wid)
             if r is None:
                 continue
-            r = dict(r, score=score_of.get(wid))
+            r = dict(r, score=score_of.get(wid), units=units_by_work.get(wid, []))
             items.append(_summary(r))
     return WorkList(items=items, page=Page(page=page, per_page=PER_PAGE, total=total),
                     mode="semantic", note=ai_search.NOTE)
@@ -177,24 +216,27 @@ def _semantic_work_list(conn, q: str, doc_type: str, year, unit: str, topic, pag
 def list_works(conn: Conn, q: str = "", doc_type: str = "", year: int | None = None,
                unit: str = "", topic: int | None = None, mode: Literal["keyword", "semantic"] = "keyword",
                pub_type: str = "", quartile: str = "", cohort: str = "", keyword: str = "",
+               score: Literal["", "0.5", "0.75", "1", "none"] = "", min_score: float | None = None,
                page: int = Query(1, ge=1)):
     note = None
     if mode == "semantic" and q.strip():
         out = _semantic_work_list(conn, q, doc_type, year, unit, topic, page,
-                                  pub_type, quartile, cohort, keyword)
+                                  pub_type, quartile, cohort, keyword, score, min_score)
         if out is not None:
             return out
         note = ai_search.DISABLED_NOTE   # AI tắt: rơi về từ khoá bên dưới, kèm giải thích
-    from_sql, where_sql, params = _works_query(q, doc_type, year, unit, topic, pub_type, quartile, cohort, keyword)
+    from_sql, where_sql, params = _works_query(q, doc_type, year, unit, topic, pub_type, quartile, cohort, keyword,
+                                               score, min_score)
     with conn.cursor() as cur:
         cur.execute(f"SELECT count(DISTINCT w.id) AS n {from_sql} WHERE {where_sql}", params)
         total = cur.fetchone()["n"]
         cur.execute(f"SELECT DISTINCT w.id, w.title, w.doc_type, w.year_issue, w.doi, w.state, w.needs_review, "
-                    f"w.keywords_raw {from_sql} WHERE {where_sql} ORDER BY w.year_issue DESC NULLS LAST, w.id DESC "
+                    f"w.keywords_raw, w.score {from_sql} WHERE {where_sql} ORDER BY w.year_issue DESC NULLS LAST, w.id DESC "
                     f"LIMIT %s OFFSET %s",
                     params + [PER_PAGE, (page - 1) * PER_PAGE])
         rows = cur.fetchall()
-    items = [_summary(r) for r in rows]
+    units_by_work = _units_for_works(conn, [r["id"] for r in rows])
+    items = [_summary(dict(r, units=units_by_work.get(r["id"], []))) for r in rows]
     return WorkList(items=items, page=Page(page=page, per_page=PER_PAGE, total=total), mode="keyword", note=note)
 
 
@@ -221,7 +263,22 @@ def works_facets(conn: Conn):
                        JOIN work w ON w.id = vu.work_id AND w.merged_into_id IS NULL
                        GROUP BY u.id, u.code, u.name ORDER BY n DESC, u.code""")
         units = [FacetUnit(value=r["value"], code=r["code"], name=r["name"], n=r["n"]) for r in cur.fetchall()]
-    return WorksFacetsOut(pub_types=pub_types, quartiles=quartiles, cohorts=cohorts, years=years, units=units)
+        cur.execute("""
+            SELECT CASE
+                     WHEN w.score IS NULL THEN 'none'
+                     WHEN w.score = 1    THEN '1'
+                     WHEN w.score = 0.75 THEN '0.75'
+                     WHEN w.score = 0.5  THEN '0.5'
+                     ELSE w.score::text
+                   END AS value,
+                   count(*) AS n
+            FROM v_work_current w GROUP BY value
+        """)
+        scores = [FacetScore(value=r["value"], label=SCORE_LABELS.get(r["value"], r["value"]), n=r["n"])
+                 for r in cur.fetchall()]
+        scores.sort(key=lambda s: SCORE_ORDER.get(s.value, 4))
+    return WorksFacetsOut(pub_types=pub_types, quartiles=quartiles, cohorts=cohorts, years=years, units=units,
+                          scores=scores)
 
 
 @router.get("/works/{wid}", response_model=WorkDetail)
@@ -276,10 +333,12 @@ def work_detail(conn: Conn, wid: int):
                      is_truncated=bool(m["is_truncated"]), linked_person_id=m["linked_person_id"],
                      linked_person_name=m["linked_person_name"], link_state=m["link_state"],
                      pending_count=m["pending_count"] or 0) for m in mentions]
+    units = _units_for_works(conn, [wid]).get(wid, [])
     return WorkDetail(id=w["id"], title=w["title"], doc_type=w["doc_type"],
                       doc_type_label=DOC_TYPE_LABELS.get(w["doc_type"], w["doc_type"]), state=w["state"],
                       needs_review=bool(w["needs_review"]), has_manual=bool(w.get("has_manual")),
-                      fields=fields, mentions=ms, pdf_url=pdf_url, source_url=source_url, keywords=keywords)
+                      fields=fields, mentions=ms, pdf_url=pdf_url, source_url=source_url, keywords=keywords,
+                      score=w.get("score"), units=units)
 
 
 @router.patch("/works/{wid}/fields", response_model=FieldEditOut)
@@ -305,7 +364,8 @@ def edit_field(conn: Conn, actor: RdOfficer, wid: int, body: FieldEditIn):
 @router.get("/persons/{pid}", response_model=PersonProfile)
 def person_profile(conn: Conn, pid: int):
     with conn.cursor() as cur:
-        cur.execute("SELECT * FROM person WHERE id = %s", (pid,))
+        cur.execute("""SELECT p.*, u.id AS unit_ref_id, u.code AS unit_ref_code, u.name AS unit_ref_name
+                       FROM person p LEFT JOIN unit u ON u.id = p.unit_id WHERE p.id = %s""", (pid,))
         p = cur.fetchone()
         if p is None:
             raise HTTPException(404, f"không tìm thấy giảng viên #{pid}")
@@ -323,13 +383,15 @@ def person_profile(conn: Conn, pid: int):
         by_type[r["doc_type"]] = by_type.get(r["doc_type"], 0) + 1
         y = str(r["year_issue"]) if r["year_issue"] is not None else "không rõ"
         by_year[y] = by_year.get(y, 0) + 1
+    unit = UnitRef(id=p["unit_ref_id"], code=p["unit_ref_code"], name=p["unit_ref_name"]) if p.get("unit_id") else None
     return PersonProfile(
         id=p["id"], display_name=p["display_name"], degree=p.get("degree_raw"), email=p.get("email"), orcid=p.get("orcid"),
         by_type=by_type, by_year=dict(sorted(by_year.items())),
         publications=[PersonPublication(work_id=r["work_id"], title=r["title"], doc_type=r["doc_type"], year=r["year_issue"],
                                         doi=r["doi"], link_state=r["state"], confidence=r["confidence"]) for r in pubs],
         pending_count=pending, last_sync=LastSync(**last) if last else None,
-        rank=p.get("rank"), scholar_url=p.get("scholar_url"), citation_stats=None)
+        rank=p.get("rank"), scholar_url=p.get("scholar_url"), citation_stats=None,
+        position=p.get("position"), unit=unit, unit_source=p.get("unit_source"))
 
 
 @router.get("/topics", response_model=list[Topic])

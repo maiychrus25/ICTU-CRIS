@@ -171,3 +171,77 @@ def test_unit_overview_rd_officer_and_school_leader_see_any_unit(client, conn):
     leader = mk_actor(conn, ["school_leader"])
     assert client.get(f"/api/units/{u1}/overview", headers=hdr(rd)).status_code == 200
     assert client.get(f"/api/units/{u1}/overview", headers=hdr(leader)).status_code == 200
+
+
+# ---------- lát cắt M: GET /api/units trả aliases; PATCH/POST alias (rd_officer) ----------
+def test_units_list_includes_aliases_field(client, conn, user_id):
+    mk_unit(conn, "khoa-k", "Khoa K")
+    q(conn, "UPDATE unit SET aliases = ARRAY['Khoa K cũ'] WHERE code='khoa-k'")
+    conn.commit()
+    r = client.get("/api/units").json()
+    row = next(u for u in r if u["code"] == "khoa-k")
+    assert row["aliases"] == ["Khoa K cũ"]
+
+
+def test_rename_unit_updates_name_returns_full_shape_and_logs_audit(client, conn, user_id):
+    uid = mk_unit(conn, "khoa-l", "Khoa L")
+    conn.commit()
+    r = client.patch(f"/api/units/{uid}", json={"name": "Khoa L mới", "reason": "xác nhận với phòng đào tạo"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body == {"id": uid, "code": "khoa-l", "name": "Khoa L mới", "active": True,
+                    "works": 0, "persons": 0, "aliases": []}
+    log = q(conn, "SELECT action, after FROM audit_log WHERE entity='unit' AND entity_id=%s", uid)[0]
+    assert log["action"] == "unit.rename" and log["after"]["reason"] == "xác nhận với phòng đào tạo"
+
+
+def test_rename_unit_empty_name_is_400(client, conn, user_id):
+    uid = mk_unit(conn, "khoa-m", "Khoa M")
+    r = client.patch(f"/api/units/{uid}", json={"name": "   "})
+    assert r.status_code == 400
+    assert r.json()["detail"] == "Tên đơn vị không được để trống."
+
+
+def test_rename_unit_unknown_id_is_404(client, conn, user_id):
+    r = client.patch("/api/units/999999", json={"name": "X"})
+    assert r.status_code == 404
+
+
+def test_rename_unit_requires_rd_officer_403(client, conn):
+    uid = mk_unit(conn, "khoa-n", "Khoa N")
+    officer = mk_actor(conn, ["faculty_officer"], unit_id=uid)
+    r = client.patch(f"/api/units/{uid}", json={"name": "Khoa N mới"}, headers=hdr(officer))
+    assert r.status_code == 403
+
+
+def test_add_unit_alias_is_idempotent_and_returns_full_shape(client, conn, user_id):
+    uid = mk_unit(conn, "khoa-o", "Khoa O")
+    conn.commit()
+    r = client.post(f"/api/units/{uid}/aliases", json={"alias": "KO", "reason": "biến thể cũ"})
+    assert r.status_code == 200, r.text
+    assert r.json()["aliases"] == ["KO"]
+    log = q(conn, "SELECT action FROM audit_log WHERE entity='unit' AND entity_id=%s AND action='unit.alias'", uid)
+    assert len(log) == 1
+
+    r2 = client.post(f"/api/units/{uid}/aliases", json={"alias": "KO"})    # lặp lại: không trùng, không ghi audit lần hai
+    assert r2.status_code == 200 and r2.json()["aliases"] == ["KO"]
+    log2 = q(conn, "SELECT action FROM audit_log WHERE entity='unit' AND entity_id=%s AND action='unit.alias'", uid)
+    assert len(log2) == 1
+
+
+def test_add_unit_alias_empty_is_400(client, conn, user_id):
+    uid = mk_unit(conn, "khoa-p", "Khoa P")
+    r = client.post(f"/api/units/{uid}/aliases", json={"alias": "  "})
+    assert r.status_code == 400
+
+
+def test_add_unit_alias_unknown_id_is_404(client, conn, user_id):
+    r = client.post("/api/units/999999/aliases", json={"alias": "X"})
+    assert r.status_code == 404
+
+
+def test_add_unit_alias_requires_rd_officer_403(client, conn):
+    uid = mk_unit(conn, "khoa-q", "Khoa Q")
+    officer = mk_actor(conn, ["faculty_officer"], unit_id=uid)
+    r = client.post(f"/api/units/{uid}/aliases", json={"alias": "KQ"}, headers=hdr(officer))
+    assert r.status_code == 403

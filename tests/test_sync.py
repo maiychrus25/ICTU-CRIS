@@ -1,7 +1,7 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
-import json
 from cris import sync
+
 
 def rows(conn, sql, *args):
     with conn.cursor() as cur:
@@ -129,3 +129,47 @@ def test_real_content_change_still_creates_a_version(conn):
                       records=[("u1", {"archive": {"title": title, "_page": 1}})], expected=1, full=True)
     vs = rows(conn, "SELECT version FROM source_record WHERE source_key='u1' ORDER BY version")
     assert [v["version"] for v in vs] == [1, 2]
+
+
+# ── lát cắt M: đơn vị thật (facet dept) gắn vào archive.depts khi đồng bộ ────
+
+def test_sync_repository_writes_depts_from_facet_index(conn, monkeypatch):
+    from cris.source import repository as R
+    url = "https://x/bai-bao/dept1/"
+    monkeypatch.setattr(R, "iter_archive", lambda path, fetch=None: iter([{"url": url, "title": "T"}]))
+    monkeypatch.setattr(R, "archive_total", lambda h: 1)
+    monkeypatch.setattr(R, "parse_detail", lambda h, u: {"url": u, "authors": [], "doi": []})
+    monkeypatch.setattr(R, "facet_index", lambda path, facet, fetch, max_pages=400: {url: ["KT&CN", "CNTT"]})
+    sync.sync_repository(conn, "bai-bao", fetch=lambda u: "<html></html>")
+    raw = rows(conn, "SELECT raw FROM source_record")[0]["raw"]
+    assert raw["archive"]["depts"] == ["CNTT", "KT&CN"]     # sắp xếp, không trùng
+
+
+def test_sync_repository_with_facets_false_skips_dept_scan(conn, monkeypatch):
+    from cris.source import repository as R
+    url = "https://x/bai-bao/nodept/"
+    calls = []
+    monkeypatch.setattr(R, "facet_index", lambda *a, **k: calls.append(1) or {})
+    monkeypatch.setattr(R, "iter_archive", lambda path, fetch=None: iter([{"url": url, "title": "T"}]))
+    monkeypatch.setattr(R, "archive_total", lambda h: 1)
+    monkeypatch.setattr(R, "parse_detail", lambda h, u: {"url": u, "authors": [], "doi": []})
+    sync.sync_repository(conn, "bai-bao", fetch=lambda u: "<html></html>", with_facets=False)
+    assert calls == []
+    raw = rows(conn, "SELECT raw FROM source_record")[0]["raw"]
+    assert "depts" not in raw["archive"]
+
+
+def test_sync_repository_no_facets_for_non_bai_bao_paths(conn, monkeypatch):
+    """`with_facets` mặc định True nhưng chỉ có tác dụng cho bài báo (facet duy
+    nhất có ý nghĩa đơn vị) — `do-an` không gọi facet_index, không có `depts`."""
+    from cris.source import repository as R
+    url = "https://x/do-an/d1/"
+    calls = []
+    monkeypatch.setattr(R, "facet_index", lambda *a, **k: calls.append(1) or {})
+    monkeypatch.setattr(R, "iter_archive", lambda path, fetch=None: iter([{"url": url, "title": "T"}]))
+    monkeypatch.setattr(R, "archive_total", lambda h: 1)
+    monkeypatch.setattr(R, "parse_detail", lambda h, u: {"url": u, "authors": [], "doi": []})
+    sync.sync_repository(conn, "do-an", fetch=lambda u: "<html></html>")
+    assert calls == []
+    raw = rows(conn, "SELECT raw FROM source_record")[0]["raw"]
+    assert "depts" not in raw["archive"]

@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 import hashlib
 import json
+
 from cris import audit
 from cris.db import tx
 from cris.source import repository as R
+
 
 def _content(obj):
     """Bỏ khoá bắt đầu bằng "_": đó là siêu dữ liệu tìm thấy, không phải nội dung.
@@ -68,14 +70,22 @@ def run_sync(conn, *, source, scope, doc_type, records, expected, full, triggere
             (json.dumps({doc_type: fetched}), added, changed, vanished, json.dumps(warnings), status, run_id))
     return run_id
 
-def sync_repository(conn, path, fetch=None, with_details=True, triggered_by=None):
+def sync_repository(conn, path, fetch=None, with_details=True, with_facets=True, triggered_by=None):
     fetch = fetch or R.get
     doc_type = R.DOC_TYPES[path]["doc_type"]
     first_page = fetch(f"{R.BASE}/{path}/")
     expected = R.archive_total(first_page)
 
+    # Đơn vị thật chỉ có cho bài báo (qua bộ lọc `dept`, xem repository.facet_index).
+    # Quét một lần trước khi lật trang chính để gán vào từng bản ghi (`archive.depts`)
+    # — nằm trong nội dung băm (_content không bỏ khoá này) nên đổi khoa = phiên bản mới.
+    use_facets = with_facets and doc_type == "bai_bao"
+    facet_map = R.facet_index(path, R.FACET[path], fetch) if use_facets else {}
+
     def records():
         for arc in R.iter_archive(path, fetch=fetch):
+            if use_facets:
+                arc["depts"] = sorted(set(facet_map.get(arc["url"], [])))
             raw = {"archive": arc}
             if with_details:
                 try:

@@ -18,7 +18,44 @@ class Page(BaseModel):
     total: int
 
 
+class UnitRef(BaseModel):
+    id: int
+    code: str
+    name: str
+
+
+class UnitListItem(BaseModel):
+    """`GET /api/units` — đơn vị thật (khoa/trung tâm) đang hoạt động, sắp theo
+    `works` giảm dần; cũng là hình dạng trả về của `PATCH /api/units/{id}` và
+    `POST /api/units/{id}/aliases` (trang quản trị `/don-vi/`)."""
+    id: int
+    code: str
+    name: str
+    active: bool
+    works: int
+    persons: int
+    aliases: list[str] = Field(default_factory=list)
+
+
+class UnitRenameIn(BaseModel):
+    """`PATCH /api/units/{id}` — đổi tên hiển thị (mã giữ nguyên)."""
+    name: str
+    reason: str | None = None
+
+
+class UnitAliasIn(BaseModel):
+    """`POST /api/units/{id}/aliases` — thêm một bí danh (idempotent)."""
+    alias: str
+    reason: str | None = None
+
+
 # ---------- tra cứu ----------
+class UnitChip(BaseModel):
+    """Đơn vị gắn với một công trình (`v_work_unit`) — chip gọn ở kết quả tra cứu."""
+    id: int
+    code: str
+
+
 class WorkSummary(BaseModel):
     id: int
     title: str | None
@@ -28,7 +65,11 @@ class WorkSummary(BaseModel):
     doi: str | None = None
     state: str
     needs_review: bool = False
-    score: float | None = None    # cosine 0..1, chỉ có ở mode=semantic
+    # điểm quy đổi (work.score, 0/0,5/0,75/1) ở mode=keyword; cosine 0..1 (thay
+    # thế bằng độ tương đồng) ở mode=semantic — hai ý nghĩa khác nhau dùng
+    # chung một trường vì lịch sử; UI phân biệt theo `WorkList.mode`.
+    score: float | None = None
+    units: list[UnitChip] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)   # tách keywords_raw, tối đa 6 đầu tiên
 
 
@@ -74,6 +115,8 @@ class WorkDetail(BaseModel):
     pdf_url: str | None = None     # đầu tiên trong detail.pdf của bản ghi nguồn hiện hành
     source_url: str | None = None  # detail.url hoặc archive.url
     keywords: list[str] = Field(default_factory=list)   # tách keywords_raw theo [,;], không trùng
+    score: float | None = None     # điểm quy đổi (work.score)
+    units: list[UnitChip] = Field(default_factory=list)
 
 
 # ---------- bộ lọc/thống kê công trình (K1) ----------
@@ -95,12 +138,22 @@ class FacetUnit(BaseModel):
     n: int
 
 
+class FacetScore(BaseModel):
+    # Thường là "0.5"/"0.75"/"1"/"none" (điểm quy đổi hợp lệ theo quy chế); giữ
+    # `str` (không `Literal`) để một điểm lạ hiếm gặp ở dữ liệu nguồn không làm
+    # sập response — vẫn hiện, chỉ không có nhãn tiếng Việt đẹp.
+    value: str
+    label: str
+    n: int
+
+
 class WorksFacetsOut(BaseModel):
     pub_types: list[FacetValue]
     quartiles: list[FacetValue]
     cohorts: list[FacetValue]
     years: list[FacetYear]
     units: list[FacetUnit]
+    scores: list[FacetScore] = Field(default_factory=list)
 
 
 class FieldEditIn(BaseModel):
@@ -148,6 +201,9 @@ class PersonProfile(BaseModel):
     rank: str | None = None            # học hàm (PGS/GS), cột person.rank
     scholar_url: str | None = None
     citation_stats: dict[str, Any] | None = None   # chưa tính — luôn null
+    position: str | None = None        # chức vụ (Hiệu trưởng, Trưởng khoa…) — tách khỏi đơn vị
+    unit: UnitRef | None = None
+    unit_source: str | None = None     # 'auto' (suy từ đa số công trình) | 'manual' (gán tay)
 
 
 class PersonSearchRow(BaseModel):
@@ -982,12 +1038,6 @@ class MarkAllReadOut(BaseModel):
 
 
 # ---------- góc nhìn theo đơn vị (L3) ----------
-class UnitRef(BaseModel):
-    id: int
-    code: str
-    name: str
-
-
 class UnitYearCount(BaseModel):
     year: int
     n: int

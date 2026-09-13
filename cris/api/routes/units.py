@@ -5,16 +5,88 @@ từ `v_work_unit`/`v_person_publications` (như `cris/api/routes/stats.py`, ở
 lọc theo một đơn vị) cùng `author_link`/`declaration` — không tính lại logic
 nghiệp vụ. Vai trò cấp khoa (có đơn vị, không `rd_officer`/`school_leader`)
 chỉ xem được đơn vị của chính mình (403 khác); `rd_officer`/`school_leader`
-xem được mọi đơn vị."""
-from fastapi import APIRouter, HTTPException, Query
+xem được mọi đơn vị.
 
-from cris.api.deps import Conn, CurrentUser
-from cris.api.schemas import TopPerson, UnitOverviewOut, UnitRef, UnitYearCount
+Lát cắt M: `PATCH /api/units/{id}`/`POST /api/units/{id}/aliases` (trang quản
+trị `/don-vi/`, chỉ `rd_officer`) dùng chung logic đổi tên/thêm bí danh với CLI
+`units rename|alias` (`cris/units.py`) — không viết lại, chỉ gọi qua đây."""
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from cris import units as units_mod
+from cris.api.deps import Conn, CurrentUser, require_role
+from cris.api.schemas import (
+    TopPerson,
+    UnitAliasIn,
+    UnitListItem,
+    UnitOverviewOut,
+    UnitRef,
+    UnitRenameIn,
+    UnitYearCount,
+)
 
 router = APIRouter(prefix="/api", tags=["khoa"])
+RdOfficer = Annotated[int, Depends(require_role("rd_officer"))]
 
 # Vai trò thấy được mọi đơn vị (không bị giới hạn theo `unit_id` của tài khoản).
 UNSCOPED_ROLES = ("rd_officer", "school_leader")
+
+_UNIT_ROW_SQL = """
+    SELECT u.id, u.code, u.name, u.active, u.aliases,
+           count(DISTINCT vu.work_id) AS works,
+           count(DISTINCT p.id) FILTER (WHERE p.kind='lecturer') AS persons
+    FROM unit u
+    LEFT JOIN v_work_unit vu ON vu.unit_id = u.id
+    LEFT JOIN person p ON p.unit_id = u.id
+    {where}
+    GROUP BY u.id, u.code, u.name, u.active, u.aliases
+"""
+
+
+@router.get("/units", response_model=list[UnitListItem])
+def list_units(conn: Conn):
+    """Đơn vị thật (khoa/trung tâm) đang hoạt động — bộ lọc Đơn vị ở tra cứu và
+    trang quản trị `/don-vi/` đọc từ đây. `works` qua `v_work_unit` (nguồn +
+    tác giả đã liên kết), `persons` đếm giảng viên đang gán đơn vị này."""
+    with conn.cursor() as cur:
+        cur.execute(_UNIT_ROW_SQL.format(where="WHERE u.active") + " ORDER BY works DESC, u.code")
+        rows = cur.fetchall()
+    return [UnitListItem(**r) for r in rows]
+
+
+def _unit_row(conn, unit_id):
+    """Một đơn vị theo đúng hình dạng `UnitListItem` (bất kể `active`) — dùng để
+    trả về sau `PATCH`/`POST` bên dưới; `None` nếu không có id này."""
+    with conn.cursor() as cur:
+        cur.execute(_UNIT_ROW_SQL.format(where="WHERE u.id = %s"), (unit_id,))
+        return cur.fetchone()
+
+
+@router.patch("/units/{unit_id}", response_model=UnitListItem)
+def rename_unit(conn: Conn, actor: RdOfficer, unit_id: int, body: UnitRenameIn):
+    """Đổi tên hiển thị của một đơn vị (mã giữ nguyên) — chỉ `rd_officer`.
+    400 nếu tên rỗng sau khi cắt khoảng trắng; 404 nếu không có đơn vị; ghi
+    `audit_log` qua `cris.units.rename_unit` (như CLI `units rename`)."""
+    name = (body.name or "").strip()
+    if not name:
+        raise HTTPException(400, "Tên đơn vị không được để trống.")
+    row = _fetch_unit(conn, unit_id)
+    units_mod.rename_unit(conn, row["code"], name, actor_id=actor, reason=body.reason)
+    return UnitListItem(**_unit_row(conn, unit_id))
+
+
+@router.post("/units/{unit_id}/aliases", response_model=UnitListItem)
+def add_unit_alias(conn: Conn, actor: RdOfficer, unit_id: int, body: UnitAliasIn):
+    """Thêm một bí danh cho đơn vị (không xoá bí danh cũ, không trùng lặp) —
+    chỉ `rd_officer`. 400 nếu bí danh rỗng; 404 nếu không có đơn vị; ghi
+    `audit_log` qua `cris.units.add_alias` (như CLI `units alias`)."""
+    alias = (body.alias or "").strip()
+    if not alias:
+        raise HTTPException(400, "Bí danh không được để trống.")
+    row = _fetch_unit(conn, unit_id)
+    units_mod.add_alias(conn, row["code"], alias, actor_id=actor, reason=body.reason)
+    return UnitListItem(**_unit_row(conn, unit_id))
 
 
 def _is_unit_scoped(user: dict) -> bool:
