@@ -12,8 +12,11 @@ với dữ liệu đổi theo mỗi lần đồng bộ). Cập nhật 12/09/2026
 đường dẫn — bản đồ tri thức, tìm chuyên gia, cổng kiểm tra đề tài công khai, lý lịch khoa
 học, cảnh báo bất thường dữ liệu. Cập nhật 12/09/2026 tối (lát cắt L, xem
 [2026-09-12-lat-cat-l.md](../superpowers/plans/2026-09-12-lat-cat-l.md)): thêm ba đường
-dẫn — thông báo trong ứng dụng, báo cáo kỳ đóng băng, góc nhìn theo khoa. Đường dẫn UI
-thật đang chạy:
+dẫn — thông báo trong ứng dụng, báo cáo kỳ đóng băng, góc nhìn theo khoa. Cập nhật 13/09/2026
+(lát cắt M, xem
+[2026-09-13-lat-cat-m.md](../superpowers/plans/2026-09-13-lat-cat-m.md)): thêm một đường
+dẫn — quản trị đơn vị (`rd_officer`), cho phép đổi tên/thêm bí danh các đơn vị thật đọc từ
+kho nguồn. Đường dẫn UI thật đang chạy:
 
 ```
 /tong-quan/                                Tổng quan cho lãnh đạo
@@ -41,6 +44,7 @@ thật đang chạy:
 /nhat-ky/                                  Nhật ký thao tác
 /chat-luong-du-lieu/                       Báo cáo chất lượng dữ liệu
 /chat-luong-du-lieu/canh-bao/              Cảnh báo bất thường dữ liệu (tab trong trang trên)
+/don-vi/                                   Quản trị đơn vị: đổi tên/bí danh (rd_officer)
 /dang-nhap/                                Đăng nhập cục bộ
 /chu-de/                                   Lưới 40 cụm chủ đề AI
 /chu-de/chi-tiet/?id=                      Chi tiết cụm: từ khoá, công trình khớp
