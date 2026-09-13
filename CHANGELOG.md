@@ -5,6 +5,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- Rà soát UI đợt 2: `GET /api/queue/authors` (`AuthorQueueRow`) thêm `candidate_degree`,
+  `candidate_rank`, `candidate_unit`, `candidate_position`, `candidate_field`,
+  `candidate_orcid`, `candidate_works` (số công trình đã liên kết `DaNoiTuDong`/
+  `DaXacNhan`) và `candidate_top_topics` (≤3 nhãn chủ đề AI nhiều nhất trên các công
+  trình đã liên kết của ứng viên, rỗng nếu AI chưa chạy) — để ba ứng viên trùng tên như
+  "Nguyễn Thị Dung" phân biệt được thay vì hiện giống hệt nhau ở hàng đợi tác giả. Một
+  truy vấn gộp cho toàn bộ trang (tránh N+1), cùng cách gán chủ đề công trình đã dùng ở
+  `cris.ai.map`/`cris.ai.trends`; không lộ email/điện thoại.
+
 ## [0.7.0] - 2026-09-13
 
 ### Added

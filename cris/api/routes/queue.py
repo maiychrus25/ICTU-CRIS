@@ -21,6 +21,7 @@ from cris.api.schemas import (
     DupGroupSummary,
     DupMember,
     Page,
+    UnitRef,
 )
 
 router = APIRouter(prefix="/api/queue", tags=["hang-doi"])
@@ -31,6 +32,53 @@ AUTHOR_STATES = ("ChoXacNhan", "DaNoiTuDong", "DaXacNhan", "DaBacBo")
 BASIS_LABELS = {"doi": "DOI", "title_norm": "Tiêu đề", "title_student_cohort": "Tiêu đề + khoá sinh viên"}
 DUP_FIELD_LABELS = {"title": "Tiêu đề", "doi": "DOI", "year_issue": "Năm/kỳ", "journal": "Tạp chí",
                     "volume": "Tập/số", "pub_type_raw": "Loại xuất bản (thô)", "cohort": "Khoá"}
+
+
+def _candidate_extras(conn, person_ids):
+    """Với mỗi ứng viên trong `person_ids`: số công trình đã liên kết
+    (`v_person_publications`, state `DaNoiTuDong`/`DaXacNhan`) và ≤3 nhãn chủ
+    đề AI nhiều nhất trong các công trình đó — MỘT truy vấn gộp cho toàn bộ
+    trang (tránh N+1), cùng cách gán chủ đề cho một công trình đã dùng ở
+    `cris.ai.map._topic_of_works`/`cris.ai.trends` (tổng weight từ khoá lớn
+    nhất, khớp `ai_topic_keyword` của bộ cụm mới nhất). Rỗng/0 khi AI chưa
+    chạy hoặc ứng viên chưa có công trình đã liên kết.
+    Trả `{person_id: {"works": int, "top_topics": [str, ...]}}`.
+    """
+    ids = list(dict.fromkeys(person_ids))
+    if not ids:
+        return {}
+    with conn.cursor() as cur:
+        cur.execute(
+            "WITH ids AS (SELECT unnest(%(ids)s::bigint[]) AS person_id), "
+            "pubs AS (SELECT person_id, work_id FROM v_person_publications "
+            "         WHERE person_id = ANY(%(ids)s) AND state IN ('DaNoiTuDong','DaXacNhan')), "
+            "work_counts AS (SELECT person_id, count(*) AS n FROM pubs GROUP BY person_id), "
+            "kw AS (SELECT pu.person_id, pu.work_id, btrim(lower(x)) AS keyword "
+            "       FROM pubs pu JOIN work w ON w.id = pu.work_id, "
+            "            regexp_split_to_table(coalesce(w.keywords_raw, ''), '[,;]') x), "
+            "latest AS (SELECT model FROM ai_topic ORDER BY built_at DESC LIMIT 1), "
+            "matched AS (SELECT kw.person_id, kw.work_id, tk.topic_id, sum(tk.weight) AS total_weight "
+            "            FROM kw JOIN ai_topic_keyword tk ON tk.keyword = kw.keyword "
+            "            JOIN ai_topic t ON t.id = tk.topic_id AND t.model = (SELECT model FROM latest) "
+            "            GROUP BY kw.person_id, kw.work_id, tk.topic_id), "
+            "ranked_work_topic AS (SELECT person_id, work_id, topic_id, "
+            "           row_number() OVER (PARTITION BY person_id, work_id ORDER BY total_weight DESC, topic_id) AS rn "
+            "           FROM matched), "
+            "topic_counts AS (SELECT person_id, topic_id, count(*) AS n "
+            "                 FROM ranked_work_topic WHERE rn = 1 GROUP BY person_id, topic_id), "
+            "ranked_topics AS (SELECT person_id, topic_id, n, "
+            "           row_number() OVER (PARTITION BY person_id ORDER BY n DESC, topic_id) AS rn "
+            "           FROM topic_counts) "
+            "SELECT ids.person_id, COALESCE(wc.n, 0) AS works, "
+            "       COALESCE(array_agg(t.label ORDER BY rt.rn) FILTER (WHERE rt.rn <= 3), ARRAY[]::text[]) AS top_topics "
+            "FROM ids LEFT JOIN work_counts wc ON wc.person_id = ids.person_id "
+            "LEFT JOIN ranked_topics rt ON rt.person_id = ids.person_id AND rt.rn <= 3 "
+            "LEFT JOIN ai_topic t ON t.id = rt.topic_id "
+            "GROUP BY ids.person_id, wc.n",
+            {"ids": ids},
+        )
+        return {r["person_id"]: {"works": r["works"], "top_topics": list(r["top_topics"] or [])}
+                for r in cur.fetchall()}
 
 
 @router.get("/authors", response_model=AuthorQueueList)
@@ -48,11 +96,15 @@ def list_author_queue(conn: Conn, state: str = "ChoXacNhan", q: str = "", page: 
         cur.execute(f"""
             SELECT l.id AS link_id, l.confidence, l.degree_conflict, l.person_id AS candidate_person_id,
                    m.raw_name, w.id AS work_id, w.title, p.display_name AS candidate_name,
+                   p.degree_raw AS candidate_degree, p.rank AS candidate_rank, p.position AS candidate_position,
+                   p.field AS candidate_field, p.orcid AS candidate_orcid,
+                   cu.id AS candidate_unit_id, cu.code AS candidate_unit_code, cu.name AS candidate_unit_name,
                    g.group_work_count, ai.payload AS ai_payload
             FROM author_link l
             JOIN author_mention m ON m.id = l.mention_id
             JOIN work w ON w.id = m.work_id
             JOIN person p ON p.id = l.person_id
+            LEFT JOIN unit cu ON cu.id = p.unit_id
             JOIN (SELECT m2.raw_name, count(DISTINCT m2.work_id) AS group_work_count
                   FROM author_link l2 JOIN author_mention m2 ON m2.id = l2.mention_id
                   WHERE {where_sql_g} GROUP BY m2.raw_name) g ON g.raw_name = m.raw_name
@@ -62,14 +114,22 @@ def list_author_queue(conn: Conn, state: str = "ChoXacNhan", q: str = "", page: 
             ORDER BY g.group_work_count DESC, m.raw_name, w.id, l.id
             LIMIT %(limit)s OFFSET %(offset)s""", {**params, "limit": PER_PAGE, "offset": (page - 1) * PER_PAGE})
         rows = cur.fetchall()
+    extras = _candidate_extras(conn, [r["candidate_person_id"] for r in rows])
     items = []
     for r in rows:
         ai = r["ai_payload"] or {}
+        ex = extras.get(r["candidate_person_id"], {"works": 0, "top_topics": []})
+        unit = (UnitRef(id=r["candidate_unit_id"], code=r["candidate_unit_code"], name=r["candidate_unit_name"])
+                if r["candidate_unit_id"] is not None else None)
         items.append(AuthorQueueRow(link_id=r["link_id"], raw_name=r["raw_name"], work_id=r["work_id"], work_title=r["title"],
                                     candidate_person_id=r["candidate_person_id"], candidate_name=r["candidate_name"],
                                     confidence=r["confidence"], degree_conflict=bool(r["degree_conflict"]),
                                     group_work_count=r["group_work_count"], ai_rank=ai.get("rank"),
-                                    ai_score=ai.get("score"), ai_reason=ai.get("reason")))
+                                    ai_score=ai.get("score"), ai_reason=ai.get("reason"),
+                                    candidate_degree=r["candidate_degree"], candidate_rank=r["candidate_rank"],
+                                    candidate_unit=unit, candidate_position=r["candidate_position"],
+                                    candidate_field=r["candidate_field"], candidate_orcid=r["candidate_orcid"],
+                                    candidate_works=ex["works"], candidate_top_topics=ex["top_topics"]))
     return AuthorQueueList(items=items, page=Page(page=page, per_page=PER_PAGE, total=total), state=state)
 
 

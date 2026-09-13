@@ -18,10 +18,13 @@ def mk_unit(conn, code="khoa-cntt", name="Khoa Công nghệ thông tin"):
     return q(conn, "INSERT INTO unit(code, name) VALUES (%s,%s) RETURNING id", code, name)[0]["id"]
 
 
-def mk_person(conn, name, unit_id=None):
-    return q(conn, "INSERT INTO person(kind, display_name, name_norm, name_keys, unit_id) "
-                   "VALUES ('lecturer',%s,%s,%s,%s) RETURNING id",
-             name, name.lower(), [name.lower()], unit_id)[0]["id"]
+def mk_person(conn, name, unit_id=None, degree_raw=None, rank=None, position=None, field=None, orcid=None,
+              email=None, phone=None):
+    return q(conn, "INSERT INTO person(kind, display_name, name_norm, name_keys, unit_id, degree_raw, rank, "
+                   "position, field, orcid, email, phone) VALUES ('lecturer',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+                   "RETURNING id",
+             name, name.lower(), [name.lower()], unit_id, degree_raw, rank, position, field, orcid, email,
+             phone)[0]["id"]
 
 
 def mk_mention(conn, work_id, raw_name, position=1):
@@ -30,10 +33,12 @@ def mk_mention(conn, work_id, raw_name, position=1):
              work_id, position, raw_name, raw_name.lower(), raw_name.lower())[0]["id"]
 
 
-def mk_link(conn, mention_id, person_id, state="ChoXacNhan"):
-    return q(conn, "INSERT INTO author_link(mention_id, person_id, confidence, state) "
-                   "VALUES (%s,%s,'ten_day_du_duy_nhat',%s) RETURNING id",
-             mention_id, person_id, state)[0]["id"]
+def mk_link(conn, mention_id, person_id, state="ChoXacNhan", reason=None):
+    if state == "DaBacBo" and reason is None:
+        reason = "kiểm thử"  # CHECK (state <> 'DaBacBo' OR reason IS NOT NULL)
+    return q(conn, "INSERT INTO author_link(mention_id, person_id, confidence, state, reason) "
+                   "VALUES (%s,%s,'ten_day_du_duy_nhat',%s,%s) RETURNING id",
+             mention_id, person_id, state, reason)[0]["id"]
 
 
 def due_soon(days=30):
@@ -253,3 +258,136 @@ def test_period_progress_lists_every_active_unit_including_zero(client, conn, us
 def test_period_progress_unknown_id_is_409(client, conn, user_id):
     r = client.get("/api/periods/999999/progress")
     assert r.status_code == 409
+
+
+# ---------- Đợt 2 (rà soát UI): ứng viên trùng tên phải phân biệt được ----------
+def mk_topic(conn, label, keywords, model="local-test"):
+    """`keywords`: [(keyword, weight), ...]. Trả `topic_id`."""
+    tid = q(conn, "INSERT INTO ai_topic(model, label, size) VALUES (%s,%s,0) RETURNING id", model, label)[0]["id"]
+    for kw, weight in keywords:
+        q(conn, "INSERT INTO ai_topic_keyword(topic_id, keyword, weight) VALUES (%s,%s,%s)", tid, kw, weight)
+    return tid
+
+
+def _seed_three_namesakes(conn):
+    """3 ứng viên "Nguyễn Thị Dung" khác khoa/học vị/số công trình đã xác nhận,
+    cùng đứng chờ xác nhận trên một công trình mới. Trả (p1, p2, p3, u_cntt, u_dtvt)."""
+    u_cntt = mk_unit(conn, "khoa-cntt", "Khoa Công nghệ thông tin")
+    u_dtvt = mk_unit(conn, "khoa-dtvt", "Khoa Điện tử viễn thông")
+    p1 = mk_person(conn, "Nguyễn Thị Dung", unit_id=u_cntt, degree_raw="ThS", position="Trưởng bộ môn",
+                   field="Khoa học máy tính", orcid="0000-0001-0001-000X")
+    p2 = mk_person(conn, "Nguyễn Thị Dung", unit_id=u_dtvt, degree_raw="TS")
+    p3 = mk_person(conn, "Nguyễn Thị Dung")  # chưa gán khoa/học vị/chức vụ/lĩnh vực/ORCID
+    for i in range(2):
+        w = mk_work(conn, f"Công trình đã xác nhận của P1 #{i}", doc_type="bai_bao")
+        mk_link(conn, mk_mention(conn, w, "Nguyễn Thị Dung"), p1, state="DaXacNhan")
+    w_p2 = mk_work(conn, "Công trình đã xác nhận của P2", doc_type="bai_bao")
+    mk_link(conn, mk_mention(conn, w_p2, "Nguyễn Thị Dung"), p2, state="DaXacNhan")
+
+    w_new = mk_work(conn, "Công trình mới chờ xác nhận tác giả", doc_type="bai_bao")
+    m_new = mk_mention(conn, w_new, "Nguyễn Thị Dung")
+    mk_link(conn, m_new, p1, state="ChoXacNhan")
+    mk_link(conn, m_new, p2, state="ChoXacNhan")
+    mk_link(conn, m_new, p3, state="ChoXacNhan")
+    conn.commit()
+    return p1, p2, p3, u_cntt, u_dtvt
+
+
+def test_author_queue_namesakes_carry_unit_degree_position_field_orcid_and_work_count(client, conn, user_id):
+    p1, p2, p3, u_cntt, u_dtvt = _seed_three_namesakes(conn)
+
+    r = client.get("/api/queue/authors", params={"state": "ChoXacNhan"})
+    assert r.status_code == 200, r.text
+    items = {row["candidate_person_id"]: row for row in r.json()["items"]}
+    assert set(items) == {p1, p2, p3}
+
+    row1, row2 = items[p1], items[p2]
+    assert row1["candidate_unit"]["code"] == "khoa-cntt" and row1["candidate_degree"] == "ThS"
+    assert row1["candidate_position"] == "Trưởng bộ môn" and row1["candidate_field"] == "Khoa học máy tính"
+    assert row1["candidate_orcid"] == "0000-0001-0001-000X" and row1["candidate_works"] == 2
+
+    assert row2["candidate_unit"]["code"] == "khoa-dtvt" and row2["candidate_degree"] == "TS"
+    assert row2["candidate_works"] == 1
+
+    # ứng viên khác khoa/học vị/số công trình -> phân biệt được, không giống hệt nhau
+    assert row1["candidate_unit"]["code"] != row2["candidate_unit"]["code"]
+    assert row1["candidate_degree"] != row2["candidate_degree"]
+    assert row1["candidate_works"] != row2["candidate_works"]
+
+
+def test_author_queue_candidate_fields_are_null_when_unassigned(client, conn, user_id):
+    p1, p2, p3, _u_cntt, _u_dtvt = _seed_three_namesakes(conn)
+
+    items = {row["candidate_person_id"]: row for row in
+             client.get("/api/queue/authors", params={"state": "ChoXacNhan"}).json()["items"]}
+    row3 = items[p3]
+    # ứng viên chưa gán gì -> null/0/[], không phải giá trị giả
+    assert row3["candidate_unit"] is None and row3["candidate_degree"] is None
+    assert row3["candidate_position"] is None and row3["candidate_field"] is None
+    assert row3["candidate_orcid"] is None and row3["candidate_works"] == 0
+    assert row3["candidate_top_topics"] == []
+    assert p3 not in (p1, p2)  # ứng viên rỗng vẫn là ứng viên riêng biệt, không lẫn với p1/p2
+
+
+def test_author_queue_candidate_works_counts_only_linked_states(client, conn, user_id):
+    p = mk_person(conn, "Trần Văn Kiên")
+    w_auto = mk_work(conn, "Công trình liên kết tự động", doc_type="bai_bao")
+    mk_link(conn, mk_mention(conn, w_auto, "Trần Văn Kiên"), p, state="DaNoiTuDong")
+    w_confirmed = mk_work(conn, "Công trình đã xác nhận", doc_type="bai_bao")
+    mk_link(conn, mk_mention(conn, w_confirmed, "Trần Văn Kiên"), p, state="DaXacNhan")
+    w_pending_other = mk_work(conn, "Công trình khác đang chờ", doc_type="bai_bao")
+    mk_link(conn, mk_mention(conn, w_pending_other, "Trần Văn Kiên"), p, state="ChoXacNhan")
+    w_rejected = mk_work(conn, "Công trình đã bác bỏ", doc_type="bai_bao")
+    mk_link(conn, mk_mention(conn, w_rejected, "Trần Văn Kiên"), p, state="DaBacBo")
+
+    w_new = mk_work(conn, "Công trình mới chờ xác nhận", doc_type="bai_bao")
+    mk_link(conn, mk_mention(conn, w_new, "Trần Văn Kiên"), p, state="ChoXacNhan")
+    conn.commit()
+
+    r = client.get("/api/queue/authors", params={"state": "ChoXacNhan", "q": "Trần Văn Kiên"}).json()
+    rows = [row for row in r["items"] if row["candidate_person_id"] == p]
+    assert len(rows) >= 1
+    assert all(row["candidate_works"] == 2 for row in rows)
+
+
+def test_author_queue_candidate_top_topics_empty_without_ai_and_ranked_when_ai_ran(client, conn, user_id):
+    p = mk_person(conn, "Lê Thị Hoa")
+    w = mk_work(conn, "Công trình đã xác nhận với từ khoá", doc_type="bai_bao",
+                keywords="an toan thong tin, hoc may, mang may tinh, co so du lieu")
+    mk_link(conn, mk_mention(conn, w, "Lê Thị Hoa"), p, state="DaXacNhan")
+    w_new = mk_work(conn, "Công trình mới chờ xác nhận", doc_type="bai_bao")
+    mk_link(conn, mk_mention(conn, w_new, "Lê Thị Hoa"), p, state="ChoXacNhan")
+    conn.commit()
+
+    # Chưa chạy AI (chưa có ai_topic nào) -> rỗng, không lỗi
+    before = client.get("/api/queue/authors", params={"state": "ChoXacNhan", "q": "Lê Thị Hoa"}).json()
+    row_before = next(row for row in before["items"] if row["candidate_person_id"] == p)
+    assert row_before["candidate_top_topics"] == []
+
+    mk_topic(conn, "An toàn thông tin", [("an toan thong tin", 5.0)])
+    mk_topic(conn, "Học máy", [("hoc may", 4.0)])
+    mk_topic(conn, "Mạng máy tính", [("mang may tinh", 3.0)])
+    mk_topic(conn, "Cơ sở dữ liệu", [("co so du lieu", 2.0)])
+    conn.commit()
+
+    after = client.get("/api/queue/authors", params={"state": "ChoXacNhan", "q": "Lê Thị Hoa"}).json()
+    row_after = next(row for row in after["items"] if row["candidate_person_id"] == p)
+    assert 1 <= len(row_after["candidate_top_topics"]) <= 3
+    assert row_after["candidate_top_topics"][0] == "An toàn thông tin"
+
+
+def test_author_queue_response_never_exposes_email_or_phone(client, conn, user_id):
+    p1 = mk_person(conn, "Vũ Minh Anh", email="vu.minh.anh@example.test", phone="0900000001")
+    p2 = mk_person(conn, "Vũ Minh Anh", phone="0900000002")
+    m = mk_mention(conn, mk_work(conn, "Công trình chờ xác nhận, hai ứng viên trùng tên", doc_type="bai_bao"),
+                   "Vũ Minh Anh")
+    mk_link(conn, m, p1, state="ChoXacNhan")
+    mk_link(conn, m, p2, state="ChoXacNhan")
+    conn.commit()
+
+    r = client.get("/api/queue/authors", params={"state": "ChoXacNhan", "q": "Vũ Minh Anh"})
+    assert r.status_code == 200
+    assert "vu.minh.anh@example.test" not in r.text
+    assert "0900000001" not in r.text and "0900000002" not in r.text
+    for row in r.json()["items"]:
+        assert "email" not in row and "phone" not in row

@@ -254,6 +254,16 @@ class AuthorQueueRow(BaseModel):
     ai_rank: int | None = None
     ai_score: float | None = None
     ai_reason: str | None = None
+    # Đợt 2 (2026-09-13): phân biệt ứng viên trùng tên — luôn có mặt (null/0/[]
+    # khi thiếu dữ liệu), không bao giờ lộ email/điện thoại.
+    candidate_degree: str | None = None        # person.degree_raw
+    candidate_rank: str | None = None          # person.rank (học hàm)
+    candidate_unit: UnitRef | None = None
+    candidate_position: str | None = None
+    candidate_field: str | None = None
+    candidate_orcid: str | None = None
+    candidate_works: int = 0                   # số công trình DaNoiTuDong/DaXacNhan
+    candidate_top_topics: list[str] = Field(default_factory=list)   # ≤3 nhãn AI, rỗng nếu chưa có
 
 
 class AuthorQueueList(BaseModel):
