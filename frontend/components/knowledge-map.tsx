@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import type { MapColor, MapOut, MapPoint } from "@/lib/types";
+import type { MapColor, MapOut, MapPoint, MapUnit } from "@/lib/types";
 
 const palette = ["#2563eb", "#7c3aed", "#0891b2", "#c2410c", "#4f46e5", "#0f766e", "#a21caf", "#0369a1", "#854d0e", "#be123c", "#4338ca", "#15803d"];
 
@@ -19,7 +19,7 @@ function valueOf(point: MapPoint, color: MapColor) {
   return point.doc_type || "Khác";
 }
 
-export function KnowledgeMap({ data, color, query }: { data: MapOut; color: MapColor; query: string }) {
+export function KnowledgeMap({ data, color, query, units }: { data: MapOut; color: MapColor; query: string; units?: MapUnit[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transform = useRef({ scale: 1, x: 0, y: 0 });
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -140,6 +140,6 @@ export function KnowledgeMap({ data, color, query }: { data: MapOut; color: MapC
   const legend = values.slice(0, 12);
   return <div>
     <div className="relative overflow-hidden rounded-lg border bg-card"><canvas ref={canvasRef} data-testid="knowledge-map-canvas" role="img" aria-label="Bản đồ các công trình theo không gian chuyên môn" className="block h-[520px] w-full touch-none cursor-grab active:cursor-grabbing" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={(event) => pointers.current.delete(event.pointerId)} onPointerLeave={() => { if (!pointers.current.size) setTooltip(null); }} onClick={(event) => { if (drag.current.moved < 5) { const point = nearest(event.clientX, event.clientY); if (point) router.push(`/cong-trinh/?id=${point.id}`); } }} onWheel={wheel} />{tooltip && <div role="tooltip" className="pointer-events-none absolute z-10 max-w-64 rounded-md border bg-popover px-2.5 py-1.5 text-xs shadow-md" style={{ left: tooltip.x, top: tooltip.y }}>{tooltip.title}</div>}<Button type="button" size="sm" variant="outline" className="absolute right-3 top-3 bg-background/90" onClick={reset}><LocateFixed />Về toàn cảnh</Button></div>
-    <div aria-label="Chú giải màu" className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">{legend.map((value) => <span key={value} className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full" style={{ background: colors.get(value) }} />{color === "topic" ? data.topics.find((topic) => String(topic.id) === value)?.label ?? "Khác" : color === "unit" ? `Đơn vị ${value}` : value}</span>)}{values.length > 12 && <span>+ Khác</span>}</div>
+    <div aria-label="Chú giải màu" className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">{legend.map((value) => <span key={value} className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full" style={{ background: colors.get(value) }} />{color === "topic" ? data.topics.find((topic) => String(topic.id) === value)?.label ?? "Khác" : color === "unit" ? units?.find((unit) => String(unit.id) === value)?.name ?? `Đơn vị ${value}` : value}</span>)}{values.length > 12 && <span>+ Khác</span>}</div>
   </div>;
 }

@@ -7,13 +7,13 @@ import {
   facetsFixture, healthFixture, mapFixture, mentorFixture, notificationFixture, periodProgressFixture, periodReportsFixture, periodsFixture, personFixture,
   publicTopicFixture, qualityFixture, recentFixture, reportFixture, statsFixture, trendsFixture, unitOverviewFixture,
   lecturerMeFixture, meFixture, myDeclarationsFixture, myWorksFixture, personsFixture, screenCohortsFixture, screenFixture, syncRunDetailsFixture, syncRunsFixture,
-  topicDetailsFixture, topicsFixture, workDetailsFixture, workItems, worksFixture,
+  topicDetailsFixture, topicsFixture, unitsFixture, workDetailsFixture, workItems, worksFixture,
 } from "@/lib/fixtures";
 import type {
   AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DeclarationCreateIn,
   DeclarationDetail, DeclarationEvidenceIn, DeclarationList, DeclarationRow, DeclarationStateIn,
   AcceptMentorResult, DecideAuthorsIn, DecideDupIn, DecideResult, DupGroupDetail, DupGroupList, EvidenceFileOut, EvidenceOut, HealthOut, MentorFilters, MentorList, PeriodOpenIn, PeriodOut, PeriodProgress,
-  CreateReportIn, FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, MyDeclarationCreateIn, MyWorkList, NotificationList, PeriodFinalizeOut, PeriodReport, PeriodReportListItem, PersonProfile, PersonSearchRow, QualityOut, ReportCreateOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail, UnitOverview,
+  CreateReportIn, FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, MyDeclarationCreateIn, MyWorkList, NotificationList, PeriodFinalizeOut, PeriodReport, PeriodReportListItem, PersonProfile, PersonSearchRow, QualityOut, ReportCreateOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail, Unit, UnitAliasIn, UnitOverview, UnitRenameIn,
   CoauthorsOut, DismissAnomalyIn, DismissAnomalyOut, ExpertIn, ExpertOut, MapColor, MapOut, PublicTopicCheckIn,
   PublicTopicCheckOut, QualityAnomalyFilters, QualityAnomalyList, RecentOut, TrendsOut, UserOut,
   WorkDetail, WorkFacets, WorkFilters, WorkList,
@@ -42,6 +42,7 @@ const mockAuthorQueue = structuredClone(authorQueueFixture);
 const mockMentors = structuredClone(mentorFixture);
 const mockAnomalies = structuredClone(anomaliesFixture);
 const mockNotifications = structuredClone(notificationFixture);
+const mockUnits = structuredClone(unitsFixture);
 const mockPeriodReports = structuredClone(periodReportsFixture);
 const mockReportDetails: Record<number, PeriodReport> = { [reportFixture.id]: structuredClone(reportFixture) };
 
@@ -81,6 +82,22 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     data = { ok: true };
   }
   else if (url.pathname === "/api/works/facets") data = facetsFixture;
+  else if (url.pathname === "/api/units" && !init?.method) data = mockUnits;
+  else if (/^\/api\/units\/\d+$/.test(url.pathname) && init?.method === "PATCH") {
+    const unit = mockUnits.find((item) => item.id === id);
+    const name = String((JSON.parse(String(init.body)) as { name: string }).name).trim();
+    if (!unit) data = undefined;
+    else if (!name) throw new ApiError(400, "Tên đơn vị không được để trống.");
+    else { unit.name = name; data = unit; }
+  }
+  else if (/^\/api\/units\/\d+\/aliases$/.test(url.pathname) && init?.method === "POST") {
+    const unitId = Number(url.pathname.split("/").at(-2));
+    const unit = mockUnits.find((item) => item.id === unitId);
+    const alias = String((JSON.parse(String(init.body)) as { alias: string }).alias).trim();
+    if (!unit) data = undefined;
+    else if (!alias) throw new ApiError(400, "Bí danh không được để trống.");
+    else { unit.aliases = [...new Set([...(unit.aliases ?? []), alias])]; data = unit; }
+  }
   else if (url.pathname === "/api/works") {
     const q = url.searchParams.get("q")?.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "") ?? "";
     const docType = url.searchParams.get("doc_type");
@@ -90,9 +107,13 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const pubType = url.searchParams.get("pub_type");
     const quartile = url.searchParams.get("quartile");
     const cohort = url.searchParams.get("cohort");
+    const unit = url.searchParams.get("unit");
+    const score = url.searchParams.get("score");
+    const minScore = Number(url.searchParams.get("min_score")) || null;
     const keyword = url.searchParams.get("keyword")?.toLocaleLowerCase("vi");
     const topicWorkIds = topic ? new Set(topicDetailsFixture[topic]?.works.map((work) => work.id) ?? []) : null;
-    const items = mockWorks.items.filter((work) => (mode === "semantic" || !q || work.title?.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)) && (!docType || work.doc_type === docType) && (!year || work.year === Number(year)) && (!topicWorkIds || topicWorkIds.has(work.id)) && (!pubType || pubType === "journal_intl") && (!quartile || quartile === "Q1") && (!cohort || work.doc_type === "do_an") && (!keyword || work.keywords?.some((item) => item.toLocaleLowerCase("vi").includes(keyword))));
+    const filtered = mockWorks.items.filter((work) => (mode === "semantic" || !q || work.title?.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)) && (!docType || work.doc_type === docType) && (!year || work.year === Number(year)) && (!unit || work.units?.some((item) => item.code === unit || String(item.id) === unit)) && (!score || (score === "none" ? work.score == null : work.score === Number(score))) && (!minScore || (work.score ?? -Infinity) >= minScore) && (!topicWorkIds || topicWorkIds.has(work.id)) && (!pubType || pubType === "journal_intl") && (!quartile || quartile === "Q1") && (!cohort || work.doc_type === "do_an") && (!keyword || work.keywords?.some((item) => item.toLocaleLowerCase("vi").includes(keyword))));
+    const items = mode === "semantic" ? filtered.map((work) => ({ ...work, score: Number((0.93 - (work.id - 1) * 0.045).toFixed(3)) })) : filtered;
     data = { items, mode, note: mode === "semantic" ? "Tìm theo nghĩa (AI): kết quả có thể không chứa từ đã gõ." : null, page: { ...mockWorks.page, page: Number(url.searchParams.get("page") ?? 1), total: items.length } };
   } else if (/^\/api\/works\/\d+\/fields$/.test(url.pathname) && init?.method === "PATCH") {
     const workId = Number(url.pathname.split("/").at(-2));
@@ -501,8 +522,11 @@ export const api = {
   getMe: () => apiRequest<MeOut>("/api/auth/me"),
   login: (input: LoginIn) => apiRequest<UserOut>("/api/auth/login", { method: "POST", body: JSON.stringify(input) }),
   logout: () => apiRequest<LogoutOut>("/api/auth/logout", { method: "POST" }),
-  getWorks: (filters: WorkFilters = {}) => apiRequest<WorkList>(`/api/works${queryString({ q: filters.q, mode: filters.mode, doc_type: filters.doc_type, year: filters.year, unit: filters.unit, topic: filters.topic, pub_type: filters.pub_type, quartile: filters.quartile, cohort: filters.cohort, keyword: filters.keyword, page: filters.page })}`),
+  getWorks: (filters: WorkFilters = {}) => apiRequest<WorkList>(`/api/works${queryString({ q: filters.q, mode: filters.mode, doc_type: filters.doc_type, year: filters.year, unit: filters.unit, topic: filters.topic, pub_type: filters.pub_type, quartile: filters.quartile, cohort: filters.cohort, keyword: filters.keyword, score: filters.score, min_score: filters.min_score, page: filters.page })}`),
   getWorkFacets: () => apiRequest<WorkFacets>("/api/works/facets"),
+  getUnits: () => apiRequest<Unit[]>("/api/units"),
+  renameUnit: (id: number, input: UnitRenameIn) => apiRequest<Unit>(`/api/units/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
+  addUnitAlias: (id: number, input: UnitAliasIn) => apiRequest<Unit>(`/api/units/${id}/aliases`, { method: "POST", body: JSON.stringify(input) }),
   getWork: (id: number) => apiRequest<WorkDetail>(`/api/works/${id}`),
   getCitation: (id: number, style: "apa" | "ieee" | "bibtex") => apiTextRequest(`/api/works/${id}/citation${queryString({ style })}`),
   editWorkField: (id: number, input: FieldEditIn) => apiRequest<FieldEditOut>(`/api/works/${id}/fields`, { method: "PATCH", body: JSON.stringify(input) }),

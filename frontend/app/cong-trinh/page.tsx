@@ -4,7 +4,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BookMarked, ExternalLink, FileText, History, PenLine, UserRound } from "lucide-react";
+import { AlertTriangle, BookMarked, Building2, ExternalLink, FileText, History, PenLine, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -23,7 +23,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api";
 import { getFieldValueLabel, labelSourceText, roleLabels } from "@/lib/labels";
-import { useEditWorkField, useOfficerAccess, useWork } from "@/lib/queries";
+import { useEditWorkField, useOfficerAccess, useUnits, useWork } from "@/lib/queries";
 import type { FieldRow } from "@/lib/types";
 
 const editableFields = new Set(["title", "doi", "year_issue", "journal", "volume", "pub_type_raw", "cohort", "abstract", "keywords_raw"]);
@@ -33,6 +33,7 @@ function WorkContent() {
   const id = rawId && /^\d+$/.test(rawId) ? Number(rawId) : null;
   const queryClient = useQueryClient();
   const query = useWork(id);
+  const units = useUnits();
   const edit = useEditWorkField(id ?? 0);
   const canEdit = useOfficerAccess();
   const [editing, setEditing] = useState<FieldRow | null>(null);
@@ -61,7 +62,7 @@ function WorkContent() {
   return (
     <>
       <PageHeader title="Chi tiết công trình" description="Mỗi giá trị đều có thể truy ngược về nguồn hình thành." action={<div className="flex flex-wrap gap-2"><StatusBadge value={work.doc_type} kind="docType" /><StatusBadge value={work.state} /></div>} />
-      <div className="mb-7"><p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Mã công trình #{work.id}</p><div className="mt-2 flex flex-wrap items-center gap-2"><h2 className="max-w-4xl text-xl font-semibold leading-8">{work.title ?? "Chưa có tiêu đề"}</h2>{work.has_manual && <Badge variant="outline" className="border-primary/25 bg-primary/10 text-primary"><PenLine />Đã chỉnh tay</Badge>}</div><div className="mt-3 flex flex-wrap gap-2">{work.pdf_url && <Button render={<a href={work.pdf_url} target="_blank" rel="noreferrer" />} variant="outline"><FileText />Mở PDF ở kho</Button>}<Button type="button" variant="outline" onClick={() => setCitationOpen(true)}><BookMarked />Trích dẫn</Button></div>{work.keywords?.length ? <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Từ khoá">{work.keywords.map((keyword) => <Link key={keyword} href={`/tra-cuu/?keyword=${encodeURIComponent(keyword)}`} className="max-w-full"><Badge variant="outline" className="h-auto max-w-full whitespace-normal py-1 text-left font-normal hover:border-primary hover:text-primary">{keyword}</Badge></Link>)}</div> : null}{work.needs_review && <Alert className="mt-4 border-status-warning/30 bg-status-warning/10 text-status-warning"><AlertTriangle /><AlertTitle>Cần đối soát</AlertTitle><AlertDescription>Bản ghi còn thông tin cần người dùng kiểm tra và quyết định.</AlertDescription></Alert>}</div>
+      <div className="mb-7"><p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Mã công trình #{work.id}</p><div className="mt-2 flex flex-wrap items-center gap-2"><h2 className="max-w-4xl text-xl font-semibold leading-8">{work.title ?? "Chưa có tiêu đề"}</h2>{work.has_manual && <Badge variant="outline" className="border-primary/25 bg-primary/10 text-primary"><PenLine />Đã chỉnh tay</Badge>}</div>{work.units?.length ? <div className="mt-2 flex flex-wrap items-center gap-1.5 text-sm"><span className="mr-1 inline-flex items-center gap-1.5 text-muted-foreground"><Building2 className="size-4" />Đơn vị</span>{work.units.map((unit) => <Link key={unit.id} href={`/tra-cuu/?unit=${encodeURIComponent(unit.code)}`} title={units.data?.find((item) => item.id === unit.id || item.code === unit.code)?.name}><Badge variant="outline" className="hover:border-primary hover:text-primary">{unit.code}</Badge></Link>)}</div> : null}<div className="mt-3 flex flex-wrap gap-2">{work.pdf_url && <Button render={<a href={work.pdf_url} target="_blank" rel="noreferrer" />} variant="outline"><FileText />Mở PDF ở kho</Button>}<Button type="button" variant="outline" onClick={() => setCitationOpen(true)}><BookMarked />Trích dẫn</Button></div>{work.keywords?.length ? <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Từ khoá">{work.keywords.map((keyword) => <Link key={keyword} href={`/tra-cuu/?keyword=${encodeURIComponent(keyword)}`} className="max-w-full"><Badge variant="outline" className="h-auto max-w-full whitespace-normal py-1 text-left font-normal hover:border-primary hover:text-primary">{keyword}</Badge></Link>)}</div> : null}{work.needs_review && <Alert className="mt-4 border-status-warning/30 bg-status-warning/10 text-status-warning"><AlertTriangle /><AlertTitle>Cần đối soát</AlertTitle><AlertDescription>Bản ghi còn thông tin cần người dùng kiểm tra và quyết định.</AlertDescription></Alert>}</div>
       {work.has_manual && <Link href="/nhat-ky/" className="mb-7 flex items-center justify-between rounded-lg border bg-card px-4 py-3 hover:bg-muted/50"><span><strong className="block text-sm">Lịch sử chỉnh sửa</strong><span className="text-xs text-muted-foreground">Bản ghi có giá trị do người dùng chỉnh sửa; mở nhật ký để đối chiếu.</span></span><History className="size-4 text-primary" /></Link>}
       <section className="mb-8" aria-labelledby="provenance-title">
         <div className="mb-3"><h2 id="provenance-title" className="text-base font-semibold">Xuất xứ dữ liệu</h2><p className="text-xs text-muted-foreground">So sánh giá trị đang sử dụng với dữ liệu gốc từ từng nguồn.</p></div>

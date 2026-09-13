@@ -18,8 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { API_BASE, ApiError } from "@/lib/api";
-import { docTypeLabels } from "@/lib/labels";
-import { useStats, useTopics, useWorkFacets, useWorks } from "@/lib/queries";
+import { docTypeLabels, formatWorkScore } from "@/lib/labels";
+import { useTopics, useUnits, useWorkFacets, useWorks } from "@/lib/queries";
 import type { FacetOption, WorkFilters, WorkSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +38,7 @@ function SearchContent() {
   const [docType, setDocType] = useState(searchParams.get("doc_type") ?? empty);
   const [year, setYear] = useState(searchParams.get("year") ?? empty);
   const [unit, setUnit] = useState(searchParams.get("unit") ?? empty);
+  const [score, setScore] = useState(searchParams.get("score") ?? empty);
   const [topic, setTopic] = useState(searchParams.get("topic") ?? empty);
   const [pubType, setPubType] = useState(searchParams.get("pub_type") ?? empty);
   const [quartile, setQuartile] = useState(searchParams.get("quartile") ?? empty);
@@ -46,32 +47,38 @@ function SearchContent() {
   const [filters, setFilters] = useState<WorkFilters>({
     q: searchParams.get("q") || undefined, mode: initialMode, doc_type: searchParams.get("doc_type") || undefined,
     year: Number(searchParams.get("year")) || undefined, unit: searchParams.get("unit") || undefined,
+    score: (searchParams.get("score") || undefined) as WorkFilters["score"],
     topic: Number(searchParams.get("topic")) || undefined, pub_type: searchParams.get("pub_type") || undefined,
     quartile: searchParams.get("quartile") || undefined, cohort: searchParams.get("cohort") || undefined,
     keyword: searchParams.get("keyword") || undefined, page: 1,
   });
   const works = useWorks(filters);
   const topics = useTopics();
-  const stats = useStats();
-  const facets = useWorkFacets(advancedOpen);
-  const auxiliaryError = topics.error ?? stats.error ?? (advancedOpen ? facets.error : null);
-  const yearOptions = facets.data?.years ?? stats.data?.by_year_type.map((row) => ({ value: String(row.year), label: String(row.year), n: Object.entries(row).reduce((total, [key, value]) => key === "year" ? total : total + value, 0) })) ?? [];
-  const unitOptions = facets.data?.units ?? stats.data?.by_unit.map((item) => ({ value: String(item.unit_id), label: `${item.code} — ${item.name}`, n: item.works })) ?? [];
+  const units = useUnits();
+  const facets = useWorkFacets();
+  const yearOptions = facets.data?.years.map((item) => ({ value: String(item.value), label: String(item.value), n: item.n })) ?? [];
+  const scoreOptions = facets.data?.scores ?? [];
+  const supportsScore = Array.isArray(facets.data?.scores);
+  const unitOptions = units.data?.length ? units.data.filter((item) => item.active).map((item) => ({ value: item.code, label: `${item.code} — ${item.name}`, n: item.works })) : facets.data?.units.map((item) => ({ value: item.code, label: `${item.code} — ${item.name}`, n: item.n })) ?? [];
+  const auxiliaryError = topics.error ?? facets.error ?? (!unitOptions.length ? units.error : null);
+  const unitNames = useMemo(() => new Map(units.data?.map((item) => [item.code, item.name]) ?? []), [units.data]);
   const semantic = filters.mode === "semantic";
   const csvQuery = new URLSearchParams(Object.entries(filters).filter(([key, value]) => key !== "page" && value !== undefined && value !== "").map(([key, value]) => [key, String(value)]));
   const csvUrl = `${API_BASE}/api/works.csv${csvQuery.size ? `?${csvQuery}` : ""}`;
   const columns = useMemo<DataTableColumn<WorkSummary>[]>(() => [
-    { accessorKey: "title", header: "Công trình", cell: ({ row }) => <div className="max-w-xl whitespace-normal"><Link href={`/cong-trinh/?id=${row.original.id}`} className="font-medium text-primary hover:underline">{row.original.title ?? "Chưa có tiêu đề"}</Link>{row.original.doi && <div className="mt-0.5 text-xs text-muted-foreground">DOI: {row.original.doi}</div>}<div className="mt-1.5 flex flex-wrap gap-1">{row.original.keywords?.slice(0, 3).map((keyword) => <Link key={keyword} href={`/tra-cuu/?keyword=${encodeURIComponent(keyword)}`}><Badge variant="outline" className="font-normal hover:border-primary hover:text-primary">{keyword}</Badge></Link>)}</div></div> },
+    { accessorKey: "title", header: "Công trình", cell: ({ row }) => <div className="max-w-xl whitespace-normal"><Link href={`/cong-trinh/?id=${row.original.id}`} className="font-medium text-primary hover:underline">{row.original.title ?? "Chưa có tiêu đề"}</Link>{row.original.doi && <div className="mt-0.5 text-xs text-muted-foreground">DOI: {row.original.doi}</div>}<div className="mt-1.5 flex flex-wrap gap-1">{row.original.units?.map((item) => <Link key={item.id} href={`/tra-cuu/?unit=${encodeURIComponent(item.code)}`} title={unitNames.get(item.code)}><Badge variant="outline" className="font-normal hover:border-primary hover:text-primary">{item.code}</Badge></Link>)}{row.original.keywords?.slice(0, 3).map((keyword) => <Link key={keyword} href={`/tra-cuu/?keyword=${encodeURIComponent(keyword)}`}><Badge variant="outline" className="font-normal hover:border-primary hover:text-primary">{keyword}</Badge></Link>)}</div></div> },
     ...(semantic ? [{ id: "score", header: "Độ gần", cell: ({ row }: { row: { original: WorkSummary } }) => <div className="w-24"><div className="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label={`Độ gần ${Math.round((row.original.score ?? 0) * 100)} phần trăm`} aria-valuenow={Math.round((row.original.score ?? 0) * 100)} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-primary" style={{ width: `${Math.round((row.original.score ?? 0) * 100)}%` }} /></div><span className="mt-1 block text-xs tabular-nums text-muted-foreground">{(row.original.score ?? 0).toFixed(2)}</span></div> }] : []),
+    ...(!semantic && supportsScore ? [{ id: "work-score", header: "Điểm", cell: ({ row }: { row: { original: WorkSummary } }) => row.original.doc_type === "bai_bao" && row.original.score !== undefined ? <Badge variant="outline" className="whitespace-nowrap tabular-nums">{formatWorkScore(row.original.score)}</Badge> : null }] : []),
     { accessorKey: "doc_type_label", header: "Loại", cell: ({ row }) => <StatusBadge value={row.original.doc_type} kind="docType" /> },
     { accessorKey: "year", header: "Năm", cell: ({ row }) => <span className="tabular-nums">{row.original.year ?? "—"}</span> },
     { accessorKey: "state", header: "Trạng thái", cell: ({ row }) => <StatusBadge value={row.original.state} /> },
-  ], [semantic]);
+  ], [semantic, supportsScore, unitNames]);
 
-  function apply(nextMode = mode, reset = false, syncUrl = false) {
+  function apply(nextMode = mode, reset = false, syncUrl = true) {
     const next: WorkFilters = reset ? { mode: nextMode, page: 1 } : {
       q: query.trim() || undefined, mode: nextMode, doc_type: docType === empty ? undefined : docType,
       year: year === empty ? undefined : Number(year), unit: unit === empty ? undefined : unit,
+      score: score === empty ? undefined : score as WorkFilters["score"],
       topic: topic === empty ? undefined : Number(topic), pub_type: pubType === empty ? undefined : pubType,
       quartile: quartile === empty ? undefined : quartile, cohort: cohort === empty ? undefined : cohort, page: 1,
     };
@@ -81,7 +88,7 @@ function SearchContent() {
   }
 
   function clearFilters() {
-    setQuery(""); setDocType(empty); setYear(empty); setUnit(empty); setTopic(empty); setPubType(empty); setQuartile(empty); setCohort(empty);
+    setQuery(""); setDocType(empty); setYear(empty); setUnit(empty); setScore(empty); setTopic(empty); setPubType(empty); setQuartile(empty); setCohort(empty);
     apply(mode, true, true);
   }
 
@@ -93,10 +100,11 @@ function SearchContent() {
         <div><span className="mb-1.5 block text-xs font-medium">Cách tìm</span><div role="group" aria-label="Cách tìm" className="flex rounded-md border p-0.5">{(["keyword", "semantic"] as const).map((value) => <Button key={value} type="button" size="sm" variant="ghost" aria-pressed={mode === value} onClick={() => { setMode(value); apply(value, false, true); }} className={cn("flex-1", mode === value && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground")} >{value === "keyword" ? "Theo từ khoá" : <><Sparkles />Theo nghĩa (AI)</>}</Button>)}</div></div>
         <Button type="submit">Tra cứu</Button>
       </div>
-      <div className="mt-3 grid gap-3 border-t pt-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={cn("mt-3 grid gap-3 border-t pt-3 sm:grid-cols-2", supportsScore ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
         <div><label className="mb-1 block text-xs font-medium">Loại tài liệu</label><Select value={docType} onValueChange={(value) => setDocType(String(value))}><SelectTrigger aria-label="Loại tài liệu" className="w-full"><SelectValue>{(value) => value === empty ? "Tất cả" : docTypeLabels[String(value)]}</SelectValue></SelectTrigger><SelectContent><SelectItem value={empty}>Tất cả</SelectItem>{Object.entries(docTypeLabels).slice(0, 5).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>
         <FacetSelect label="Năm" value={year} options={yearOptions} onChange={setYear} />
         <FacetSelect label="Đơn vị" value={unit} options={unitOptions} onChange={setUnit} />
+        {supportsScore && <FacetSelect label="Điểm quy đổi" value={score} options={scoreOptions} onChange={setScore} />}
         <div><label className="mb-1 block text-xs font-medium">Chủ đề</label><Select value={topic} onValueChange={(value) => setTopic(String(value))}><SelectTrigger aria-label="Chủ đề" className="w-full"><SelectValue>{(value) => value === empty ? "Tất cả" : topics.data?.find((item) => item.id === Number(value))?.label}</SelectValue></SelectTrigger><SelectContent><SelectItem value={empty}>Tất cả</SelectItem>{topics.data?.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.label} ({item.size})</SelectItem>)}</SelectContent></Select></div>
       </div>
       <details className="mt-3 rounded-md border px-3 py-2" open={advancedOpen} onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}><summary className="cursor-pointer text-sm font-medium">Bộ lọc nâng cao</summary><div className="mt-3 grid gap-3 border-t pt-3 sm:grid-cols-3"><FacetSelect label="Loại bài/chỉ mục" value={pubType} options={facets.data?.pub_types ?? []} onChange={setPubType} /><FacetSelect label="Quartile" value={quartile} options={facets.data?.quartiles ?? []} onChange={setQuartile} /><FacetSelect label="Khoá" value={cohort} options={facets.data?.cohorts ?? []} onChange={setCohort} /></div></details>
@@ -104,7 +112,7 @@ function SearchContent() {
     </form>
     {filters.keyword && <div className="mb-4 flex items-center gap-2 text-sm"><span className="text-muted-foreground">Đang lọc từ khoá:</span><Badge>{filters.keyword}</Badge><Button type="button" size="icon-sm" variant="ghost" aria-label="Bỏ lọc từ khoá" onClick={clearFilters}><X /></Button></div>}
     {semantic && works.data?.note && <Alert className="mb-4 border-primary/25 bg-primary/5"><Sparkles /><AlertTitle>Tìm theo nghĩa</AlertTitle><AlertDescription>{works.data.note}</AlertDescription></Alert>}
-    {(topics.isError || stats.isError || (advancedOpen && facets.isError)) && <Alert variant="destructive" className="mb-4"><AlertTitle>Chưa tải được một số bộ lọc</AlertTitle><AlertDescription><span>{auxiliaryError instanceof ApiError ? auxiliaryError.detail : "Hãy thử tải lại bộ lọc."}</span><Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => { void topics.refetch(); void stats.refetch(); if (advancedOpen) void facets.refetch(); }}>Thử lại</Button></AlertDescription></Alert>}
+    {auxiliaryError && <Alert variant="destructive" className="mb-4"><AlertTitle>Chưa tải được một số bộ lọc</AlertTitle><AlertDescription><span>{auxiliaryError instanceof ApiError ? auxiliaryError.detail : "Hãy thử tải lại bộ lọc."}</span><Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => { void topics.refetch(); void units.refetch(); void facets.refetch(); }}>Thử lại</Button></AlertDescription></Alert>}
     {works.isLoading ? <LoadingView /> : works.isError ? <ErrorView error={works.error} retry={() => works.refetch()} /> : !works.data?.items.length ? <EmptyView title="Không tìm thấy công trình" description="Hãy đổi nội dung tìm hoặc bỏ bớt bộ lọc rồi tra cứu lại." action={<Button type="button" variant="outline" onClick={clearFilters}>Xoá bộ lọc</Button>} /> : <DataTable columns={columns} data={works.data.items} getRowId={(row) => String(row.id)} page={{ page: works.data.page.page, perPage: works.data.page.per_page, total: works.data.page.total, onPageChange: (page) => setFilters((current) => ({ ...current, page })) }} />}
   </>;
 }

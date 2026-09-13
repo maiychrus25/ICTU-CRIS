@@ -84,6 +84,7 @@ export function getAspectLevel(value: string): AspectLevel {
 export const aspectLevelLabels: Record<AspectLevel, string> = { cao: "Cao", vua: "Vừa", thap: "Thấp" };
 
 export function getFieldValueLabel(field: string, value: string) {
+  if (field === "score") return formatWorkScore(Number(value));
   const labels = field === "doc_type" || field === "doc_types" ? docTypeLabels
     : field === "state" || field === "link_state" || field === "status" ? stateLabels
     : field === "role" ? roleLabels
@@ -94,6 +95,10 @@ export function getFieldValueLabel(field: string, value: string) {
     : field === "source" ? sourceLabels
     : undefined;
   return labels?.[value] ?? value;
+}
+
+export function formatWorkScore(value: number | null | undefined) {
+  return value === null ? "—" : value === undefined ? "" : `${value.toLocaleString("vi-VN", { maximumFractionDigits: 2 })} điểm`;
 }
 
 export function labelDataCodes(value: unknown, field = ""): unknown {

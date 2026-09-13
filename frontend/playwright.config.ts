@@ -9,11 +9,11 @@ export default defineConfig({
   timeout: 120_000,
   expect: { timeout: 30_000 },
   workers: 1,
-  use: { baseURL: "http://localhost:3000" },
+  use: { baseURL: "http://localhost:3010" },
   webServer: {
-    command: "NEXT_PUBLIC_MOCK=1 npm run dev -- --webpack",
+    command: "NEXT_PUBLIC_MOCK=1 npm run dev -- --webpack -p 3010",
     env: { ...process.env, WATCHPACK_POLLING: "true" },
-    url: "http://localhost:3000",
+    url: "http://localhost:3010",
     reuseExistingServer: false,
   },
 });

@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCoauthors, useKnowledgeMap, useTrends } from "@/lib/queries";
+import { useCoauthors, useKnowledgeMap, useTrends, useUnits } from "@/lib/queries";
 import type { CoauthorsOut, MapColor } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +25,8 @@ function MapView() {
   const [color, setColor] = useState<MapColor>("topic");
   const [query, setQuery] = useState("");
   const map = useKnowledgeMap(color);
-  return <section aria-label="Bản đồ công trình"><div className="mb-4 flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row"><div className="min-w-0 flex-1"><label htmlFor="map-search" className="mb-1 block text-xs font-medium">Tìm nhanh trên bản đồ</label><Input id="map-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nhập một phần tiêu đề công trình…" /></div><div className="sm:w-52"><label className="mb-1 block text-xs font-medium">Tô màu theo</label><Select value={color} onValueChange={(value) => setColor(value as MapColor)}><SelectTrigger aria-label="Tô màu bản đồ theo" className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="topic">Chủ đề</SelectItem><SelectItem value="unit">Đơn vị</SelectItem><SelectItem value="year">Năm</SelectItem><SelectItem value="doc_type">Loại tài liệu</SelectItem></SelectContent></Select></div></div>{map.isLoading ? <LoadingView label="Đang tải bản đồ tri thức…" /> : map.isError ? <ErrorView error={map.error} retry={() => map.refetch()} /> : !map.data?.points.length ? <EmptyView title="Chưa có bản đồ" description="Bản đồ sẽ xuất hiện sau khi dữ liệu AI được xây dựng." /> : <><KnowledgeMap data={map.data} color={color} query={query} /><p className="mt-2 text-xs text-muted-foreground">Cuộn hoặc chụm để thu phóng, kéo để di chuyển, bấm một điểm để mở công trình. Vị trí thể hiện độ gần chuyên môn, không phải xếp hạng chất lượng.</p></>}</section>;
+  const units = useUnits();
+  return <section aria-label="Bản đồ công trình"><div className="mb-4 flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row"><div className="min-w-0 flex-1"><label htmlFor="map-search" className="mb-1 block text-xs font-medium">Tìm nhanh trên bản đồ</label><Input id="map-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nhập một phần tiêu đề công trình…" /></div><div className="sm:w-52"><label className="mb-1 block text-xs font-medium">Tô màu theo</label><Select value={color} onValueChange={(value) => setColor(value as MapColor)}><SelectTrigger aria-label="Tô màu bản đồ theo" className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="topic">Chủ đề</SelectItem><SelectItem value="unit">Đơn vị</SelectItem><SelectItem value="year">Năm</SelectItem><SelectItem value="doc_type">Loại tài liệu</SelectItem></SelectContent></Select></div></div>{map.isLoading ? <LoadingView label="Đang tải bản đồ tri thức…" /> : map.isError ? <ErrorView error={map.error} retry={() => map.refetch()} /> : !map.data?.points.length ? <EmptyView title="Chưa có bản đồ" description="Bản đồ sẽ xuất hiện sau khi dữ liệu AI được xây dựng." /> : <><KnowledgeMap data={map.data} color={color} query={query} units={units.data?.length ? units.data : map.data.units} /><p className="mt-2 text-xs text-muted-foreground">Cuộn hoặc chụm để thu phóng, kéo để di chuyển, bấm một điểm để mở công trình. Vị trí thể hiện độ gần chuyên môn, không phải xếp hạng chất lượng.</p></>}</section>;
 }
 
 function TrendsView() {
@@ -48,6 +49,7 @@ function TrendsView() {
 
 function CoauthorsView() {
   const coauthors = useCoauthors();
+  const unitsQuery = useUnits();
   const [unit, setUnit] = useState("all");
   const filtered = useMemo<CoauthorsOut | null>(() => {
     if (!coauthors.data) return null;
@@ -55,8 +57,9 @@ function CoauthorsView() {
     const ids = new Set(nodes.map((node) => node.person_id));
     return { nodes, edges: coauthors.data.edges.filter((edge) => ids.has(edge.a) && ids.has(edge.b)) };
   }, [coauthors.data, unit]);
-  const units = [...new Set(coauthors.data?.nodes.map((node) => node.unit_code).filter(Boolean) ?? [])] as string[];
-  return <section aria-label="Mạng lưới đồng tác giả"><div className="mb-4 ml-auto max-w-64"><label className="mb-1 block text-xs font-medium">Lọc theo đơn vị</label><Select value={unit} onValueChange={(value) => setUnit(String(value))}><SelectTrigger aria-label="Lọc đồng tác giả theo đơn vị" className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả đơn vị</SelectItem>{units.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>{coauthors.isLoading ? <LoadingView label="Đang tải mạng lưới đồng tác giả…" /> : coauthors.isError ? <ErrorView error={coauthors.error} retry={() => coauthors.refetch()} /> : !filtered?.nodes.length ? <EmptyView title="Chưa có đồng tác giả phù hợp" description="Hãy chọn đơn vị khác hoặc chờ dữ liệu liên kết được xác nhận." /> : <><CoauthorGraph data={filtered} /><p className="mt-2 text-xs text-muted-foreground">Nút lớn hơn là giảng viên có nhiều công trình hơn; cạnh đậm hơn là có nhiều công trình chung hơn. Bấm một nút để mở hồ sơ.</p></>}</section>;
+  const unitCodes = new Set(coauthors.data?.nodes.map((node) => node.unit_code).filter(Boolean) ?? []);
+  const units = unitsQuery.data?.filter((item) => unitCodes.has(item.code)) ?? [...unitCodes].map((code) => ({ code, name: code }));
+  return <section aria-label="Mạng lưới đồng tác giả"><div className="mb-4 ml-auto max-w-64"><label className="mb-1 block text-xs font-medium">Lọc theo đơn vị</label><Select value={unit} onValueChange={(value) => setUnit(String(value))}><SelectTrigger aria-label="Lọc đồng tác giả theo đơn vị" className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả đơn vị</SelectItem>{units.map((item) => <SelectItem key={item.code} value={item.code}>{item.code} — {item.name}</SelectItem>)}</SelectContent></Select></div>{coauthors.isLoading ? <LoadingView label="Đang tải mạng lưới đồng tác giả…" /> : coauthors.isError ? <ErrorView error={coauthors.error} retry={() => coauthors.refetch()} /> : !filtered?.nodes.length ? <EmptyView title="Chưa có đồng tác giả phù hợp" description="Hãy chọn đơn vị khác hoặc chờ dữ liệu liên kết được xác nhận." /> : <><CoauthorGraph data={filtered} /><p className="mt-2 text-xs text-muted-foreground">Nút lớn hơn là giảng viên có nhiều công trình hơn; cạnh đậm hơn là có nhiều công trình chung hơn. Bấm một nút để mở hồ sơ.</p></>}</section>;
 }
 
 export default function KnowledgePage() {

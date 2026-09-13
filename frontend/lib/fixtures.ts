@@ -3,11 +3,23 @@
 
 import type {
   AboutOut, AuditList, AuthorQueueList, CompareOut, DeclarationDetail, DeclarationRow, DupGroupDetail, DupGroupList, HealthOut, MeOut,
-  NotificationRow, PeriodReport, PeriodReportListItem, UnitOverview,
+  NotificationRow, PeriodReport, PeriodReportListItem, Unit, UnitOverview,
   CoauthorsOut, ExpertOut, MentorList, MyWorkList, PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow,
   PublicTopicCheckOut, QualityAnomalyList, QualityOut, RecentOut, StatsOut, SyncRunDetail, SyncRunList, Topic,
   TopicDetail, TrendsOut, WorkDetail, WorkFacets, WorkList, WorkSummary, ScreenCohortSummary, ScreenList, MapOut,
 } from "@/lib/types";
+
+export const unitsFixture: Unit[] = [
+  { id: 1, code: "CNTT", name: "Khoa Công nghệ thông tin", active: true, works: 523, persons: 173, aliases: [] },
+  { id: 2, code: "ĐTVT", name: "Khoa Công nghệ điện tử và truyền thông", active: true, works: 381, persons: 82, aliases: ["ĐTTT"] },
+  { id: 3, code: "HTTTKT", name: "Khoa Hệ thống thông tin kinh tế", active: true, works: 276, persons: 61, aliases: ["HTTKT"] },
+  { id: 4, code: "KHCB", name: "Khoa Khoa học cơ bản", active: true, works: 142, persons: 39, aliases: [] },
+  { id: 5, code: "TĐH", name: "Khoa Công nghệ tự động hoá", active: true, works: 119, persons: 34, aliases: [] },
+  { id: 6, code: "TTĐPT", name: "Khoa Truyền thông đa phương tiện", active: true, works: 96, persons: 27, aliases: [] },
+  { id: 7, code: "KT&CN", name: "Khoa Kỹ thuật và Công nghệ", active: true, works: 83, persons: 24, aliases: [] },
+  { id: 8, code: "KT&QT", name: "Khoa Kinh tế và Quản trị", active: true, works: 71, persons: 21, aliases: [] },
+  { id: 9, code: "NT&TT", name: "Khoa Nghệ thuật và Truyền thông", active: true, works: 58, persons: 18, aliases: [] },
+];
 
 export const meFixture: MeOut = {
   user: { id: 1, email: "nguyen.minh.anh@ictu.edu.vn", display_name: "Nguyễn Minh Anh", roles: ["rd_officer"], unit_id: 1, unit_code: "CNTT", person_id: null },
@@ -36,8 +48,11 @@ export const workItems: WorkSummary[] = [
 
 workItems.forEach((work, index) => {
   work.keywords = index % 2 ? ["trí tuệ nhân tạo", "dữ liệu"] : ["hệ thống thông tin", "ứng dụng web"];
-  work.score = Number((0.93 - index * 0.045).toFixed(3));
+  work.units = [{ id: index % 3 + 1, code: unitsFixture[index % 3].code }];
 });
+Object.assign(workItems[1], { score: 0.75, units: [{ id: 1, code: "CNTT" }] });
+Object.assign(workItems[5], { score: 1, units: [{ id: 2, code: "ĐTVT" }] });
+Object.assign(workItems[8], { score: 0.5, units: [{ id: 3, code: "HTTTKT" }] });
 
 export const worksFixture: WorkList = { items: workItems, page: { page: 1, per_page: 50, total: workItems.length } };
 
@@ -58,6 +73,8 @@ export const workDetailsFixture: Record<number, WorkDetail> = Object.fromEntries
   state: work.state,
   needs_review: work.needs_review,
   has_manual: false,
+  score: work.score,
+  units: work.units,
   pdf_url: work.id % 2 ? `https://repository.ictu.edu.vn/works/${work.id}.pdf` : null,
   source_url: `https://repository.ictu.edu.vn/works/${work.id}`,
   keywords: work.keywords,
@@ -72,6 +89,7 @@ export const workDetailsFixture: Record<number, WorkDetail> = Object.fromEntries
     { field: "keywords_raw", label: "Từ khoá", value: "hệ thống thông tin; dữ liệu", raw: null, source: "Đồng bộ kho dữ liệu ICTU" },
     { field: "pub_type_raw", label: "Loại xuất bản (thô)", value: work.doc_type_label, raw: work.doc_type_label, source: "Đồng bộ kho dữ liệu ICTU" },
     { field: "cohort", label: "Khoá/đợt", value: work.doc_type === "do_an" ? "21" : null, raw: null, source: "Đồng bộ kho dữ liệu ICTU" },
+    ...(work.doc_type === "bai_bao" ? [{ field: "score", label: "Điểm quy đổi", value: work.score === null ? null : String(work.score), raw: work.score === null ? null : String(work.score), source: "Đồng bộ kho dữ liệu ICTU" }] : []),
   ],
   mentions: work.id === 1 ? [
     { mention_id: 101, role: "tac_gia", role_label: "Tác giả", position: 1, raw_name: "Nguyễn Minh Anh", is_placeholder: false, is_truncated: false, linked_person_id: null, linked_person_name: null, link_state: "ChoXacNhan", pending_count: 2 },
@@ -98,6 +116,7 @@ export const topicDetailsFixture: Record<number, TopicDetail> = Object.fromEntri
 
 export const personFixture: PersonProfile = {
   id: 1, display_name: "TS. Nguyễn Văn A", degree: "Tiến sĩ", email: "nguyenvana@ictu.edu.vn",
+  position: "Hiệu trưởng", unit: { id: 1, code: "CNTT", name: "Khoa Công nghệ thông tin" }, unit_source: "auto",
   orcid: "0000-0002-1825-0097", by_type: { bai_bao: 8, do_an: 14, hoc_lieu: 2 },
   by_year: { "2022": 3, "2023": 5, "2024": 7, "2025": 9 },
   publications: workItems.slice(0, 6).map((work) => ({ work_id: work.id, title: work.title, doc_type: work.doc_type, year: work.year, doi: work.doi, link_state: "DaXacNhan", confidence: "cao" })),
@@ -107,8 +126,8 @@ export const personFixture: PersonProfile = {
 
 export const personsFixture: PersonSearchRow[] = [
   { id: 1, display_name: "TS. Nguyễn Văn A", degree: "Tiến sĩ", unit_code: "CNTT", kind: "giang_vien", works: 42 },
-  { id: 2, display_name: "TS. Nguyễn Văn An", degree: "Tiến sĩ", unit_code: "KHMT", kind: "giang_vien", works: 31 },
-  { id: 3, display_name: "ThS. Trần Thị Bình", degree: "Thạc sĩ", unit_code: "HTTT", kind: "giang_vien", works: 24 },
+  { id: 2, display_name: "TS. Nguyễn Văn An", degree: "Tiến sĩ", unit_code: "ĐTVT", kind: "giang_vien", works: 31 },
+  { id: 3, display_name: "ThS. Trần Thị Bình", degree: "Thạc sĩ", unit_code: "HTTTKT", kind: "giang_vien", works: 24 },
 ];
 
 export const authorQueueFixture: AuthorQueueList = {
@@ -245,13 +264,13 @@ export const statsFixture: StatsOut = {
   unknown_year: { bai_bao: 3, do_an: 12, luan_van: 2, luan_an: 0, hoc_lieu: 1 },
   by_unit: [
     { unit_id: 1, code: "CNTT", name: "Khoa Công nghệ thông tin", works: 426 },
-    { unit_id: 2, code: "KHMT", name: "Khoa Khoa học máy tính", works: 318 },
-    { unit_id: 3, code: "HTTT", name: "Khoa Hệ thống thông tin kinh tế", works: 247 },
+    { unit_id: 2, code: "ĐTVT", name: "Khoa Công nghệ điện tử và truyền thông", works: 318 },
+    { unit_id: 3, code: "HTTTKT", name: "Khoa Hệ thống thông tin kinh tế", works: 247 },
   ],
   top_persons: [
     { person_id: 1, display_name: "TS. Nguyễn Văn A", unit_code: "CNTT", works: 42 },
-    { person_id: 2, display_name: "PGS.TS. Trần Thị Bình", unit_code: "KHMT", works: 38 },
-    { person_id: 3, display_name: "TS. Lê Văn Hoàng", unit_code: "HTTT", works: 35 },
+    { person_id: 2, display_name: "PGS.TS. Trần Thị Bình", unit_code: "ĐTVT", works: 38 },
+    { person_id: 3, display_name: "TS. Lê Văn Hoàng", unit_code: "HTTTKT", works: 35 },
   ],
   queues: { authors_pending: 36, dup_groups_open: 12 },
   coverage: { works_with_link_pct: 83.3, works_without_unit: 27 },
@@ -278,8 +297,8 @@ export const periodsFixture: PeriodOut[] = [
 export const periodProgressFixture: Record<number, PeriodProgress> = {
   401: { period_id: 401, state: "DangMo", due_at: "2026-09-30T16:59:59Z", days_remaining: 19, units: [
     { unit_id: 1, unit_code: "CNTT", unit_name: "Khoa Công nghệ thông tin", counts: { Nhap: 1, KhoaDaDuyet: 1, DaChot: 1 }, total: 3 },
-    { unit_id: 2, unit_code: "KHMT", unit_name: "Khoa Khoa học máy tính", counts: { ChoBoSung: 1, ChoKhoaDuyet: 1, ChoPhongKiemTra: 1 }, total: 3 },
-    { unit_id: 3, unit_code: "HTTT", unit_name: "Khoa Hệ thống thông tin kinh tế", counts: { DatYeuCau: 1, Rut: 1 }, total: 2 },
+    { unit_id: 2, unit_code: "ĐTVT", unit_name: "Khoa Công nghệ điện tử và truyền thông", counts: { ChoBoSung: 1, ChoKhoaDuyet: 1, ChoPhongKiemTra: 1 }, total: 3 },
+    { unit_id: 3, unit_code: "HTTTKT", unit_name: "Khoa Hệ thống thông tin kinh tế", counts: { DatYeuCau: 1, Rut: 1 }, total: 2 },
   ] },
   402: { period_id: 402, state: "DaDongNop", due_at: "2025-09-30T16:59:59Z", days_remaining: -345, units: [
     { unit_id: 1, unit_code: "CNTT", unit_name: "Khoa Công nghệ thông tin", counts: { DatYeuCau: 1, Nhap: 1 }, total: 2 },
@@ -290,12 +309,12 @@ export const periodProgressFixture: Record<number, PeriodProgress> = {
 export const declarationsFixture: Record<number, DeclarationRow[]> = {
   401: [
     { id: 608, period_id: 401, work_id: 9, work_title: workItems[8].title, doc_type: "bai_bao", doc_type_label: "Bài báo", unit_id: 1, unit_code: "CNTT", state: "DaChot", note: null, evidence_count: 1, last_event_at: "2026-09-11T08:00:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-11T08:00:00Z" },
-    { id: 607, period_id: 401, work_id: 8, work_title: workItems[7].title, doc_type: "luan_an", doc_type_label: "Luận án", unit_id: 3, unit_code: "HTTT", state: "DatYeuCau", note: null, evidence_count: 1, last_event_at: "2026-09-11T07:30:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-11T07:30:00Z" },
-    { id: 606, period_id: 401, work_id: 7, work_title: workItems[6].title, doc_type: "do_an", doc_type_label: "Đồ án", unit_id: 2, unit_code: "KHMT", state: "ChoPhongKiemTra", note: null, evidence_count: 1, last_event_at: "2026-09-10T08:00:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-10T08:00:00Z" },
+    { id: 607, period_id: 401, work_id: 8, work_title: workItems[7].title, doc_type: "luan_an", doc_type_label: "Luận án", unit_id: 3, unit_code: "HTTTKT", state: "DatYeuCau", note: null, evidence_count: 1, last_event_at: "2026-09-11T07:30:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-11T07:30:00Z" },
+    { id: 606, period_id: 401, work_id: 7, work_title: workItems[6].title, doc_type: "do_an", doc_type_label: "Đồ án", unit_id: 2, unit_code: "ĐTVT", state: "ChoPhongKiemTra", note: null, evidence_count: 1, last_event_at: "2026-09-10T08:00:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-10T08:00:00Z" },
     { id: 605, period_id: 401, work_id: 6, work_title: workItems[5].title, doc_type: "bai_bao", doc_type_label: "Bài báo", unit_id: 1, unit_code: "CNTT", state: "KhoaDaDuyet", note: null, evidence_count: 1, last_event_at: "2026-09-10T07:00:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-10T07:00:00Z" },
-    { id: 604, period_id: 401, work_id: 5, work_title: workItems[4].title, doc_type: "hoc_lieu", doc_type_label: "Học liệu", unit_id: 2, unit_code: "KHMT", state: "ChoKhoaDuyet", note: null, evidence_count: 1, last_event_at: "2026-09-09T10:00:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-09T10:00:00Z" },
-    { id: 603, period_id: 401, work_id: 4, work_title: workItems[3].title, doc_type: "luan_van", doc_type_label: "Luận văn", unit_id: 3, unit_code: "HTTT", state: "Rut", note: "Hồ sơ rút theo đề nghị của đơn vị.", evidence_count: 0, last_event_at: "2026-09-09T09:20:00Z", created_at: "2026-09-04T02:00:00Z", updated_at: "2026-09-09T09:20:00Z" },
-    { id: 602, period_id: 401, work_id: 3, work_title: workItems[2].title, doc_type: "do_an", doc_type_label: "Đồ án", unit_id: 2, unit_code: "KHMT", state: "ChoBoSung", note: "Kê khai bổ sung theo đợt tháng 9.", evidence_count: 1, last_event_at: "2026-09-08T08:30:00Z", created_at: "2026-09-03T02:00:00Z", updated_at: "2026-09-08T08:30:00Z" },
+    { id: 604, period_id: 401, work_id: 5, work_title: workItems[4].title, doc_type: "hoc_lieu", doc_type_label: "Học liệu", unit_id: 2, unit_code: "ĐTVT", state: "ChoKhoaDuyet", note: null, evidence_count: 1, last_event_at: "2026-09-09T10:00:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-09T10:00:00Z" },
+    { id: 603, period_id: 401, work_id: 4, work_title: workItems[3].title, doc_type: "luan_van", doc_type_label: "Luận văn", unit_id: 3, unit_code: "HTTTKT", state: "Rut", note: "Hồ sơ rút theo đề nghị của đơn vị.", evidence_count: 0, last_event_at: "2026-09-09T09:20:00Z", created_at: "2026-09-04T02:00:00Z", updated_at: "2026-09-09T09:20:00Z" },
+    { id: 602, period_id: 401, work_id: 3, work_title: workItems[2].title, doc_type: "do_an", doc_type_label: "Đồ án", unit_id: 2, unit_code: "ĐTVT", state: "ChoBoSung", note: "Kê khai bổ sung theo đợt tháng 9.", evidence_count: 1, last_event_at: "2026-09-08T08:30:00Z", created_at: "2026-09-03T02:00:00Z", updated_at: "2026-09-08T08:30:00Z" },
     { id: 601, period_id: 401, work_id: 2, work_title: workItems[1].title, doc_type: "bai_bao", doc_type_label: "Bài báo", unit_id: 1, unit_code: "CNTT", state: "Nhap", note: null, evidence_count: 1, last_event_at: "2026-09-02T03:10:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-02T03:10:00Z" },
   ],
   402: [
@@ -344,8 +363,14 @@ export const facetsFixture: WorkFacets = {
   pub_types: [{ value: "journal_intl", label: "Tạp chí quốc tế", n: 126 }, { value: "conference", label: "Hội thảo", n: 84 }],
   quartiles: ["Q1", "Q2", "Q3", "Q4"].map((value, index) => ({ value, label: value, n: 42 - index * 7 })),
   cohorts: ["21", "20", "19"].map((value, index) => ({ value, label: `Khoá ${value}`, n: 174 - index * 12 })),
-  years: [2025, 2024, 2023].map((value, index) => ({ value: String(value), label: String(value), n: 307 - index * 28 })),
-  units: statsFixture.by_unit.map((unit) => ({ value: String(unit.unit_id), label: `${unit.code} — ${unit.name}`, n: unit.works })),
+  years: [2025, 2024, 2023].map((value, index) => ({ value, n: 307 - index * 28 })),
+  units: unitsFixture.slice(0, 3).map((unit) => ({ value: unit.id, code: unit.code, name: unit.name, n: unit.works })),
+  scores: [
+    { value: "1", label: "1 điểm", n: 1 },
+    { value: "0.75", label: "0,75 điểm", n: 1 },
+    { value: "0.5", label: "0,5 điểm", n: 1 },
+    { value: "none", label: "Chưa xác định", n: 9 },
+  ],
 };
 
 export const citationsFixture = {
@@ -386,6 +411,7 @@ export const mapFixture: MapOut = {
     return { id: work.id, x: mapCenters[topicIndex][0] + Math.cos(angle) * radius, y: mapCenters[topicIndex][1] + Math.sin(angle) * radius, topic_id: topicIndex + 1, unit_id: index % 3 + 1, year: work.year, doc_type: work.doc_type, title: work.title };
   }),
   topics: topicsFixture.map((topic, index) => ({ id: topic.id, label: topic.label, size: topic.size, cx: mapCenters[index][0], cy: mapCenters[index][1] })),
+  units: unitsFixture.slice(0, 3).map(({ id, code, name }) => ({ id, code, name })),
   built_at: "2026-09-12T02:00:00Z", method: "pca",
 };
 
@@ -400,10 +426,10 @@ export const trendsFixture: TrendsOut = {
 export const coauthorsFixture: CoauthorsOut = {
   nodes: [
     { person_id: 1, display_name: "TS. Nguyễn Văn A", unit_code: "CNTT", works: 42 },
-    { person_id: 2, display_name: "TS. Nguyễn Văn An", unit_code: "KHMT", works: 31 },
-    { person_id: 3, display_name: "ThS. Trần Thị Bình", unit_code: "HTTT", works: 24 },
+    { person_id: 2, display_name: "TS. Nguyễn Văn An", unit_code: "ĐTVT", works: 31 },
+    { person_id: 3, display_name: "ThS. Trần Thị Bình", unit_code: "HTTTKT", works: 24 },
     { person_id: 4, display_name: "TS. Lê Văn Hoàng", unit_code: "CNTT", works: 18 },
-    { person_id: 5, display_name: "ThS. Phạm Minh Đức", unit_code: "KHMT", works: 14 },
+    { person_id: 5, display_name: "ThS. Phạm Minh Đức", unit_code: "ĐTVT", works: 14 },
   ],
   edges: [{ a: 1, b: 2, weight: 6 }, { a: 1, b: 4, weight: 4 }, { a: 2, b: 3, weight: 3 }, { a: 2, b: 5, weight: 2 }, { a: 3, b: 4, weight: 2 }],
 };
@@ -438,8 +464,8 @@ export const reportFixture: PeriodReport = {
   summary: {
     units: [
       { unit_id: 1, code: "CNTT", name: "Khoa Công nghệ thông tin", by_state: { Nhap: 1, KhoaDaDuyet: 1, DaChot: 1 }, declared: 3, accepted: 1 },
-      { unit_id: 2, code: "KHMT", name: "Khoa Khoa học máy tính", by_state: { ChoBoSung: 1, ChoKhoaDuyet: 1, ChoPhongKiemTra: 1 }, declared: 3, accepted: 0 },
-      { unit_id: 3, code: "HTTT", name: "Khoa Hệ thống thông tin kinh tế", by_state: { DatYeuCau: 1, Rut: 1 }, declared: 2, accepted: 1 },
+      { unit_id: 2, code: "ĐTVT", name: "Khoa Công nghệ điện tử và truyền thông", by_state: { ChoBoSung: 1, ChoKhoaDuyet: 1, ChoPhongKiemTra: 1 }, declared: 3, accepted: 0 },
+      { unit_id: 3, code: "HTTTKT", name: "Khoa Hệ thống thông tin kinh tế", by_state: { DatYeuCau: 1, Rut: 1 }, declared: 2, accepted: 1 },
     ],
     by_doc_type: { bai_bao: 3, do_an: 2, luan_van: 1, luan_an: 1, hoc_lieu: 1 },
     totals: { declared: 8, accepted: 2, by_state: { Nhap: 1, ChoBoSung: 1, ChoKhoaDuyet: 1, KhoaDaDuyet: 1, ChoPhongKiemTra: 1, DatYeuCau: 1, DaChot: 1, Rut: 1 } },

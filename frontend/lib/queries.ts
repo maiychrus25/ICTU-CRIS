@@ -21,6 +21,9 @@ export function useOfficerAccess() {
 
 export const useWorks = (filters: WorkFilters, enabled = true) => useQuery({ queryKey: ["works", filters], queryFn: () => api.getWorks(filters), enabled });
 export const useWorkFacets = (enabled = true) => useQuery({ queryKey: ["work-facets"], queryFn: api.getWorkFacets, enabled });
+export const useUnits = () => useQuery({ queryKey: ["units"], queryFn: api.getUnits, retry: false });
+export const useRenameUnit = () => useMutation({ mutationFn: ({ id, name, reason }: { id: number; name: string; reason?: string }) => api.renameUnit(id, { name, reason }) });
+export const useAddUnitAlias = () => useMutation({ mutationFn: ({ id, alias, reason }: { id: number; alias: string; reason?: string }) => api.addUnitAlias(id, { alias, reason }) });
 export const useWork = (id: number | null) => useQuery({ queryKey: ["work", id], queryFn: () => api.getWork(id!), enabled: id !== null });
 export const useCitation = (id: number, style: "apa" | "ieee" | "bibtex", enabled = true) => useQuery({ queryKey: ["citation", id, style], queryFn: () => api.getCitation(id, style), enabled });
 export const useEditWorkField = (id: number) => useMutation({ mutationFn: (input: FieldEditIn) => api.editWorkField(id, input) });

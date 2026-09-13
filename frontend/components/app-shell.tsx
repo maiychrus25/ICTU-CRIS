@@ -35,6 +35,7 @@ const navigation = [
   { href: "/doi-soat/trung-lap/", label: "Hàng đợi nghi trùng", icon: CopyCheck },
   { href: "/ky-bao-cao/", label: "Kỳ báo cáo", icon: CalendarRange },
   { href: "/chat-luong-du-lieu/", label: "Chất lượng dữ liệu", icon: BarChart3 },
+  { href: "/don-vi/", label: "Quản trị đơn vị", icon: Building2, officerOnly: true },
   { href: "/dong-bo/", label: "Đồng bộ", icon: RefreshCw },
   { href: "/nhat-ky/", label: "Nhật ký", icon: ScrollText },
   { href: "/ve/", label: "Về hệ thống", icon: Info },
@@ -58,6 +59,7 @@ const routeTitles = [
   ["/doi-soat/tac-gia", "Hàng đợi tác giả"],
   ["/chat-luong-du-lieu/canh-bao", "Cảnh báo bất thường"],
   ["/chat-luong-du-lieu", "Chất lượng dữ liệu"],
+  ["/don-vi", "Quản trị đơn vị"],
   ["/ban-do", "Bản đồ tri thức"],
   ["/dong-bo", "Đồng bộ"],
   ["/chu-de", "Chủ đề"],
@@ -94,7 +96,7 @@ function Navigation({ compact = false }: { compact?: boolean }) {
   const items = unitNavigation ? [...navigation.slice(0, 2), unitNavigation, ...navigation.slice(2)] : navigation;
   return (
     <nav aria-label="Điều hướng chính" className="space-y-1 px-2 py-3">
-      {items.filter((item) => !("lecturerOnly" in item) || !item.lecturerOnly || showMyDeclarations).map(({ href, label, icon: Icon }) => {
+      {items.filter((item) => (!("lecturerOnly" in item) || !item.lecturerOnly || showMyDeclarations) && (!("officerOnly" in item) || !item.officerOnly || user?.roles.includes("rd_officer"))).map(({ href, label, icon: Icon }) => {
         const active = pathname.startsWith(href.replace(/\/$/, ""));
         return (
           <Link key={href} href={href} title={compact ? label : undefined} aria-current={active ? "page" : undefined}

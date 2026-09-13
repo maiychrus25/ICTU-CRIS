@@ -67,7 +67,7 @@ test("kê khai công trình và chặn yêu cầu bổ sung thiếu lý do", asy
   await createDialog.getByRole("combobox", { name: "Tìm công trình" }).fill("Thiết kế hệ thống tưới cây");
   await createDialog.getByRole("option", { name: /Thiết kế hệ thống tưới cây tự động/ }).click();
   await createDialog.getByRole("combobox", { name: "Đơn vị kê khai" }).click();
-  await page.getByRole("option", { name: "KHMT — Khoa Khoa học máy tính" }).click();
+  await page.getByRole("option", { name: "ĐTVT — Khoa Công nghệ điện tử và truyền thông" }).click();
   await createDialog.getByLabel("Ghi chú").fill("Kê khai từ kiểm thử giao diện.");
   await createDialog.getByRole("button", { name: "Kê khai", exact: true }).click();
 

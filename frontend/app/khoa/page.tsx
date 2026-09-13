@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { stateLabels } from "@/lib/labels";
-import { useMe, usePeriods, useStats, useUnitOverview } from "@/lib/queries";
+import { useMe, usePeriods, useStats, useUnitOverview, useUnits } from "@/lib/queries";
 
 function MetricCard({ label, value, icon: Icon }: { label: string; value: number | string; icon: typeof BookOpenCheck }) {
   return <Card size="sm"><CardHeader className="flex-row items-center justify-between"><CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle><Icon className="size-4 text-primary" /></CardHeader><CardContent><p className="text-2xl font-semibold tabular-nums">{typeof value === "number" ? value.toLocaleString("vi-VN") : value}</p></CardContent></Card>;
@@ -27,26 +27,29 @@ function FacultyContent() {
   const requestedId = rawId && /^\d+$/.test(rawId) ? Number(rawId) : null;
   const me = useMe();
   const stats = useStats();
+  const units = useUnits();
   const periods = usePeriods();
   const router = useRouter();
   const user = me.data?.user;
   const canChoose = Boolean(user?.roles.some((role) => ["rd_officer", "school_leader"].includes(role)));
   const ownUnit = user?.roles.some((role) => ["faculty_officer", "faculty_head", "lecturer"].includes(role)) ? user.unit_id : null;
-  const unitId = ownUnit ?? requestedId ?? (canChoose ? stats.data?.by_unit[0]?.unit_id ?? null : null);
+  const unitOptions = units.data?.length ? units.data.filter((unit) => unit.active).map((unit) => ({ unit_id: unit.id, code: unit.code, name: unit.name })) : stats.data?.by_unit ?? [];
+  const unitId = ownUnit ?? requestedId ?? (canChoose ? unitOptions[0]?.unit_id ?? null : null);
   const openPeriod = periods.data?.find((period) => period.state === "DangMo");
   const overview = useUnitOverview(unitId, openPeriod?.id);
 
   if (me.isLoading || stats.isLoading || periods.isLoading || (unitId !== null && overview.isLoading)) return <><PageHeader title="Góc nhìn khoa" /><LoadingView label="Đang tải số liệu khoa…" /></>;
-  if (stats.isError) return <><PageHeader title="Góc nhìn khoa" /><ErrorView error={stats.error} retry={() => stats.refetch()} /></>;
+  if (stats.isError && !units.data?.length) return <><PageHeader title="Góc nhìn khoa" /><ErrorView error={units.error ?? stats.error} retry={() => { void stats.refetch(); void units.refetch(); }} /></>;
   if (periods.isError) return <><PageHeader title="Góc nhìn khoa" /><ErrorView error={periods.error} retry={() => periods.refetch()} /></>;
   if (overview.isError) return <><PageHeader title="Góc nhìn khoa" /><ErrorView error={overview.error} retry={() => overview.refetch()} /></>;
   if (unitId === null) return <><PageHeader title="Góc nhìn khoa" /><EmptyView title="Chưa xác định khoa" description="Tài khoản chưa gắn với đơn vị và không có quyền chọn khoa khác." /></>;
   if (!overview.data) return <><PageHeader title="Góc nhìn khoa" /><EmptyView description="Chưa có số liệu cho khoa này. Hãy thử lại sau lần đồng bộ tiếp theo." /></>;
 
   const data = overview.data;
-  const unitSelector = canChoose ? <Select value={String(unitId)} onValueChange={(value) => router.replace("/khoa/?id=" + value)}><SelectTrigger aria-label="Chọn đơn vị" className="w-full sm:w-72"><SelectValue>{(value) => stats.data?.by_unit.find((item) => item.unit_id === Number(value))?.name ?? "Chọn đơn vị"}</SelectValue></SelectTrigger><SelectContent>{stats.data?.by_unit.map((item) => <SelectItem key={item.unit_id} value={String(item.unit_id)}>{item.code} — {item.name}</SelectItem>)}</SelectContent></Select> : undefined;
+  const selectedUnit = unitOptions.find((item) => item.unit_id === unitId);
+  const unitSelector = canChoose ? <Select value={String(unitId)} onValueChange={(value) => router.replace("/khoa/?id=" + value)}><SelectTrigger aria-label="Chọn đơn vị" className="w-full sm:w-72"><SelectValue>{(value) => unitOptions.find((item) => item.unit_id === Number(value))?.name ?? "Chọn đơn vị"}</SelectValue></SelectTrigger><SelectContent>{unitOptions.map((item) => <SelectItem key={item.unit_id} value={String(item.unit_id)}>{item.code} — {item.name}</SelectItem>)}</SelectContent></Select> : undefined;
   return <>
-    <PageHeader title={data.unit.name} description={openPeriod ? "Số liệu công trình và hồ sơ kê khai trong " + openPeriod.name + "." : "Số liệu công trình và liên kết tác giả của đơn vị."} action={unitSelector} />
+    <PageHeader title={selectedUnit?.name ?? data.unit.name} description={openPeriod ? "Số liệu công trình và hồ sơ kê khai trong " + openPeriod.name + "." : "Số liệu công trình và liên kết tác giả của đơn vị."} action={unitSelector} />
     <section aria-label="Chỉ số khoa" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><MetricCard label="Tổng công trình" value={data.works_total} icon={BookOpenCheck} /><MetricCard label="Đã liên kết" value={data.linked_works ?? "—"} icon={Link2} /><MetricCard label="Chờ xác nhận" value={data.pending_links} icon={UserRoundCheck} /><MetricCard label="Giảng viên chưa có công trình" value={data.lecturers_without_works} icon={UsersRound} /></section>
 
     <section className="mt-7" aria-labelledby="faculty-chart-title"><div className="mb-3"><h2 id="faculty-chart-title" className="text-base font-semibold">Công trình 5 năm theo loại tài liệu</h2><p className="text-xs text-muted-foreground">Số công trình đã gắn với đơn vị theo năm công bố.</p></div>{data.by_year.length ? <YearTypeChart data={data.by_year} label="Biểu đồ công trình 5 năm theo loại tài liệu" /> : <EmptyView description="Chưa có dữ liệu theo năm để vẽ biểu đồ." />}</section>

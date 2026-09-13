@@ -8,10 +8,10 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 30_000 },
   workers: 1,
-  use: { baseURL: "http://localhost:3000" },
+  use: { baseURL: "http://localhost:3010" },
   webServer: {
-    command: "python3 -m http.server 3000 --directory out",
-    url: "http://localhost:3000",
+    command: "python3 -m http.server 3010 --directory out",
+    url: "http://localhost:3010",
     timeout: 120_000,
     reuseExistingServer: false,
   },

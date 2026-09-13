@@ -6,7 +6,7 @@ export interface PageInfo { page: number; per_page: number; total: number }
 export interface WorkSummary {
   id: number; title: string | null; doc_type: string; doc_type_label: string;
   year: number | null; doi: string | null; state: string; needs_review: boolean;
-  score?: number | null; keywords?: string[]; first_seen_at?: string; version?: number;
+  score?: number | null; units?: WorkUnit[]; keywords?: string[]; first_seen_at?: string; version?: number;
 }
 export interface WorkList { items: WorkSummary[]; page: PageInfo; mode?: "keyword" | "semantic"; note?: string | null }
 export interface FieldRow { field: string; label: string; value: string | null; raw: string | null; source: string }
@@ -18,7 +18,7 @@ export interface MentionRow {
 export interface WorkDetail {
   id: number; title: string | null; doc_type: string; doc_type_label: string; state: string;
   needs_review: boolean; has_manual: boolean; fields: FieldRow[]; mentions: MentionRow[];
-  pdf_url?: string | null; source_url?: string | null; keywords?: string[];
+  score?: number | null; units?: WorkUnit[]; pdf_url?: string | null; source_url?: string | null; keywords?: string[];
 }
 export interface FieldEditIn { field: string; value: unknown; reason: string }
 export interface FieldEditOut { field: string; old: unknown; new: unknown }
@@ -35,6 +35,7 @@ export interface PersonProfile {
   by_type: Record<string, number>; by_year: Record<string, number>; publications: PersonPublication[];
   pending_count: number; last_sync: LastSync | null;
   rank?: string | null; scholar_url?: string | null; citation_stats?: Record<string, number> | null;
+  position?: string | null; unit?: Pick<Unit, "id" | "code" | "name"> | null; unit_source?: "auto" | "manual" | null;
 }
 export interface PersonSearchRow {
   id: number; display_name: string; degree: string | null; unit_code: string | null; kind: string; works: number;
@@ -129,6 +130,13 @@ export interface YearTypeRow {
 }
 export type UnknownYearRow = Omit<YearTypeRow, "year">;
 export interface UnitWorks { unit_id: number; code: string; name: string; works: number }
+export interface WorkUnit { id: number; code: string }
+export interface Unit {
+  id: number; code: string; name: string; active: boolean; works: number; persons: number; aliases?: string[];
+}
+export interface UnitChangeIn { reason?: string }
+export interface UnitRenameIn extends UnitChangeIn { name: string }
+export interface UnitAliasIn extends UnitChangeIn { alias: string }
 export interface TopPerson { person_id: number; display_name: string; unit_code: string | null; works: number }
 export interface StatsOut {
   by_year_type: YearTypeRow[]; unknown_year: UnknownYearRow; by_unit: UnitWorks[];
@@ -242,13 +250,16 @@ export interface UnitOverview {
   lecturers_without_works_items?: LecturerWithoutWorks[];
 }
 export interface FacetOption { value: string; label: string; n: number }
+export interface FacetYear { value: number; n: number }
+export interface FacetUnit { value: number; code: string; name: string; n: number }
 export interface WorkFacets {
   pub_types: FacetOption[]; quartiles: FacetOption[]; cohorts: FacetOption[];
-  years: FacetOption[]; units: FacetOption[];
+  years: FacetYear[]; units: FacetUnit[]; scores?: FacetOption[];
 }
 export interface WorkFilters {
   q?: string; mode?: "keyword" | "semantic"; doc_type?: string; year?: number; unit?: string;
-  topic?: number; pub_type?: string; quartile?: string; cohort?: string; keyword?: string; page?: number;
+  topic?: number; pub_type?: string; quartile?: string; cohort?: string; keyword?: string;
+  score?: "0.5" | "0.75" | "1" | "none"; min_score?: number; page?: number;
 }
 export interface ExpertEvidence { work_id: number; title: string | null; doc_type: string; year: number | null; score: number }
 export interface ExpertResult {
@@ -277,7 +288,8 @@ export interface MapPoint {
   year: number | null; doc_type: string; title: string | null;
 }
 export interface MapTopic { id: number; label: string; size: number; cx: number; cy: number }
-export interface MapOut { points: MapPoint[]; topics: MapTopic[]; built_at: string; method: "pca" }
+export interface MapUnit { id: number; code: string; name: string }
+export interface MapOut { points: MapPoint[]; topics: MapTopic[]; units?: MapUnit[]; built_at: string; method: "pca" }
 export interface TrendValue { key: string; count: number; share: number }
 export interface TrendSeries { topic_id: number | null; label: string; values: TrendValue[] }
 export interface TrendsOut { series: TrendSeries[]; keys: string[] }

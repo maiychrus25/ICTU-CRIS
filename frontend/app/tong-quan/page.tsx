@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { YearTypeChart } from "@/components/year-type-chart";
 import { API_BASE } from "@/lib/api";
 import { getFieldValueLabel } from "@/lib/labels";
-import { useRecent, useStats } from "@/lib/queries";
+import { useRecent, useStats, useUnits } from "@/lib/queries";
 import type { RecentAdded, RecentChanged } from "@/lib/types";
 
 const docTypes = ["bai_bao", "do_an", "luan_van", "luan_an", "hoc_lieu"] as const;
@@ -39,6 +39,7 @@ function RecentWorks() {
 
 export default function OverviewPage() {
   const query = useStats();
+  const units = useUnits();
   if (query.isLoading) return <><PageHeader title="Tổng quan" /><LoadingView /></>;
   if (query.isError) return <><PageHeader title="Tổng quan" /><ErrorView error={query.error} retry={() => query.refetch()} /></>;
   if (!query.data) return <><PageHeader title="Tổng quan" /><EmptyView description="Chưa có số liệu tổng quan. Hãy thử lại sau lần đồng bộ tiếp theo." /></>;
@@ -47,6 +48,8 @@ export default function OverviewPage() {
   const yearlyData = [...stats.by_year_type].sort((a, b) => a.year - b.year);
   const totalWorks = yearlyData.reduce((sum, row) => sum + docTypes.reduce((rowSum, type) => rowSum + row[type], 0), 0);
   const unknownWorks = docTypes.reduce((sum, type) => sum + stats.unknown_year[type], 0);
+  const unitById = new Map(units.data?.map((unit) => [unit.id, unit]) ?? []);
+  const unitByCode = new Map(units.data?.map((unit) => [unit.code, unit]) ?? []);
 
   return (
     <>
@@ -66,8 +69,8 @@ export default function OverviewPage() {
       </section>
 
       <div className="mt-7 grid items-start gap-7 xl:grid-cols-2">
-        <section aria-labelledby="unit-table-title"><h2 id="unit-table-title" className="mb-3 text-base font-semibold">Công trình theo đơn vị</h2>{stats.by_unit.length ? <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Mã</TableHead><TableHead>Đơn vị</TableHead><TableHead className="text-right">Công trình</TableHead></TableRow></TableHeader><TableBody>{stats.by_unit.map((unit) => <TableRow key={unit.unit_id}><TableCell className="font-medium">{unit.code}</TableCell><TableCell>{unit.name}</TableCell><TableCell className="text-right font-semibold tabular-nums">{unit.works.toLocaleString("vi-VN")}</TableCell></TableRow>)}</TableBody></Table></div> : <EmptyView description="Chưa có dữ liệu đơn vị. Hãy chờ lần đồng bộ tiếp theo." />}</section>
-        <section aria-labelledby="top-persons-title"><h2 id="top-persons-title" className="mb-3 text-base font-semibold">10 giảng viên có nhiều công trình nhất</h2>{stats.top_persons.length ? <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Giảng viên</TableHead><TableHead>Đơn vị</TableHead><TableHead className="text-right">Công trình</TableHead></TableRow></TableHeader><TableBody>{stats.top_persons.map((person) => <TableRow key={person.person_id}><TableCell><Link href={`/giang-vien/?id=${person.person_id}`} className="font-medium text-primary hover:underline">{person.display_name}</Link></TableCell><TableCell>{person.unit_code ?? "—"}</TableCell><TableCell className="text-right font-semibold tabular-nums">{person.works.toLocaleString("vi-VN")}</TableCell></TableRow>)}</TableBody></Table></div> : <EmptyView description="Chưa có dữ liệu xếp hạng giảng viên. Hãy chờ lần đồng bộ tiếp theo." />}</section>
+        <section aria-labelledby="unit-table-title"><h2 id="unit-table-title" className="mb-3 text-base font-semibold">Công trình theo đơn vị</h2>{stats.by_unit.length ? <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Mã</TableHead><TableHead>Đơn vị</TableHead><TableHead className="text-right">Công trình</TableHead></TableRow></TableHeader><TableBody>{stats.by_unit.map((unit) => { const official = unitById.get(unit.unit_id); return <TableRow key={unit.unit_id}><TableCell className="font-medium">{official?.code ?? unit.code}</TableCell><TableCell>{official?.name ?? unit.name}</TableCell><TableCell className="text-right font-semibold tabular-nums">{unit.works.toLocaleString("vi-VN")}</TableCell></TableRow>; })}</TableBody></Table></div> : <EmptyView description="Chưa có dữ liệu đơn vị. Hãy chờ lần đồng bộ tiếp theo." />}</section>
+        <section aria-labelledby="top-persons-title"><h2 id="top-persons-title" className="mb-3 text-base font-semibold">10 giảng viên có nhiều công trình nhất</h2>{stats.top_persons.length ? <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Giảng viên</TableHead><TableHead>Đơn vị</TableHead><TableHead className="text-right">Công trình</TableHead></TableRow></TableHeader><TableBody>{stats.top_persons.map((person) => { const official = person.unit_code ? unitByCode.get(person.unit_code) : undefined; return <TableRow key={person.person_id}><TableCell><Link href={`/giang-vien/?id=${person.person_id}`} className="font-medium text-primary hover:underline">{person.display_name}</Link></TableCell><TableCell>{official ? `${official.code} — ${official.name}` : person.unit_code ?? "—"}</TableCell><TableCell className="text-right font-semibold tabular-nums">{person.works.toLocaleString("vi-VN")}</TableCell></TableRow>; })}</TableBody></Table></div> : <EmptyView description="Chưa có dữ liệu xếp hạng giảng viên. Hãy chờ lần đồng bộ tiếp theo." />}</section>
       </div>
       <footer className="mt-7 border-t pt-4 text-xs text-muted-foreground">Dữ liệu đồng bộ lần cuối: <span className="tabular-nums">{formatDate(stats.last_sync?.finished_at)}</span>{stats.last_sync?.source ? ` · ${getFieldValueLabel("source", stats.last_sync.source)}` : ""}</footer>
     </>

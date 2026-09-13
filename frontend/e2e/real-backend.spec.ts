@@ -22,8 +22,8 @@ test.beforeEach(async ({ page }) => {
   runtimeErrors.set(page, errors);
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => {
-    const expectedMissingNotification = message.text().includes("404 (Not Found)") && message.location().url.includes("/api/notifications");
-    if (message.type() === "error" && !expectedMissingNotification) errors.push(`console.error: ${message.text()} (${message.location().url})`);
+    const expectedMissingOptionalApi = message.text().includes("404 (Not Found)") && ["/api/notifications", "/api/units"].some((path) => message.location().url.includes(path));
+    if (message.type() === "error" && !expectedMissingOptionalApi) errors.push(`console.error: ${message.text()} (${message.location().url})`);
   });
 });
 
@@ -219,10 +219,12 @@ test("chủ đề thật mở chi tiết và điền bộ lọc tra cứu", asyn
   await expect(page).toHaveURL(/\/tra-cuu\/\?topic=\d+$/);
   await expect(page.getByRole("combobox", { name: "Chủ đề" })).toContainText(topicName!);
   await page.getByRole("combobox", { name: "Đơn vị" }).click();
-  await page.getByRole("option").nth(1).click();
+  const unitOption = page.getByRole("option").nth(1);
+  const unitCode = (await unitOption.textContent())?.split(" — ")[0];
+  await unitOption.click();
   const worksRequest = page.waitForRequest((request) => new URL(request.url()).searchParams.has("unit"));
   await page.getByRole("button", { name: "Tra cứu", exact: true }).click();
-  expect(new URL((await worksRequest).url()).searchParams.get("unit")).toMatch(/^\d+$/);
+  expect(new URL((await worksRequest).url()).searchParams.get("unit")).toBe(unitCode);
 });
 
 test("lịch sử đồng bộ thật mở chi tiết lượt", async ({ page }) => {
