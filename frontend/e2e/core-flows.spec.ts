@@ -30,8 +30,8 @@ test("đăng nhập đúng hiển thị người dùng, vai trò và quyền quy
   await expect(page).toHaveURL(/\/doi-soat\/tac-gia\/$/);
   await expect(page.getByText("Nguyễn Minh Anh", { exact: true })).toBeVisible();
   await expect(page.getByText("Chuyên viên KHCN", { exact: true })).toBeVisible();
-  await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();
-  await expect(page.getByRole("button", { name: "Xác nhận" })).toBeEnabled();
+  await page.getByRole("checkbox", { name: /^Chọn .+ – / }).first().check();
+  await expect(page.getByRole("button", { name: "Xác nhận", exact: true })).toBeEnabled();
 });
 
 test("nhật ký lọc theo loại thực thể", async ({ page }) => {
@@ -197,7 +197,7 @@ test("giảng viên tự kê khai công trình rồi trình khoa duyệt", async
 
 test("quyết định liên kết tác giả dùng lý do và bộ chọn người", async ({ page }) => {
   await page.goto("/doi-soat/tac-gia/");
-  await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();
+  await page.getByRole("checkbox", { name: /^Chọn .+ – / }).first().check();
   await page.getByRole("button", { name: "Bác bỏ" }).click();
 
   const dialog = page.getByRole("dialog");
@@ -210,7 +210,7 @@ test("quyết định liên kết tác giả dùng lý do và bộ chọn ngư�
   await dialog.getByRole("button", { name: "Bác bỏ" }).click();
   await expect(page.getByText("Đã xử lý 1 liên kết tác giả.")).toBeVisible();
 
-  await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();
+  await page.getByRole("checkbox", { name: /^Chọn .+ – / }).first().check();
   await page.getByRole("button", { name: "Chuyển cho người khác" }).click();
   const reassignDialog = page.getByRole("dialog");
   await reassignDialog.getByRole("combobox", { name: "Tìm người" }).fill("Nguyễn Văn");

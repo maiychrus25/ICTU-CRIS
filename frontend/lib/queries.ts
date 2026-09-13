@@ -65,8 +65,8 @@ export const useReadNotification = () => useMutation({ mutationFn: (id: number) 
 export const useReadAllNotifications = () => useMutation({ mutationFn: api.readAllNotifications });
 export const useAudit = (filters: AuditFilters) => useQuery({ queryKey: ["audit", filters], queryFn: () => api.getAudit(filters) });
 export const usePeriods = () => useQuery({ queryKey: ["periods"], queryFn: api.getPeriods });
-export const useMyWorks = (page: number) => useQuery({ queryKey: ["my-works", page], queryFn: () => api.getMyWorks(page) });
-export const useMyDeclarations = () => useQuery({ queryKey: ["my-declarations"], queryFn: api.getMyDeclarations });
+export const useMyWorks = (page: number, enabled = true) => useQuery({ queryKey: ["my-works", page], queryFn: () => api.getMyWorks(page), enabled });
+export const useMyDeclarations = (enabled = true) => useQuery({ queryKey: ["my-declarations"], queryFn: api.getMyDeclarations, enabled });
 export const useAddMyDeclaration = () => useMutation({ mutationFn: (input: MyDeclarationCreateIn) => api.addMyDeclaration(input) });
 export const usePeriodProgress = (id: number | null) => useQuery({ queryKey: ["period-progress", id], queryFn: () => api.getPeriodProgress(id!), enabled: id !== null });
 export const useDeclarations = (periodId: number | null, unitId?: number) => useQuery({ queryKey: ["declarations", periodId, unitId], queryFn: () => api.getDeclarations(periodId!, unitId), enabled: periodId !== null });

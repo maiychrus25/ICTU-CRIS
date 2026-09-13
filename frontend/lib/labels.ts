@@ -110,5 +110,5 @@ export function labelDataCodes(value: unknown, field = ""): unknown {
 }
 
 export function labelSourceText(value: string) {
-  return value.replace(/\b(repository|excel_faculty|sheet_registration|manual)\b/g, (code) => sourceLabels[code] ?? code);
+  return sourceLabels[value] ?? value;
 }

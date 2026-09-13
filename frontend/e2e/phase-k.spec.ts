@@ -3,7 +3,7 @@
 
 import { expect, test } from "@playwright/test";
 
-const notice = "Dữ liệu được lấy từ DSpace của Trường CNTT&TT – ĐH Thái Nguyên";
+const notice = "Dữ liệu từ DSpace ICTU";
 
 test("footer nguồn dữ liệu cố định và không che bảng tra cứu", async ({ page }) => {
   test.setTimeout(60_000);

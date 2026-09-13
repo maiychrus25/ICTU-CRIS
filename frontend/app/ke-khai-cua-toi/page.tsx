@@ -13,7 +13,7 @@ import { PageHeader } from "@/components/page-header";
 import { Pager } from "@/components/pager";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { StatusBadge } from "@/components/status-badge";
-import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -34,15 +34,16 @@ export default function MyDeclarationsPage() {
   const [periodChoice, setPeriodChoice] = useState<number | null>(null);
   const [stateAction, setStateAction] = useState<{ row: DeclarationRow; action: DeclarationAction } | null>(null);
   const me = useMe();
+  const hasLecturerAccount = Boolean(me.data?.user?.roles.includes("lecturer") && me.data.user.person_id !== null);
   const periods = usePeriods();
-  const works = useMyWorks(page);
-  const declarations = useMyDeclarations();
+  const works = useMyWorks(page, hasLecturerAccount);
+  const declarations = useMyDeclarations(hasLecturerAccount);
   const addDeclaration = useAddMyDeclaration();
   const setState = useSetDeclarationState();
   const openPeriods = periods.data?.filter((period) => period.state === "DangMo") ?? [];
   const periodId = periodChoice ?? openPeriods[0]?.id ?? null;
   const selectedPeriod = openPeriods.find((period) => period.id === periodId);
-  const canDeclare = Boolean(me.data?.user?.roles.some((role) => ["lecturer", "faculty_officer", "rd_officer"].includes(role)));
+  const canDeclare = hasLecturerAccount;
 
   async function declareWork(workId: number) {
     if (periodId === null) return;
@@ -72,11 +73,10 @@ export default function MyDeclarationsPage() {
     } catch (error) { showError(error, "Không thể cập nhật trạng thái hồ sơ."); }
   }
 
-  if (works.isError && works.error instanceof ApiError && works.error.status === 409) {
-    return <><PageHeader title="Kê khai của tôi" /><Alert variant="destructive"><CircleAlert /><AlertTitle>Chưa thể kê khai</AlertTitle><AlertDescription>Tài khoản chưa gắn với hồ sơ giảng viên — liên hệ Phòng KH-CN</AlertDescription><AlertAction><Button variant="outline" size="sm" onClick={() => works.refetch()}>Thử lại</Button></AlertAction></Alert></>;
-  }
-  if (me.isLoading || periods.isLoading || works.isLoading || declarations.isLoading) return <><PageHeader title="Kê khai của tôi" /><LoadingView label="Đang tải công trình và hồ sơ của bạn…" /></>;
+  if (me.isLoading) return <><PageHeader title="Kê khai của tôi" /><LoadingView label="Đang xác định tài khoản của bạn…" /></>;
   if (me.isError) return <><PageHeader title="Kê khai của tôi" /><ErrorView error={me.error} retry={() => me.refetch()} /></>;
+  if (!hasLecturerAccount) return <><PageHeader title="Kê khai của tôi" /><EmptyView title="Chưa có hồ sơ giảng viên" description="Trang này dành cho giảng viên có tài khoản; đăng nhập bằng tài khoản giảng viên để xem công trình của mình" action={me.data?.auth_required ? <Button render={<Link href="/dang-nhap/?next=/ke-khai-cua-toi/" />}>Đăng nhập</Button> : undefined} /></>;
+  if (periods.isLoading || works.isLoading || declarations.isLoading) return <><PageHeader title="Kê khai của tôi" /><LoadingView label="Đang tải công trình và hồ sơ của bạn…" /></>;
   if (periods.isError) return <><PageHeader title="Kê khai của tôi" /><ErrorView error={periods.error} retry={() => periods.refetch()} /></>;
   if (works.isError) return <><PageHeader title="Kê khai của tôi" /><ErrorView error={works.error} retry={() => works.refetch()} /></>;
   if (declarations.isError) return <><PageHeader title="Kê khai của tôi" /><ErrorView error={declarations.error} retry={() => declarations.refetch()} /></>;

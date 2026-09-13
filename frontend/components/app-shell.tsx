@@ -27,9 +27,9 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { href: "/tong-quan/", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/ke-khai-cua-toi/", label: "Kê khai của tôi", icon: FilePenLine, lecturerOnly: true },
-  { href: "/tra-cuu/", label: "Tra cứu", icon: Search },
-  { href: "/chu-de/", label: "Chủ đề", icon: Tags },
-  { href: "/ban-do/", label: "Bản đồ tri thức", icon: Map },
+  { href: "/tra-cuu/", label: "Tra cứu", icon: Search, public: true },
+  { href: "/chu-de/", label: "Chủ đề", icon: Tags, public: true },
+  { href: "/ban-do/", label: "Bản đồ tri thức", icon: Map, public: true },
   { href: "/doi-chieu/", label: "Đối chiếu đề tài", icon: Scale },
   { href: "/doi-soat/tac-gia/", label: "Hàng đợi tác giả", icon: UserRoundCheck },
   { href: "/doi-soat/trung-lap/", label: "Hàng đợi nghi trùng", icon: CopyCheck },
@@ -38,8 +38,8 @@ const navigation = [
   { href: "/don-vi/", label: "Quản trị khoa", icon: Building2, officerOnly: true },
   { href: "/dong-bo/", label: "Đồng bộ", icon: RefreshCw },
   { href: "/nhat-ky/", label: "Nhật ký", icon: ScrollText },
-  { href: "/ve/", label: "Về hệ thống", icon: Info },
-  { href: "/huong-dan/", label: "Hướng dẫn", icon: CircleHelp },
+  { href: "/ve/", label: "Về hệ thống", icon: Info, public: true },
+  { href: "/huong-dan/", label: "Hướng dẫn", icon: CircleHelp, public: true },
 ];
 
 const routeTitles = [
@@ -89,6 +89,7 @@ function Navigation({ compact = false }: { compact?: boolean }) {
   const me = useMe();
   const showMyDeclarations = Boolean(me.data?.user && (me.data.user.roles.includes("lecturer") || me.data.user.person_id !== null));
   const user = me.data?.user;
+  const publicOnly = Boolean(me.data?.auth_required && !user);
   const canChooseUnit = user?.roles.some((role) => ["rd_officer", "school_leader"].includes(role));
   const hasOwnUnit = user?.unit_id && user.roles.some((role) => ["faculty_officer", "faculty_head", "lecturer"].includes(role));
   const unitNavigation = canChooseUnit ? { href: "/khoa/", label: "Theo khoa", icon: Building2 }
@@ -96,7 +97,7 @@ function Navigation({ compact = false }: { compact?: boolean }) {
   const items = unitNavigation ? [...navigation.slice(0, 2), unitNavigation, ...navigation.slice(2)] : navigation;
   return (
     <nav aria-label="Điều hướng chính" className="space-y-1 px-2 py-3">
-      {items.filter((item) => (!("lecturerOnly" in item) || !item.lecturerOnly || showMyDeclarations) && (!("officerOnly" in item) || !item.officerOnly || user?.roles.includes("rd_officer"))).map(({ href, label, icon: Icon }) => {
+      {items.filter((item) => (!publicOnly || ("public" in item && item.public)) && (!("lecturerOnly" in item) || !item.lecturerOnly || showMyDeclarations) && (!("officerOnly" in item) || !item.officerOnly || user?.roles.includes("rd_officer"))).map(({ href, label, icon: Icon }) => {
         const active = pathname.startsWith(href.replace(/\/$/, ""));
         return (
           <Link key={href} href={href} title={compact ? label : undefined} aria-current={active ? "page" : undefined}
@@ -134,7 +135,7 @@ function ThemeToggle() {
 }
 
 function PublicPortalLink({ compact = false }: { compact?: boolean }) {
-  return <Link href="/kiem-tra-de-tai/" title={compact ? "Kiểm tra đề tài công khai" : undefined} className="mx-2 mb-2 flex h-10 items-center justify-center gap-2 rounded-lg border border-sidebar-border px-2 text-xs font-medium text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><GraduationCap className="size-4" />{!compact && "Kiểm tra đề tài công khai"}</Link>;
+  return <Link href="/kiem-tra-de-tai/" title={compact ? "Kiểm tra đề tài" : undefined} className="mx-2 mb-2 flex h-10 items-center justify-center gap-2 rounded-lg border border-sidebar-border px-2 text-xs font-medium text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><GraduationCap className="size-4" />{!compact && "Kiểm tra đề tài"}</Link>;
 }
 
 function Account({ compact = false }: { compact?: boolean }) {
@@ -147,7 +148,7 @@ function Account({ compact = false }: { compact?: boolean }) {
     try {
       await logout.mutateAsync();
       await queryClient.invalidateQueries({ queryKey: ["me"] });
-      router.push("/tong-quan/");
+      router.push("/dang-nhap/");
     } catch (error) {
       if (!(error instanceof ApiError && error.handled)) toast.error(error instanceof ApiError ? error.detail : "Không thể đăng xuất.");
     }

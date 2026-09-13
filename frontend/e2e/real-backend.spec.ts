@@ -84,9 +84,8 @@ test("bốn tab hàng đợi tác giả chỉ được đọc", async ({ page })
   await assertHealthyPage(page);
   await expect(page.getByText("Tên đầy đủ, nhiều ứng viên").first()).toHaveClass(/text-status-warning/);
   await expect(page.getByText("ten_day_du_nhieu_ung_vien", { exact: true })).toHaveCount(0);
-  const candidate = page.locator('tbody a[href^="/giang-vien/?id="]').first();
+  const candidate = page.locator('article a[href^="/giang-vien/?id="]').first();
   await expect(candidate).toBeVisible();
-  await expect(candidate).toHaveCSS("text-transform", "capitalize");
   await capture(page, "hang-doi-tac-gia.png");
 
   for (const name of ["Chờ xác nhận", "Đã nối tự động", "Đã xác nhận", "Đã bác bỏ"]) {
@@ -98,7 +97,7 @@ test("bốn tab hàng đợi tác giả chỉ được đọc", async ({ page })
   }
 
   await page.getByRole("tab", { name: /^Chờ xác nhận/ }).click();
-  await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();
+  await page.getByRole("checkbox", { name: /^Chọn .+ – / }).first().check();
   await page.getByRole("button", { name: "Chuyển cho người khác" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("combobox", { name: "Tìm người" }).fill("Nguyễn");
@@ -121,7 +120,7 @@ test("hàng đợi nghi trùng mở chi tiết nhưng không quyết định", a
 test("chi tiết công trình gắn nhãn mã trạng thái và loại nơi công bố", async ({ page }) => {
   await page.goto("/cong-trinh/?id=458");
   await expect(page.getByText("Đã chuẩn hoá", { exact: true })).toBeVisible();
-  await expect(page.getByText("Tạp chí quốc tế", { exact: true })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Tạp chí quốc tế", exact: true })).toBeVisible();
   await expect(page.getByText("DaChuanHoa", { exact: true })).toHaveCount(0);
   await expect(page.getByText("journal_intl", { exact: true })).toHaveCount(0);
 });

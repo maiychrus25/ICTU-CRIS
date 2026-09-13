@@ -54,6 +54,7 @@ test("lọc loại nơi công bố giữ URL và mỗi kết quả mở được
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/tra-cuu/?venue_kind=journal_intl");
+  await page.getByText("Bộ lọc (1 đang áp dụng)", { exact: true }).click();
   await expect(page.getByRole("combobox", { name: "Loại nơi công bố" })).toBeVisible();
   await expectNoPageOverflow(page);
 });

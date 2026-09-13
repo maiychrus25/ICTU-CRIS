@@ -5,9 +5,9 @@ import { aspectLabels, aspectLevelLabels, getAspectLevel, type AspectLevel } fro
 import { cn } from "@/lib/utils";
 
 const levelStyles: Record<AspectLevel, string> = {
-  cao: "border-status-danger/25 bg-status-danger/10 text-status-danger",
-  vua: "border-status-warning/30 bg-status-warning/10 text-status-warning",
-  thap: "border-status-success/25 bg-status-success/10 text-status-success",
+  cao: "border-status-danger/25 bg-status-danger/10 text-foreground",
+  vua: "border-status-warning/30 bg-status-warning/10 text-foreground",
+  thap: "border-status-success/25 bg-status-success/10 text-foreground",
 };
 
 export function AspectMatrix({ aspects }: { aspects: Record<string, string> }) {
@@ -20,8 +20,8 @@ export function AspectMatrix({ aspects }: { aspects: Record<string, string> }) {
         const unavailable = value === "khong_du_du_lieu" || value === "chua_du";
         const level = getAspectLevel(value);
         return (
-          <div key={key} className={cn("rounded-md border px-3 py-2", unavailable ? "bg-muted/60 text-muted-foreground" : levelStyles[level])}>
-            <p className="text-[11px] font-medium uppercase tracking-wide opacity-80">{label}</p>
+          <div key={key} className={cn("rounded-md border px-3 py-2", unavailable ? "bg-muted/60 text-foreground" : levelStyles[level])}>
+            <p className="text-[11px] font-medium uppercase tracking-wide">{label}</p>
             <p className="mt-0.5 text-sm font-semibold">{unavailable ? "Chưa đủ dữ liệu" : aspectLevelLabels[level]}</p>
           </div>
         );

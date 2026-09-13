@@ -6,7 +6,7 @@ import {
   anomaliesFixture, citationsFixture, coauthorsFixture, duplicateDetailFixture, duplicateGroupsFixture, expertsFixture,
   facetsFixture, healthFixture, mapFixture, mentorFixture, notificationFixture, periodProgressFixture, periodReportsFixture, periodsFixture, personFixture,
   publicTopicFixture, qualityFixture, recentFixture, reportFixture, statsFixture, trendsFixture, unitOverviewFixture,
-  lecturerMeFixture, meFixture, myDeclarationsFixture, myWorksFixture, personsFixture, screenCohortsFixture, screenFixture, syncRunDetailsFixture, syncRunsFixture,
+  lecturerMeFixture, meFixture, myDeclarationsFixture, myWorksFixture, personsFixture, screenCohortsFixture, screenFixture, signedOutMeFixture, syncRunDetailsFixture, syncRunsFixture,
   topicDetailsFixture, topicsFixture, unitsFixture, workDetailsFixture, workItems, worksFixture,
 } from "@/lib/fixtures";
 import type {
@@ -30,6 +30,21 @@ export class ApiError extends Error {
 }
 
 let mockUser = meFixture.user;
+const MOCK_USER_KEY = "cris:mock-user";
+
+function restoreMockUser() {
+  if (typeof window === "undefined") return mockUser;
+  const email = window.sessionStorage.getItem(MOCK_USER_KEY);
+  if (email === "signed-out") return null;
+  if (email === lecturerMeFixture.user?.email) return lecturerMeFixture.user;
+  if (email === meFixture.user?.email) return meFixture.user;
+  return mockUser;
+}
+
+function persistMockUser(user: typeof mockUser) {
+  mockUser = user;
+  if (typeof window !== "undefined") window.sessionStorage.setItem(MOCK_USER_KEY, user?.email ?? "signed-out");
+}
 const mockWorks = structuredClone(worksFixture);
 const mockWorkDetails = structuredClone(workDetailsFixture);
 const mockPeriods = structuredClone(periodsFixture);
@@ -68,17 +83,20 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const id = Number(url.pathname.split("/").at(-1));
   let data: unknown;
 
-  if (url.pathname === "/api/auth/me") data = { ...meFixture, user: mockUser };
+  if (url.pathname === "/api/auth/me") {
+    mockUser = restoreMockUser();
+    data = { ...signedOutMeFixture, user: mockUser };
+  }
   else if (url.pathname === "/api/auth/login") {
     const body = JSON.parse(String(init?.body)) as LoginIn;
     const user = body.email === lecturerMeFixture.user?.email ? lecturerMeFixture.user
       : body.email === meFixture.user?.email ? meFixture.user : null;
     if (!user || body.password !== "demo1234") throw new ApiError(401, "Email hoặc mật khẩu không đúng.");
-    mockUser = user;
+    persistMockUser(user);
     data = mockUser;
   }
   else if (url.pathname === "/api/auth/logout") {
-    mockUser = null;
+    persistMockUser(null);
     data = { ok: true };
   }
   else if (url.pathname === "/api/works/facets") data = facetsFixture;

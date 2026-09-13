@@ -173,7 +173,7 @@ test("bảng, biểu đồ, thẻ số, form và dialog vừa viewport", async (
   expect(await chart.evaluate((element) => element.getBoundingClientRect().right <= document.documentElement.clientWidth + 1)).toBe(true);
   if (testInfo.project.name === "mobile") {
     const cards = page.locator('[aria-label="Chỉ số tổng quan"] > *');
-    expect(await cards.nth(0).evaluate((first, second) => Math.abs(first.getBoundingClientRect().left - (second as Element).getBoundingClientRect().left), await cards.nth(1).elementHandle())).toBeLessThan(1);
+    expect(await cards.nth(0).evaluate((first, second) => Math.abs(first.getBoundingClientRect().top - (second as Element).getBoundingClientRect().top), await cards.nth(1).elementHandle())).toBeLessThan(1);
     await page.screenshot({ path: path.join(imageDir, "mobile-tong-quan.png"), animations: "disabled" });
   }
 
@@ -184,16 +184,16 @@ test("bảng, biểu đồ, thẻ số, form và dialog vừa viewport", async (
   expect(await form.evaluate((element, resultTop) => element.getBoundingClientRect().bottom <= Number(resultTop) + 1, await results.evaluate((element) => element.getBoundingClientRect().top))).toBe(true);
 
   await page.goto("/doi-soat/tac-gia/");
-  await expect(page.locator("tbody tr").first()).toBeVisible();
+  await expect(page.getByRole("article").first()).toBeVisible();
   const tabs = page.locator('[data-slot="tabs-list"]').filter({ has: page.getByRole("tab", { name: /^Chờ xác nhận/ }) });
   expect(await tabs.locator('[data-slot="tabs-trigger"]').first().evaluate((tab, listLeft) => tab.getBoundingClientRect().left >= Number(listLeft) - 1, await tabs.evaluate((list) => list.getBoundingClientRect().left)), "Tab đầu không được tràn khỏi mép trái").toBe(true);
   if (testInfo.project.name === "mobile") await page.screenshot({ path: path.join(imageDir, "mobile-hang-doi.png"), animations: "disabled" });
-  await page.getByRole("checkbox", { name: "Chọn hàng" }).first().check();
-  const batchActions = page.getByText(/liên kết đã chọn$/).locator("..");
+  await page.getByRole("checkbox", { name: /^Chọn .+ – / }).first().check();
+  const batchActions = page.getByText(/lượt tên đã chọn$/).locator("..");
   await expect(batchActions).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  const tableBottom = await page.locator('[data-slot="table-container"]').last().evaluate((element) => element.getBoundingClientRect().bottom);
-  expect(await batchActions.evaluate((element, bottom) => element.getBoundingClientRect().top >= Number(bottom) - 1, tableBottom), "Thanh hành động không che bảng ở cuối trang").toBe(true);
+  const queueBottom = await page.getByRole("region", { name: "Các lượt tên cần đối soát" }).evaluate((element) => element.getBoundingClientRect().bottom);
+  expect(await batchActions.evaluate((element, bottom) => element.getBoundingClientRect().top >= Number(bottom) - 1, queueBottom), "Thanh hành động không che danh sách ở cuối trang").toBe(true);
   const footerTop = await page.locator(".data-notice-footer").evaluate((element) => element.getBoundingClientRect().top);
   expect(await batchActions.evaluate((element, top) => element.getBoundingClientRect().bottom <= Number(top) + 1, footerTop), "Thanh hành động phải nằm trên footer dữ liệu").toBe(true);
   await page.getByRole("button", { name: "Chuyển cho người khác" }).click();

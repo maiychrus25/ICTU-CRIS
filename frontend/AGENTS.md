@@ -131,3 +131,16 @@ quản lý thư viện trường THPT…", tên giảng viên kiểu "TS. Nguy�
 `NEXT_PUBLIC_MOCK=1` client trả fixture thay vì gọi mạng (dùng cho Playwright và xem giao diện
 khi backend chưa chạy). Backend thật đang chạy ở `http://localhost:8001` (có thể chưa lên khi bạn
 bắt đầu — đừng chặn vì nó).
+
+## Quét UI tự động
+
+Chạy từ thư mục frontend sau khi build và khi backend đang phục vụ giao diện:
+
+    node scripts/ui-audit.mjs http://localhost:8000 <thu-muc-ket-qua>
+
+Khi rà artifact host riêng nhưng dùng API thật, đặt `AUDIT_API_BASE=http://localhost:8000` để
+script proxy các request API giống cấu hình Playwright thật của dự án.
+
+Script quét 390/820/1280 ở cả chế độ sáng và tối, rồi ghi ảnh cùng report.json vào thư mục
+kết quả. Lệnh thất bại nếu còn tràn ngang, chữ bị cắt/chồng, nút hoặc tab điện thoại nhỏ hơn
+32px, trường biểu mẫu thiếu nhãn, lỗi console/request, hay vi phạm axe mức serious/critical.

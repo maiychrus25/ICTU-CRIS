@@ -28,6 +28,15 @@ import type { FieldRow } from "@/lib/types";
 
 const editableFields = new Set(["title", "doi", "year_issue", "journal", "volume", "pub_type_raw", "cohort", "abstract", "keywords_raw"]);
 
+function SourceReference({ source, url }: { source: string; url?: string | null }) {
+  const repositorySource = /\brepository\b|repository\.ictu\.edu\.vn/i.test(source);
+  const sourceUrl = source.match(/https?:\/\/[^\s)]+/)?.[0] ?? (repositorySource ? url : null);
+  const time = source.match(/(?:lúc|·)\s*(.+)$/i)?.[1];
+  const label = repositorySource ? `Kho ICTU${time ? ` · ${time}` : ""}` : labelSourceText(source);
+  const content = <><ExternalLink className="size-3 shrink-0 text-muted-foreground" />{label}</>;
+  return sourceUrl ? <a href={sourceUrl} target="_blank" rel="noreferrer" title={source} className="inline-flex items-center gap-1.5 text-primary hover:underline">{content}</a> : <span title={source} className="inline-flex items-center gap-1.5">{content}</span>;
+}
+
 function WorkContent() {
   const rawId = useSearchParams().get("id");
   const id = rawId && /^\d+$/.test(rawId) ? Number(rawId) : null;
@@ -38,6 +47,7 @@ function WorkContent() {
   const canEdit = useOfficerAccess();
   const [editing, setEditing] = useState<FieldRow | null>(null);
   const [citationOpen, setCitationOpen] = useState(false);
+  const [showMissing, setShowMissing] = useState(false);
 
   async function submitEdit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,6 +68,8 @@ function WorkContent() {
   if (query.isError) return <><PageHeader title="Chi tiết công trình" /><ErrorView error={query.error} retry={() => query.refetch()} /></>;
   if (!query.data) return <><PageHeader title="Chi tiết công trình" /><EmptyView description="Bản ghi này không còn tồn tại. Hãy quay lại trang tra cứu." /></>;
   const work = query.data;
+  const missingFields = work.fields.filter((field) => !field.value && !field.raw && field.source === "Chưa ghi nhận nguồn");
+  const visibleFields = showMissing ? work.fields : work.fields.filter((field) => !missingFields.includes(field));
 
   return (
     <>
@@ -66,7 +78,7 @@ function WorkContent() {
       {work.has_manual && <Link href="/nhat-ky/" className="mb-7 flex items-center justify-between rounded-lg border bg-card px-4 py-3 hover:bg-muted/50"><span><strong className="block text-sm">Lịch sử chỉnh sửa</strong><span className="text-xs text-muted-foreground">Bản ghi có giá trị do người dùng chỉnh sửa; mở nhật ký để đối chiếu.</span></span><History className="size-4 text-primary" /></Link>}
       <section className="mb-8" aria-labelledby="provenance-title">
         <div className="mb-3"><h2 id="provenance-title" className="text-base font-semibold">Xuất xứ dữ liệu</h2><p className="text-xs text-muted-foreground">So sánh giá trị đang sử dụng với dữ liệu gốc từ từng nguồn.</p></div>
-        {work.fields.length ? <div className="overflow-hidden rounded-lg border bg-card"><Table><TableHeader><TableRow><TableHead>Trường</TableHead><TableHead>Giá trị đang dùng</TableHead><TableHead>Giá trị gốc</TableHead><TableHead>Nguồn</TableHead></TableRow></TableHeader><TableBody>{work.fields.map((field) => <TableRow key={field.field}><TableCell className="font-medium"><span className="inline-flex items-center gap-1.5">{field.label}{canEdit && editableFields.has(field.field) && <Button type="button" variant="ghost" size="icon-xs" aria-label={`Chỉnh sửa ${field.label}`} onClick={() => setEditing(field)}><PenLine /></Button>}</span></TableCell><TableCell className="max-w-sm whitespace-normal">{field.value ? getFieldValueLabel(field.field, field.value) : "—"}</TableCell><TableCell className="max-w-sm whitespace-normal text-muted-foreground">{field.raw ?? "—"}</TableCell><TableCell className="max-w-xs whitespace-normal text-xs"><span className="inline-flex items-start gap-1.5"><ExternalLink className="mt-0.5 size-3 shrink-0 text-muted-foreground" />{labelSourceText(field.source)}</span></TableCell></TableRow>)}</TableBody></Table></div> : <EmptyView description="Bản ghi chưa có thông tin xuất xứ. Hãy chờ lần đồng bộ tiếp theo." />}
+        {work.fields.length ? <><div className="hidden overflow-hidden rounded-lg border bg-card md:block"><Table><TableHeader><TableRow><TableHead>Trường</TableHead><TableHead>Giá trị đang dùng</TableHead><TableHead>Giá trị gốc</TableHead><TableHead>Nguồn</TableHead></TableRow></TableHeader><TableBody>{visibleFields.map((field) => <TableRow key={field.field}><TableCell className="font-medium"><span className="inline-flex items-center gap-1.5">{field.label}{canEdit && editableFields.has(field.field) && <Button type="button" variant="ghost" size="icon-xs" aria-label={`Chỉnh sửa ${field.label}`} onClick={() => setEditing(field)}><PenLine /></Button>}</span></TableCell><TableCell className="max-w-sm whitespace-normal break-words">{field.value ? getFieldValueLabel(field.field, field.value) : "—"}</TableCell><TableCell className="max-w-sm whitespace-normal break-words text-muted-foreground">{field.raw ?? "—"}</TableCell><TableCell className="max-w-xs whitespace-normal text-xs"><SourceReference source={field.source} url={work.source_url} /></TableCell></TableRow>)}</TableBody></Table></div><div className="space-y-3 md:hidden">{visibleFields.map((field) => <article key={field.field} className="rounded-lg border bg-card p-4"><div className="flex items-center justify-between gap-2"><h3 className="font-semibold">{field.label}</h3>{canEdit && editableFields.has(field.field) && <Button type="button" variant="ghost" size="icon-sm" aria-label={`Chỉnh sửa ${field.label}`} onClick={() => setEditing(field)}><PenLine /></Button>}</div><dl className="mt-3 grid gap-3"><div><dt className="text-xs text-muted-foreground">Đang dùng</dt><dd className="mt-0.5 break-words">{field.value ? getFieldValueLabel(field.field, field.value) : "—"}</dd></div><div><dt className="text-xs text-muted-foreground">Gốc</dt><dd className="mt-0.5 break-words">{field.raw ?? "—"}</dd></div><div><dt className="text-xs text-muted-foreground">Nguồn</dt><dd className="mt-0.5 text-xs"><SourceReference source={field.source} url={work.source_url} /></dd></div></dl></article>)}</div>{missingFields.length > 0 && <Button type="button" variant="ghost" size="sm" className="mt-2" aria-expanded={showMissing} onClick={() => setShowMissing((current) => !current)}>{showMissing ? "Ẩn" : "Hiện"} {missingFields.length} trường chưa có dữ liệu</Button>}</> : <EmptyView description="Bản ghi chưa có thông tin xuất xứ. Hãy chờ lần đồng bộ tiếp theo." />}
         <p className="mt-2 text-xs text-muted-foreground">Tác giả, khoa, minh chứng không sửa ở đây — sai thì trả về khoa.</p>
       </section>
       <section aria-labelledby="authors-title">

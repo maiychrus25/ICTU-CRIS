@@ -126,6 +126,12 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@media (min-width: 640px) and (max-width: 1439px) {
+  :root {
+    --data-footer-h: 3rem;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

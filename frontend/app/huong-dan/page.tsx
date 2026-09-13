@@ -7,6 +7,7 @@ import {
   Bot, Building2, CheckCircle2, CircleAlert, ExternalLink, GraduationCap, Landmark, LockKeyhole, School,
 } from "lucide-react";
 import Link from "next/link";
+import { Fragment } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -225,10 +226,10 @@ export default function UserGuidePage() {
       <section aria-labelledby="guide-purpose-title" className="mb-8 border-b pb-8">
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">Bắt đầu từ dữ liệu thật</p>
         <h2 id="guide-purpose-title" className="text-xl font-semibold">Hệ thống này làm gì</h2>
-        <div className="mt-3 max-w-4xl space-y-2 text-[15px] leading-7 text-muted-foreground">
+        <div className="mt-3 max-w-4xl space-y-2 break-words text-[15px] leading-7 text-muted-foreground">
           <p>ICTU-CRIS hợp nhất <strong className="font-semibold text-foreground tabular-nums">7.618 công trình</strong> và <strong className="font-semibold text-foreground tabular-nums">410 giảng viên</strong> thành một nguồn sự thật có thể truy ngược về bản ghi gốc.</p>
           <p>Chuẩn hoá tên và đưa trường hợp chưa chắc chắn cho người dùng quyết định giúp độ phủ liên kết tác giả tăng từ <strong className="font-semibold text-foreground tabular-nums">8%</strong> lên <strong className="font-semibold text-foreground tabular-nums">86%</strong>.</p>
-          <p>Dữ liệu nguồn vẫn có giới hạn lớn: <strong className="font-semibold text-foreground tabular-nums">4.621/5.375 đồ án</strong> ghi người hướng dẫn là <code className="rounded bg-muted px-1.5 py-0.5 text-sm text-foreground">ICTU_TEACHER</code>, nên hệ thống luôn trình bày rõ điều đã biết và điều cần con người kiểm tra.</p>
+          <p>Dữ liệu nguồn vẫn có giới hạn lớn: <strong className="font-semibold text-foreground tabular-nums">4.621/5.375 đồ án</strong> ghi người hướng dẫn là <code className="break-all rounded bg-muted px-1.5 py-0.5 text-sm text-foreground">ICTU_TEACHER</code>, nên hệ thống luôn trình bày rõ điều đã biết và điều cần con người kiểm tra.</p>
         </div>
       </section>
 
@@ -295,11 +296,11 @@ export default function UserGuidePage() {
 
           <section id="thuat-ngu" aria-labelledby="glossary-title" className="scroll-mt-20 border-b py-9">
             <h2 id="glossary-title" className="text-xl font-semibold">Thuật ngữ</h2>
-            <dl className="mt-5 divide-y border-y">{glossary.map(([term, definition]) => <div key={term} className="grid gap-1 py-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-5"><dt className="font-semibold">{term}</dt><dd className="leading-6 text-muted-foreground">{definition}</dd></div>)}</dl>
+            <dl className="mt-5 grid gap-x-5 border-y sm:grid-cols-[180px_minmax(0,1fr)]">{glossary.map(([term, definition]) => <Fragment key={term}><dt className="border-t py-4 font-semibold first:border-t-0">{term}</dt><dd className="border-b py-4 leading-6 text-muted-foreground sm:border-t sm:border-b-0">{definition}</dd></Fragment>)}</dl>
             <div className="mt-6">
               <h3 className="font-semibold">Hồ sơ kê khai và 8 trạng thái</h3>
               <p className="mt-1 max-w-4xl leading-6 text-muted-foreground">Hồ sơ kê khai gắn một công trình với một khoa trong một kỳ báo cáo, kèm minh chứng và toàn bộ lịch sử duyệt. Luồng thông thường đi từ Nháp tới Đã chốt; Chờ bổ sung và Đã rút là các nhánh xử lý riêng.</p>
-              <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">{declarationStates.map(([state, description], index) => <div key={state} className="grid grid-cols-[24px_minmax(0,1fr)] gap-2"><span aria-hidden className="pt-0.5 text-xs text-muted-foreground tabular-nums">{index + 1}.</span><div><dt className="font-medium">{stateLabels[state]}</dt><dd className="mt-0.5 text-sm leading-5 text-muted-foreground">{description}</dd></div></div>)}</dl>
+              <dl className="mt-4 grid grid-cols-[24px_minmax(0,1fr)] gap-x-2 gap-y-3 sm:grid-cols-[24px_minmax(0,1fr)_24px_minmax(0,1fr)] sm:gap-x-3">{declarationStates.map(([state, description], index) => <Fragment key={state}><dt className="contents font-medium"><span aria-hidden className="pt-0.5 text-xs text-muted-foreground tabular-nums">{index + 1}.</span><span>{stateLabels[state]}</span></dt><dd className="col-start-2 -mt-2 text-sm leading-5 text-muted-foreground sm:col-start-auto">{description}</dd></Fragment>)}</dl>
             </div>
           </section>
 

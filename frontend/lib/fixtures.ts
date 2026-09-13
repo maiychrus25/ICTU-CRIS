@@ -32,6 +32,8 @@ export const lecturerMeFixture: MeOut = {
   auth_required: true,
 };
 
+export const signedOutMeFixture: MeOut = { user: null, auth_required: true };
+
 export const workItems: WorkSummary[] = [
   { id: 1, title: "Xây dựng website quản lý thư viện trường THPT Lương Ngọc Quyến", doc_type: "do_an", doc_type_label: "Đồ án", year: 2025, doi: null, state: "DaXacNhan", needs_review: false },
   { id: 2, title: "Ứng dụng học sâu trong nhận dạng bệnh trên lá chè Thái Nguyên", doc_type: "bai_bao", doc_type_label: "Bài báo", year: 2025, doi: "10.15625/ictu.2025.102", state: "DaXacNhan", needs_review: false },
@@ -81,11 +83,11 @@ export const workDetailsFixture: Record<number, WorkDetail> = Object.fromEntries
   source_url: `https://repository.ictu.edu.vn/works/${work.id}`,
   keywords: work.keywords,
   fields: [
-    { field: "title", label: "Tiêu đề", value: work.title, raw: work.id === 1 ? "XAY DUNG WEBSITE QUAN LY THU VIEN TRUONG THPT LUONG NGOC QUYEN" : work.title, source: work.id === 1 ? "Chuẩn hoá từ kho đồ án ICTU" : "Đồng bộ kho dữ liệu ICTU" },
+    { field: "title", label: "Tiêu đề", value: work.title, raw: work.id === 1 ? "XAY DUNG WEBSITE QUAN LY THU VIEN TRUONG THPT LUONG NGOC QUYEN" : work.title, source: work.id === 1 ? "Đồng bộ từ repository (khoá https://repository.ictu.edu.vn/works/1), lúc 10/09/2026 16:38" : "Đồng bộ kho dữ liệu ICTU" },
     { field: "doc_type", label: "Loại tài liệu", value: work.doc_type_label, raw: work.doc_type, source: "Ánh xạ danh mục chuẩn" },
-    { field: "doi", label: "DOI", value: work.doi, raw: work.doi, source: work.doi ? "Crossref" : "Không có trong nguồn gốc" },
-    { field: "journal", label: "Tạp chí", value: work.doc_type === "bai_bao" ? "Tạp chí Khoa học và Công nghệ" : null, raw: null, source: "Đồng bộ kho dữ liệu ICTU" },
-    { field: "volume", label: "Tập/số", value: work.doc_type === "bai_bao" ? "12(3)" : null, raw: null, source: "Đồng bộ kho dữ liệu ICTU" },
+    { field: "doi", label: "DOI", value: work.doi, raw: work.doi, source: work.doi ? "Crossref" : "Chưa ghi nhận nguồn" },
+    { field: "journal", label: "Tạp chí", value: work.doc_type === "bai_bao" ? "Tạp chí Khoa học và Công nghệ" : null, raw: null, source: work.doc_type === "bai_bao" ? "Đồng bộ kho dữ liệu ICTU" : "Chưa ghi nhận nguồn" },
+    { field: "volume", label: "Tập/số", value: work.doc_type === "bai_bao" ? "12(3)" : null, raw: null, source: work.doc_type === "bai_bao" ? "Đồng bộ kho dữ liệu ICTU" : "Chưa ghi nhận nguồn" },
     { field: "year_issue", label: "Năm", value: work.year?.toString() ?? null, raw: work.year?.toString() ?? null, source: "Đồng bộ kho dữ liệu ICTU" },
     { field: "abstract", label: "Tóm tắt", value: "Tóm tắt công trình được đồng bộ từ nguồn gốc.", raw: null, source: "Đồng bộ kho dữ liệu ICTU" },
     { field: "keywords_raw", label: "Từ khoá", value: "hệ thống thông tin; dữ liệu", raw: null, source: "Đồng bộ kho dữ liệu ICTU" },
@@ -134,17 +136,19 @@ export const personsFixture: PersonSearchRow[] = [
 ];
 
 export const authorQueueFixture: AuthorQueueList = {
-  state: "ChoXacNhan", page: { page: 1, per_page: 50, total: 6 },
+  state: "ChoXacNhan", page: { page: 1, per_page: 50, total: 8 },
   items: [
-    [201, "Nguyễn Văn A", 1, "TS. Nguyễn Văn A", "Tên và khoa công tác trùng khớp"],
-    [202, "N.V. An", 2, "TS. Nguyễn Văn An", "Tên viết tắt, có cùng chuỗi công trình"],
-    [203, "Trần Thị Bình", 3, "ThS. Trần Thị Bình", "Tên đầy đủ trùng khớp"],
-    [204, "Lê Hoàng", 4, "TS. Lê Văn Hoàng", "Cùng khoa nhưng tên chưa đủ"],
-    [205, "Phạm Minh Đức", 5, "ThS. Phạm Minh Đức", "Tên và học vị phù hợp"],
-    [206, "Đỗ Thu Hà", 6, "TS. Đỗ Thu Hà", "ORCID trong nguồn liên quan"],
-  ].map(([linkId, rawName, workId, candidateName, reason], index) => ({
-    link_id: Number(linkId), raw_name: String(rawName), work_id: Number(workId), work_title: workItems[index].title,
-    candidate_person_id: index + 1, candidate_name: String(candidateName), confidence: index < 3 ? "cao" : "vua",
+    [201, "Nguyễn Văn A", 1, "TS. Nguyễn Văn A", "Tên và khoa công tác trùng khớp", 1],
+    [207, "Nguyễn Văn A", 1, "TS. Nguyễn Văn An", "Tên gần giống, cần người dùng chọn", 2],
+    [208, "Nguyễn Văn A", 1, "ThS. Trần Thị Bình", "Cùng nhóm chuyên môn", 3],
+    [202, "N.V. An", 2, "TS. Nguyễn Văn An", "Tên viết tắt, có cùng chuỗi công trình", 2],
+    [203, "Trần Thị Bình", 3, "ThS. Trần Thị Bình", "Tên đầy đủ trùng khớp", 3],
+    [204, "Lê Hoàng", 4, "TS. Lê Văn Hoàng", "Cùng khoa nhưng tên chưa đủ", 4],
+    [205, "Phạm Minh Đức", 5, "ThS. Phạm Minh Đức", "Tên và học vị phù hợp", 5],
+    [206, "Đỗ Thu Hà", 6, "TS. Đỗ Thu Hà", "ORCID trong nguồn liên quan", 6],
+  ].map(([linkId, rawName, workId, candidateName, reason, personId], index) => ({
+    link_id: Number(linkId), raw_name: String(rawName), work_id: Number(workId), work_title: workItems[Number(workId) - 1].title,
+    candidate_person_id: Number(personId), candidate_name: String(candidateName), confidence: index < 3 ? "cao" : "vua",
     degree_conflict: index === 3, group_work_count: 2 + index, ai_rank: index + 1,
     ai_score: 0.92 - index * 0.08, ai_reason: String(reason),
   })),
@@ -445,8 +449,8 @@ export const coauthorsFixture: CoauthorsOut = {
 };
 
 export const recentFixture: RecentOut = {
-  added: workItems.slice(0, 3).map((work, index) => ({ ...work, first_seen_at: `2026-09-1${index}T02:00:00Z` })),
-  changed: workItems.slice(3, 5).map((work, index) => ({ ...work, version: index + 2 })),
+  added: [],
+  changed: workItems.slice(3, 11).map((work, index) => ({ ...work, version: index + 2 })),
   run: statsFixture.last_sync!,
 };
 

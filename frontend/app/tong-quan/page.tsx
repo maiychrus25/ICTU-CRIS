@@ -29,7 +29,8 @@ function MetricCard({ label, value, icon: Icon, href }: { label: string; value: 
 }
 
 function RecentColumn({ title, items, fallbackTime, changed = false }: { title: string; items: (RecentAdded | RecentChanged)[]; fallbackTime?: string | null; changed?: boolean }) {
-  return <div><h3 className="mb-2 text-sm font-semibold">{title} <span className="font-normal text-muted-foreground tabular-nums">({items.length})</span></h3>{items.length ? <ul className="divide-y rounded-lg border bg-card">{items.map((work) => <li key={work.id} className="p-3"><Link href={`/cong-trinh/?id=${work.id}`} className="line-clamp-2 font-medium leading-5 text-primary hover:underline">{work.title ?? "Chưa có tiêu đề"}</Link><p className="mt-1 text-xs text-muted-foreground"><span>{work.doc_type_label}</span>{changed && "version" in work ? ` · Phiên bản ${work.version}` : ""}<span> · {formatDate("first_seen_at" in work ? work.first_seen_at : fallbackTime)}</span></p></li>)}</ul> : <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">Không có công trình {changed ? "thay đổi" : "thêm mới"} trong lượt này.</p>}</div>;
+  const visible = items.slice(0, 5);
+  return <div><h3 className="mb-2 text-sm font-semibold">{title} <span className="font-normal text-muted-foreground tabular-nums">({items.length})</span></h3>{items.length ? <><ul aria-label={`Công trình ${changed ? "thay đổi" : "thêm mới"} gần đây`} className="divide-y rounded-lg border bg-card">{visible.map((work) => <li key={work.id} className="p-3"><Link href={`/cong-trinh/?id=${work.id}`} className="line-clamp-2 font-medium leading-5 text-primary hover:underline">{work.title ?? "Chưa có tiêu đề"}</Link><p className="mt-1 text-xs text-muted-foreground"><span>{work.doc_type_label}</span>{changed && "version" in work ? ` · Phiên bản ${work.version}` : ""}<span> · {formatDate("first_seen_at" in work ? work.first_seen_at : fallbackTime)}</span></p></li>)}</ul>{items.length > visible.length && <Link href="/dong-bo/" className="mt-2 inline-flex min-h-8 items-center text-xs font-medium text-primary hover:underline">Xem tất cả ({items.length})</Link>}</> : <p className="border-t py-2 text-sm text-muted-foreground">Không có công trình {changed ? "thay đổi" : "thêm mới"} trong lượt này.</p>}</div>;
 }
 
 function RecentWorks() {
@@ -54,7 +55,7 @@ export default function OverviewPage() {
   return (
     <>
       <PageHeader title="Tổng quan" description="Bức tranh 5 năm gần nhất dành cho lãnh đạo, từ số liệu có thể truy ngược về dữ liệu gốc." />
-      <section aria-label="Chỉ số tổng quan" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Chỉ số tổng quan" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <MetricCard label="Tổng công trình 5 năm" value={totalWorks.toLocaleString("vi-VN")} icon={FileStack} />
         <MetricCard label="Công trình có liên kết tác giả" value={`${stats.coverage.works_with_link_pct.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`} icon={Link2} />
         <MetricCard label="Liên kết tác giả chờ xác nhận" value={stats.queues.authors_pending.toLocaleString("vi-VN")} icon={UserRoundCheck} href="/doi-soat/tac-gia/" />
