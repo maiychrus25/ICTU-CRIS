@@ -218,7 +218,7 @@ test("chủ đề thật mở chi tiết và điền bộ lọc tra cứu", asyn
   await page.getByRole("link", { name: "Tra cứu theo chủ đề này" }).click();
   await expect(page).toHaveURL(/\/tra-cuu\/\?topic=\d+$/);
   await expect(page.getByRole("combobox", { name: "Chủ đề" })).toContainText(topicName!);
-  await page.getByRole("combobox", { name: "Đơn vị" }).click();
+  await page.getByRole("combobox", { name: "Khoa" }).click();
   const unitOption = page.getByRole("option").nth(1);
   const unitCode = (await unitOption.textContent())?.split(" — ")[0];
   await unitOption.click();

@@ -83,7 +83,7 @@ function DeclarationDetailContent() {
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2"><dt className="text-xs text-muted-foreground">Công trình</dt><dd className="mt-1"><Link href={`/cong-trinh/?id=${detail.work_id}`} className="font-medium text-primary hover:underline">{detail.work_title ?? `Công trình #${detail.work_id}`}</Link><p className="mt-1 text-xs text-muted-foreground">{detail.doc_type_label}</p></dd></div>
           <div><dt className="text-xs text-muted-foreground">Kỳ báo cáo</dt><dd className="mt-1"><Link href={`/ky-bao-cao/chi-tiet/?id=${detail.period_id}`} className="font-medium text-primary hover:underline">{period?.name ?? `Kỳ #${detail.period_id}`}</Link></dd></div>
-          <div><dt className="text-xs text-muted-foreground">Đơn vị</dt><dd className="mt-1 font-medium">{detail.unit_code}</dd></div>
+          <div><dt className="text-xs text-muted-foreground">Khoa kê khai</dt><dd className="mt-1 font-medium">{detail.unit_code}</dd></div>
           <div><dt className="text-xs text-muted-foreground">Trạng thái</dt><dd className="mt-1"><StatusBadge value={detail.state} /></dd></div>
           <div><dt className="text-xs text-muted-foreground">Ngày tạo</dt><dd className="mt-1 tabular-nums">{formatDate(detail.created_at)}</dd></div>
           <div><dt className="text-xs text-muted-foreground">Cập nhật lần cuối</dt><dd className="mt-1 tabular-nums">{formatDate(detail.updated_at)}</dd></div>

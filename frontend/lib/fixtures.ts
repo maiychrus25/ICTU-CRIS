@@ -11,7 +11,7 @@ import type {
 
 export const unitsFixture: Unit[] = [
   { id: 1, code: "CNTT", name: "Khoa Công nghệ thông tin", active: true, works: 523, persons: 173, aliases: [] },
-  { id: 2, code: "ĐTVT", name: "Khoa Công nghệ điện tử và truyền thông", active: true, works: 381, persons: 82, aliases: ["ĐTTT"] },
+  { id: 2, code: "ĐTVT", name: "Khoa Công nghệ điện tử và truyền thông", active: true, works: 381, persons: 82, aliases: [] },
   { id: 3, code: "HTTTKT", name: "Khoa Hệ thống thông tin kinh tế", active: true, works: 276, persons: 61, aliases: ["HTTKT"] },
   { id: 4, code: "KHCB", name: "Khoa Khoa học cơ bản", active: true, works: 142, persons: 39, aliases: [] },
   { id: 5, code: "TĐH", name: "Khoa Công nghệ tự động hoá", active: true, works: 119, persons: 34, aliases: [] },
@@ -19,6 +19,7 @@ export const unitsFixture: Unit[] = [
   { id: 7, code: "KT&CN", name: "Khoa Kỹ thuật và Công nghệ", active: true, works: 83, persons: 24, aliases: [] },
   { id: 8, code: "KT&QT", name: "Khoa Kinh tế và Quản trị", active: true, works: 71, persons: 21, aliases: [] },
   { id: 9, code: "NT&TT", name: "Khoa Nghệ thuật và Truyền thông", active: true, works: 58, persons: 18, aliases: [] },
+  { id: 10, code: "ĐTTT", name: "Khoa Điện tử truyền thông", active: true, works: 52, persons: 16, aliases: [] },
 ];
 
 export const meFixture: MeOut = {
@@ -133,10 +134,10 @@ export const personsFixture: PersonSearchRow[] = [
 export const authorQueueFixture: AuthorQueueList = {
   state: "ChoXacNhan", page: { page: 1, per_page: 50, total: 6 },
   items: [
-    [201, "Nguyễn Văn A", 1, "TS. Nguyễn Văn A", "Tên và đơn vị công tác trùng khớp"],
+    [201, "Nguyễn Văn A", 1, "TS. Nguyễn Văn A", "Tên và khoa công tác trùng khớp"],
     [202, "N.V. An", 2, "TS. Nguyễn Văn An", "Tên viết tắt, có cùng chuỗi công trình"],
     [203, "Trần Thị Bình", 3, "ThS. Trần Thị Bình", "Tên đầy đủ trùng khớp"],
-    [204, "Lê Hoàng", 4, "TS. Lê Văn Hoàng", "Cùng đơn vị nhưng tên chưa đủ"],
+    [204, "Lê Hoàng", 4, "TS. Lê Văn Hoàng", "Cùng khoa nhưng tên chưa đủ"],
     [205, "Phạm Minh Đức", 5, "ThS. Phạm Minh Đức", "Tên và học vị phù hợp"],
     [206, "Đỗ Thu Hà", 6, "TS. Đỗ Thu Hà", "ORCID trong nguồn liên quan"],
   ].map(([linkId, rawName, workId, candidateName, reason], index) => ({
@@ -185,7 +186,7 @@ export const duplicateGroupsFixture: DupGroupList = {
 export const duplicateDetailFixture: DupGroupDetail = {
   id: 301, doc_type: "do_an", basis: "normalized_title", basis_label: "Tiêu đề chuẩn hoá",
   hint: "đồ án nhóm", state: "NghiTrung", compare_fields: ["title", "year", "authors", "unit"],
-  field_labels: { title: "Tiêu đề", year: "Năm", authors: "Tác giả", unit: "Đơn vị" },
+  field_labels: { title: "Tiêu đề", year: "Năm", authors: "Tác giả", unit: "Khoa" },
   diff_fields: ["authors"], ai_similarity: { title: 0.91 }, decided_by: null, decided_at: null, reason: null, survivor_work_id: null,
   members: [
     { id: 1, state: "active", title: workItems[0].title, fields: { title: workItems[0].title, year: 2025, authors: "Nguyễn Minh Anh; Trần Thu Hà", unit: "Khoa CNTT" }, diff: { authors: true } },
@@ -313,7 +314,7 @@ export const declarationsFixture: Record<number, DeclarationRow[]> = {
     { id: 606, period_id: 401, work_id: 7, work_title: workItems[6].title, doc_type: "do_an", doc_type_label: "Đồ án", unit_id: 2, unit_code: "ĐTVT", state: "ChoPhongKiemTra", note: null, evidence_count: 1, last_event_at: "2026-09-10T08:00:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-10T08:00:00Z" },
     { id: 605, period_id: 401, work_id: 6, work_title: workItems[5].title, doc_type: "bai_bao", doc_type_label: "Bài báo", unit_id: 1, unit_code: "CNTT", state: "KhoaDaDuyet", note: null, evidence_count: 1, last_event_at: "2026-09-10T07:00:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-10T07:00:00Z" },
     { id: 604, period_id: 401, work_id: 5, work_title: workItems[4].title, doc_type: "hoc_lieu", doc_type_label: "Học liệu", unit_id: 2, unit_code: "ĐTVT", state: "ChoKhoaDuyet", note: null, evidence_count: 1, last_event_at: "2026-09-09T10:00:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-09T10:00:00Z" },
-    { id: 603, period_id: 401, work_id: 4, work_title: workItems[3].title, doc_type: "luan_van", doc_type_label: "Luận văn", unit_id: 3, unit_code: "HTTTKT", state: "Rut", note: "Hồ sơ rút theo đề nghị của đơn vị.", evidence_count: 0, last_event_at: "2026-09-09T09:20:00Z", created_at: "2026-09-04T02:00:00Z", updated_at: "2026-09-09T09:20:00Z" },
+    { id: 603, period_id: 401, work_id: 4, work_title: workItems[3].title, doc_type: "luan_van", doc_type_label: "Luận văn", unit_id: 3, unit_code: "HTTTKT", state: "Rut", note: "Hồ sơ rút theo đề nghị của khoa.", evidence_count: 0, last_event_at: "2026-09-09T09:20:00Z", created_at: "2026-09-04T02:00:00Z", updated_at: "2026-09-09T09:20:00Z" },
     { id: 602, period_id: 401, work_id: 3, work_title: workItems[2].title, doc_type: "do_an", doc_type_label: "Đồ án", unit_id: 2, unit_code: "ĐTVT", state: "ChoBoSung", note: "Kê khai bổ sung theo đợt tháng 9.", evidence_count: 1, last_event_at: "2026-09-08T08:30:00Z", created_at: "2026-09-03T02:00:00Z", updated_at: "2026-09-08T08:30:00Z" },
     { id: 601, period_id: 401, work_id: 2, work_title: workItems[1].title, doc_type: "bai_bao", doc_type_label: "Bài báo", unit_id: 1, unit_code: "CNTT", state: "Nhap", note: null, evidence_count: 1, last_event_at: "2026-09-02T03:10:00Z", created_at: "2026-09-02T03:10:00Z", updated_at: "2026-09-02T03:10:00Z" },
   ],
@@ -343,7 +344,7 @@ export const declarationDetailsFixture: Record<number, DeclarationDetail> = Obje
 export const syncRunsFixture: SyncRunList = {
   page: { page: 1, per_page: 20, total: 2 },
   items: [
-    { id: 18, source: "Kho dữ liệu ICTU", scope: "Toàn bộ dữ liệu", status: "warning", started_at: "2026-09-10T01:00:00Z", finished_at: "2026-09-10T01:04:12Z", duration_s: 252, added: 47, changed: 12, vanished: 2, errors: [], warnings: ["2 bản ghi thiếu mã đơn vị."] },
+    { id: 18, source: "Kho dữ liệu ICTU", scope: "Toàn bộ dữ liệu", status: "warning", started_at: "2026-09-10T01:00:00Z", finished_at: "2026-09-10T01:04:12Z", duration_s: 252, added: 47, changed: 12, vanished: 2, errors: [], warnings: ["2 bản ghi thiếu mã khoa."] },
     { id: 17, source: "Kho dữ liệu ICTU", scope: "Bài báo", status: "ok", started_at: "2026-09-03T01:00:00Z", finished_at: "2026-09-03T01:02:08Z", duration_s: 128, added: 8, changed: 5, vanished: 0, errors: [], warnings: [] },
   ],
 };

@@ -35,7 +35,7 @@ const roleGuides: RoleGuide[] = [
     steps: [
       {
         title: "Tra cứu và xuất CSV",
-        description: "Nhập từ khoá, chọn loại tài liệu, năm, đơn vị hoặc chủ đề rồi bấm Tra cứu. Nút Tải CSV xuất đúng tập kết quả đang lọc, ở dạng UTF-8 để mở bằng Excel.",
+        description: "Nhập từ khoá, chọn loại tài liệu, năm, khoa hoặc chủ đề rồi bấm Tra cứu. Nút Tải CSV xuất đúng tập kết quả đang lọc, ở dạng UTF-8 để mở bằng Excel.",
         href: "/tra-cuu/",
         linkLabel: "Mở Tra cứu",
       },
@@ -53,7 +53,7 @@ const roleGuides: RoleGuide[] = [
       },
       {
         title: "Vận hành kỳ báo cáo",
-        description: "Mở kỳ với phạm vi và hạn nộp, theo dõi tiến độ từng đơn vị, sau đó Đóng nộp. Chỉ Chốt kỳ khi đã kiểm tra các hồ sơ Đạt yêu cầu và danh sách hồ sơ sẽ bị bỏ qua.",
+        description: "Mở kỳ với phạm vi và hạn nộp, theo dõi tiến độ từng khoa, sau đó Đóng nộp. Chỉ Chốt kỳ khi đã kiểm tra các hồ sơ Đạt yêu cầu và danh sách hồ sơ sẽ bị bỏ qua.",
         href: "/ky-bao-cao/",
         linkLabel: "Mở Kỳ báo cáo",
       },
@@ -80,13 +80,13 @@ const roleGuides: RoleGuide[] = [
   {
     id: "khoa",
     title: "Khoa",
-    summary: "Kê khai trong phạm vi đơn vị và duyệt nội bộ trước khi chuyển hồ sơ cho Phòng KH-CN.",
+    summary: "Kê khai trong phạm vi khoa và duyệt nội bộ trước khi chuyển hồ sơ cho Phòng KH-CN.",
     userRoles: ["faculty_officer", "faculty_head"],
     icon: School,
     steps: [
       {
-        title: "Kê khai công trình cho đơn vị",
-        description: "Chuyên viên khoa mở kỳ đang nhận hồ sơ, vào tab Hồ sơ kê khai, chọn công trình và đúng đơn vị của mình; thêm ghi chú hoặc minh chứng cần thiết.",
+        title: "Kê khai công trình cho khoa",
+        description: "Chuyên viên khoa mở kỳ đang nhận hồ sơ, vào tab Hồ sơ kê khai, chọn công trình và đúng khoa của mình; thêm ghi chú hoặc minh chứng cần thiết.",
         href: "/ky-bao-cao/",
         linkLabel: "Mở Kỳ báo cáo",
       },
@@ -158,7 +158,7 @@ const roleGuides: RoleGuide[] = [
     steps: [
       {
         title: "Xem tổng quan",
-        description: "Đọc các chỉ số chính, biểu đồ theo năm và loại, thống kê theo đơn vị cùng nhóm giảng viên nổi bật. Bấm vào hàng đợi hoặc tên giảng viên để truy ngược số liệu.",
+        description: "Đọc các chỉ số chính, biểu đồ theo năm và loại, thống kê theo khoa cùng nhóm giảng viên nổi bật. Bấm vào hàng đợi hoặc tên giảng viên để truy ngược số liệu.",
         href: "/tong-quan/",
         linkLabel: "Mở Tổng quan",
       },
@@ -190,7 +190,7 @@ const declarationStates = [
   ["ChoPhongKiemTra", "Đã gửi Phòng KH-CN để kiểm tra cấp trường."],
   ["DatYeuCau", "Phòng KH-CN đã chấp nhận, hồ sơ chờ kỳ được chốt."],
   ["DaChot", "Đã nằm trong dữ liệu chốt của kỳ báo cáo."],
-  ["Rut", "Đơn vị hoặc người kê khai đã rút hồ sơ khỏi luồng."],
+  ["Rut", "Khoa hoặc người kê khai đã rút hồ sơ khỏi luồng."],
 ] as const;
 
 const glossary = [
@@ -199,7 +199,7 @@ const glossary = [
   ["Liên kết tác giả", "Mối nối giữa một lượt tên và đúng hồ sơ giảng viên. Liên kết có trạng thái để phân biệt kết quả tự động, đang chờ người xác nhận, đã xác nhận hoặc đã bác bỏ."],
   ["Nghi trùng", "Nhóm từ hai bản ghi trở lên có dấu hiệu mô tả cùng một công trình. Người có thẩm quyền phải so sánh rồi chọn gộp, giữ riêng hoặc bỏ qua."],
   ["Khía cạnh", "Một góc so sánh đề tài: bài toán, đối tượng, phạm vi hoặc phương pháp. Mỗi khía cạnh được giải thích riêng thay vì gộp thành một phần trăm tổng hợp."],
-  ["Kỳ báo cáo", "Khoảng thời gian Phòng KH-CN mở để các đơn vị kê khai, duyệt và nộp công trình. Khi kỳ đã chốt, dữ liệu báo cáo không được sửa ngầm."],
+  ["Kỳ báo cáo", "Khoảng thời gian Phòng KH-CN mở để các khoa kê khai, duyệt và nộp công trình. Khi kỳ đã chốt, dữ liệu báo cáo không được sửa ngầm."],
   ["Chế độ mở", "Khi chưa có tài khoản nào được đặt mật khẩu, hệ thống cho phép dùng các chức năng theo cấu hình vận hành ban đầu. Ngay khi bật đăng nhập, quyền thao tác được kiểm tra theo tài khoản và vai trò."],
 ] as const;
 
@@ -209,7 +209,7 @@ const faqs = [
   ["Tỷ lệ liên kết tác giả 86,6% có nghĩa là đã đúng hết chưa?", "Chưa. Đây là tỷ lệ bài báo có ít nhất một liên kết tự động hoặc ứng viên đã vào hàng đợi; các ca chưa chắc chắn vẫn phải được người dùng xác nhận hoặc bác bỏ."],
   ["Ngưỡng rà soát Cao/Vừa có phải số tuỳ ý không?", "Không. Ngưỡng 0,90/0,80 được hiệu chuẩn trên phân bố điểm thật của 529 đồ án khoá 21 và kiểm tra thủ công các cặp quanh ngưỡng. Khi đổi mô hình hoặc tập dữ liệu, ngưỡng có thể cần đo lại."],
   ["AI có tự gộp, tự nối hoặc tự xoá dữ liệu không?", "Không. AI chỉ tạo gợi ý; các thao tác gộp, nối, sửa hay bác bỏ đều cần người có quyền chủ động thực hiện. Đây là nguyên tắc BR-18: AI gợi ý, người quyết."],
-  ["Ai được sửa dữ liệu và có truy ngược được sau khi sửa không?", "Chỉ Phòng KH-CN được chỉnh tay chín trường mô tả và phải ghi lý do; không được sửa tác giả, đơn vị hay minh chứng. Hệ thống giữ giá trị gốc, ghi người sửa, thời điểm và sự kiện trong nhật ký."],
+  ["Ai được sửa dữ liệu và có truy ngược được sau khi sửa không?", "Chỉ Phòng KH-CN được chỉnh tay chín trường mô tả và phải ghi lý do; không được sửa tác giả, khoa hay minh chứng. Hệ thống giữ giá trị gốc, ghi người sửa, thời điểm và sự kiện trong nhật ký."],
 ] as const;
 
 export default function UserGuidePage() {
@@ -298,7 +298,7 @@ export default function UserGuidePage() {
             <dl className="mt-5 divide-y border-y">{glossary.map(([term, definition]) => <div key={term} className="grid gap-1 py-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-5"><dt className="font-semibold">{term}</dt><dd className="leading-6 text-muted-foreground">{definition}</dd></div>)}</dl>
             <div className="mt-6">
               <h3 className="font-semibold">Hồ sơ kê khai và 8 trạng thái</h3>
-              <p className="mt-1 max-w-4xl leading-6 text-muted-foreground">Hồ sơ kê khai gắn một công trình với một đơn vị trong một kỳ báo cáo, kèm minh chứng và toàn bộ lịch sử duyệt. Luồng thông thường đi từ Nháp tới Đã chốt; Chờ bổ sung và Đã rút là các nhánh xử lý riêng.</p>
+              <p className="mt-1 max-w-4xl leading-6 text-muted-foreground">Hồ sơ kê khai gắn một công trình với một khoa trong một kỳ báo cáo, kèm minh chứng và toàn bộ lịch sử duyệt. Luồng thông thường đi từ Nháp tới Đã chốt; Chờ bổ sung và Đã rút là các nhánh xử lý riêng.</p>
               <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">{declarationStates.map(([state, description], index) => <div key={state} className="grid grid-cols-[24px_minmax(0,1fr)] gap-2"><span aria-hidden className="pt-0.5 text-xs text-muted-foreground tabular-nums">{index + 1}.</span><div><dt className="font-medium">{stateLabels[state]}</dt><dd className="mt-0.5 text-sm leading-5 text-muted-foreground">{description}</dd></div></div>)}</dl>
             </div>
           </section>

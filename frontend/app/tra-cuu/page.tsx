@@ -103,7 +103,7 @@ function SearchContent() {
       <div className={cn("mt-3 grid gap-3 border-t pt-3 sm:grid-cols-2", supportsScore ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
         <div><label className="mb-1 block text-xs font-medium">Loại tài liệu</label><Select value={docType} onValueChange={(value) => setDocType(String(value))}><SelectTrigger aria-label="Loại tài liệu" className="w-full"><SelectValue>{(value) => value === empty ? "Tất cả" : docTypeLabels[String(value)]}</SelectValue></SelectTrigger><SelectContent><SelectItem value={empty}>Tất cả</SelectItem>{Object.entries(docTypeLabels).slice(0, 5).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>
         <FacetSelect label="Năm" value={year} options={yearOptions} onChange={setYear} />
-        <FacetSelect label="Đơn vị" value={unit} options={unitOptions} onChange={setUnit} />
+        <FacetSelect label="Khoa" value={unit} options={unitOptions} onChange={setUnit} />
         {supportsScore && <FacetSelect label="Điểm quy đổi" value={score} options={scoreOptions} onChange={setScore} />}
         <div><label className="mb-1 block text-xs font-medium">Chủ đề</label><Select value={topic} onValueChange={(value) => setTopic(String(value))}><SelectTrigger aria-label="Chủ đề" className="w-full"><SelectValue>{(value) => value === empty ? "Tất cả" : topics.data?.find((item) => item.id === Number(value))?.label}</SelectValue></SelectTrigger><SelectContent><SelectItem value={empty}>Tất cả</SelectItem>{topics.data?.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.label} ({item.size})</SelectItem>)}</SelectContent></Select></div>
       </div>

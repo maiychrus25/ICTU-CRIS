@@ -87,7 +87,7 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const unit = mockUnits.find((item) => item.id === id);
     const name = String((JSON.parse(String(init.body)) as { name: string }).name).trim();
     if (!unit) data = undefined;
-    else if (!name) throw new ApiError(400, "Tên đơn vị không được để trống.");
+    else if (!name) throw new ApiError(400, "Tên khoa không được để trống.");
     else { unit.name = name; data = unit; }
   }
   else if (/^\/api\/units\/\d+\/aliases$/.test(url.pathname) && init?.method === "POST") {
@@ -289,7 +289,7 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     if (!work) throw new ApiError(403, "chỉ kê khai được công trình của chính mình");
     if (!["DaNoiTuDong", "DaXacNhan"].includes(work.link_state)) throw new ApiError(403, "chỉ kê khai được công trình của chính mình");
     if (work.declared_in.includes(body.period_id)) throw new ApiError(409, "đã kê khai");
-    if (!unit) throw new ApiError(409, "Không xác định được đơn vị để kê khai");
+    if (!unit) throw new ApiError(409, "Không xác định được khoa để kê khai");
     const now = new Date().toISOString();
     const row: DeclarationRow = {
       id: Math.max(600, ...Object.keys(mockDeclarationDetails).map(Number)) + 1,
@@ -320,7 +320,7 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const unit = statsFixture.by_unit.find((item) => item.unit_id === body.unit_id);
     if (period?.state !== "DangMo") throw new ApiError(409, "chỉ kê khai được khi kỳ báo cáo đang mở");
     if (mockDeclarations[periodId]?.some((row) => row.work_id === body.work_id && row.unit_id === body.unit_id)) throw new ApiError(409, "đã kê khai");
-    if (!work || !unit) throw new ApiError(409, "công trình hoặc đơn vị không hợp lệ");
+    if (!work || !unit) throw new ApiError(409, "công trình hoặc khoa không hợp lệ");
     const now = new Date().toISOString();
     const row: DeclarationRow = {
       id: Math.max(600, ...Object.keys(mockDeclarationDetails).map(Number)) + 1,

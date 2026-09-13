@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Tổng quan",
-  description: "Theo dõi số liệu công trình nghiên cứu ICTU theo năm, loại tài liệu và đơn vị với khả năng truy ngược dữ liệu gốc.",
+  description: "Theo dõi số liệu công trình nghiên cứu ICTU theo năm, loại tài liệu và khoa với khả năng truy ngược dữ liệu gốc.",
   alternates: { canonical: "/tong-quan/" },
 };
 

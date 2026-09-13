@@ -35,7 +35,7 @@ test("trang báo cáo hiển thị mã băm và các bảng đóng băng", async
 
   await expect(page.getByRole("heading", { name: "Báo cáo công trình năm 2026" })).toBeVisible();
   await expect(page.getByText(/SHA-256 6f2a9d31/)).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Tổng hợp theo đơn vị" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tổng hợp theo khoa" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Theo loại tài liệu" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Chi tiết hồ sơ" })).toBeVisible();
   await expect(page.getByRole("link", { name: "CSV" })).toHaveAttribute("href", "/api/reports/901/export?format=csv");

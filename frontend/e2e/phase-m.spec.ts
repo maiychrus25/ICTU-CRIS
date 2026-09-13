@@ -15,7 +15,7 @@ test("lọc điểm quy đổi cập nhật URL và chỉ giữ công trình ph�
   await expect(page.locator("tbody tr")).toHaveCount(1);
 });
 
-test("chip đơn vị ở chi tiết công trình mở tra cứu theo mã", async ({ page }) => {
+test("chip khoa ở chi tiết công trình mở tra cứu theo mã", async ({ page }) => {
   await page.goto("/cong-trinh/?id=2");
 
   const unit = page.getByRole("link", { name: "CNTT" });
@@ -25,10 +25,10 @@ test("chip đơn vị ở chi tiết công trình mở tra cứu theo mã", asyn
   await expect(page).toHaveURL(/\/tra-cuu\/\?unit=CNTT$/);
 });
 
-test("hồ sơ giảng viên tách chức vụ khỏi đơn vị", async ({ page }) => {
+test("hồ sơ giảng viên tách chức vụ khỏi khoa", async ({ page }) => {
   await page.goto("/giang-vien/?id=1");
 
   await expect(page.getByText("Hiệu trưởng", { exact: true })).toBeVisible();
-  await expect(page.getByText("CNTT — Khoa Công nghệ thông tin", { exact: true })).toHaveAttribute("title", "Suy từ đa số công trình đã liên kết");
+  await expect(page.getByText("Khoa: CNTT — Khoa Công nghệ thông tin", { exact: true })).toHaveAttribute("title", "Suy từ đa số công trình");
   await expect(page.getByText("Ban Giám hiệu", { exact: true })).toHaveCount(0);
 });

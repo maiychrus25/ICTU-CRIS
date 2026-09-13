@@ -66,7 +66,7 @@ test("kê khai công trình và chặn yêu cầu bổ sung thiếu lý do", asy
   const createDialog = page.getByRole("dialog");
   await createDialog.getByRole("combobox", { name: "Tìm công trình" }).fill("Thiết kế hệ thống tưới cây");
   await createDialog.getByRole("option", { name: /Thiết kế hệ thống tưới cây tự động/ }).click();
-  await createDialog.getByRole("combobox", { name: "Đơn vị kê khai" }).click();
+  await createDialog.getByRole("combobox", { name: "Khoa kê khai" }).click();
   await page.getByRole("option", { name: "ĐTVT — Khoa Công nghệ điện tử và truyền thông" }).click();
   await createDialog.getByLabel("Ghi chú").fill("Kê khai từ kiểm thử giao diện.");
   await createDialog.getByRole("button", { name: "Kê khai", exact: true }).click();
@@ -231,7 +231,7 @@ test("chủ đề mở chi tiết rồi điền bộ lọc tra cứu", async ({ 
 
   await expect(page).toHaveURL(/\/tra-cuu\/\?topic=1$/);
   await expect(page.getByRole("combobox", { name: "Chủ đề" })).toContainText("Trí tuệ nhân tạo");
-  await page.getByRole("combobox", { name: "Đơn vị" }).click();
+  await page.getByRole("combobox", { name: "Khoa" }).click();
   await expect(page.getByRole("option", { name: "CNTT — Khoa Công nghệ thông tin" })).toBeVisible();
 });
 
@@ -242,7 +242,7 @@ test("đồng bộ mở chi tiết lượt và hiển thị cảnh báo", async 
 
   await expect(page).toHaveURL(/\/dong-bo\/chi-tiet\/\?id=18$/);
   await expect(page.getByRole("heading", { name: "Chi tiết lượt đồng bộ #18" })).toBeVisible();
-  await expect(page.getByText("2 bản ghi thiếu mã đơn vị.")).toBeVisible();
+  await expect(page.getByText("2 bản ghi thiếu mã khoa.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Bản ghi thay đổi gần nhất" })).toBeVisible();
 });
 
