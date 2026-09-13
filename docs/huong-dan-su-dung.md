@@ -33,7 +33,7 @@
   - [2.12 Khoa của tôi / Theo khoa](#212-khoa-của-tôi--theo-khoa)
   - [2.13 Hồ sơ giảng viên](#213-hồ-sơ-giảng-viên)
   - [2.14 Chất lượng dữ liệu](#214-chất-lượng-dữ-liệu)
-  - [2.15 Quản trị đơn vị](#215-quản-trị-đơn-vị)
+  - [2.15 Quản trị khoa](#215-quản-trị-khoa)
   - [2.16 Đồng bộ](#216-đồng-bộ)
   - [2.17 Nhật ký](#217-nhật-ký)
   - [2.18 Thông báo](#218-thông-báo)
@@ -89,7 +89,7 @@ trò mình có.
 
 | Vai trò | Mã trong hệ thống | Tóm tắt quyền |
 |---|---|---|
-| **Phòng KH-CN** | `rd_officer` | Toàn quyền trên toàn trường: mở/đóng/huỷ/chốt kỳ báo cáo, kiểm tra hồ sơ kê khai của mọi khoa, xử lý hàng đợi tác giả và nghi trùng, chỉnh tay dữ liệu công trình (có xuất xứ), quản trị tên/bí danh đơn vị (`/don-vi/`), bỏ qua cảnh báo bất thường, xem báo cáo và đơn vị bất kỳ. Giao diện gọi vai trò này là **"Chuyên viên KHCN"** ở các nút và tooltip (ví dụ tooltip **"Cần vai trò Chuyên viên KHCN"** khi bạn chưa đủ quyền) |
+| **Phòng KH-CN** | `rd_officer` | Toàn quyền trên toàn trường: mở/đóng/huỷ/chốt kỳ báo cáo, kiểm tra hồ sơ kê khai của mọi khoa, xử lý hàng đợi tác giả và nghi trùng, chỉnh tay dữ liệu công trình (có xuất xứ), quản trị tên/bí danh khoa (`/don-vi/`), bỏ qua cảnh báo bất thường, xem báo cáo và khoa bất kỳ. Giao diện gọi vai trò này là **"Chuyên viên KHCN"** ở các nút và tooltip (ví dụ tooltip **"Cần vai trò Chuyên viên KHCN"** khi bạn chưa đủ quyền) |
 | **Chuyên viên khoa** | `faculty_officer` | Kê khai công trình và trình khoa duyệt, chỉ trong phạm vi đơn vị mình được gán — phạm vi này lọc ở tầng cơ sở dữ liệu, không chỉ ẩn trên giao diện |
 | **Trưởng khoa** | `faculty_head` | Duyệt hoặc trả lại hồ sơ **của khoa mình**; không tự lập hồ sơ, không sửa nội dung công trình |
 | **Giảng viên** | `lecturer` | Tự kê khai công trình đã liên kết với chính mình (`/ke-khai-cua-toi/`), tự xác nhận liên kết tác giả của mình, dùng đối chiếu đề tài và rà soát theo khoá |
@@ -127,7 +127,7 @@ trong ứng dụng).
   điện thoại): logo ICTU-CRIS ở trên cùng, rồi tới danh sách điều hướng theo thứ tự
   **Tổng quan**, (**Kê khai của tôi** — chỉ hiện với giảng viên), **Tra cứu**, **Chủ đề**,
   **Bản đồ tri thức**, **Đối chiếu đề tài**, **Hàng đợi tác giả**, **Hàng đợi nghi trùng**,
-  **Kỳ báo cáo**, **Chất lượng dữ liệu**, (**Quản trị đơn vị** — chỉ hiện với Phòng KH-CN),
+  **Kỳ báo cáo**, **Chất lượng dữ liệu**, (**Quản trị khoa** — chỉ hiện với Phòng KH-CN),
   **Đồng bộ**, **Nhật ký**, **Về hệ thống**, **Hướng dẫn**. Nếu tài khoản gắn với một đơn vị
   hoặc có quyền xem mọi đơn vị, mục **Khoa của tôi** (hoặc **Theo khoa**) chèn thêm ngay sau
   **Kê khai của tôi**. Cuối thanh bên là liên kết **"Kiểm tra đề tài công khai"** rồi tới
@@ -220,20 +220,20 @@ trùng từ), kèm bộ lọc và xuất CSV.
 - Công tắc **"Theo từ khoá"** / **"Theo nghĩa (AI)"** ngay cạnh ô tìm.
 - Ô **Từ khoá** (placeholder đổi theo chế độ: *"Tiêu đề (không dấu cũng được) hoặc tên tác
   giả…"* ở chế độ từ khoá, *"Mô tả điều bạn tìm, ví dụ: app dạy trẻ phát âm"* ở chế độ AI).
-- Bộ lọc chính: **Loại tài liệu**, **Năm**, **Đơn vị**, **Điểm quy đổi**, **Chủ đề** (mỗi
-  lựa chọn kèm số lượng công trình khớp, ví dụ *"Bài báo (1.907)"*). **Đơn vị** đọc từ danh
-  mục đơn vị thật (`GET /api/units`) — mỗi lựa chọn hiện *"Mã — Tên"* (ví dụ *"CNTT — Khoa
+- Bộ lọc chính: **Loại tài liệu**, **Năm**, **Khoa**, **Điểm quy đổi**, **Chủ đề** (mỗi
+  lựa chọn kèm số lượng công trình khớp, ví dụ *"Bài báo (1.907)"*). **Khoa** đọc từ danh
+  mục khoa thật (`GET /api/units`) — mỗi lựa chọn hiện *"Mã — Tên"* (ví dụ *"CNTT — Khoa
   Công nghệ thông tin"*).
 - **Điểm quy đổi**: lọc bài báo theo mức điểm ghi tại nguồn — **0,5**, **0,75**, **1**, hoặc
   **Chưa xác định**, mỗi mức kèm số lượng khớp lấy từ facet `scores`.
 - Khung **"Bộ lọc nâng cao"** (đóng mặc định, bấm mở): **Loại bài/chỉ mục**, **Quartile**,
   **Khoá**.
-- Chip từ khoá và chip **đơn vị** (mã đơn vị): mỗi công trình trong bảng kết quả hiện chip
-  đơn vị (di chuột vào để thấy tên đầy đủ) rồi tối đa 3 từ khoá dạng huy hiệu; bấm vào một
-  chip đơn vị hoặc một từ khoá để lọc tiếp theo đúng giá trị đó.
+- Chip từ khoá và chip **khoa** (mã khoa): mỗi công trình trong bảng kết quả hiện chip
+  khoa (di chuột vào để thấy tên đầy đủ) rồi tối đa 3 từ khoá dạng huy hiệu; bấm vào một
+  chip khoa hoặc một từ khoá để lọc tiếp theo đúng giá trị đó.
 - Nút **Tải CSV** (tải đúng tập kết quả đang lọc, UTF-8 có BOM, mở được ngay bằng Excel).
 - Nút **Tra cứu** (chạy tìm kiếm) và **Xoá bộ lọc**.
-- Bảng kết quả: cột **Công trình** (tiêu đề + DOI nếu có + chip đơn vị + chip từ khoá), cột
+- Bảng kết quả: cột **Công trình** (tiêu đề + DOI nếu có + chip khoa + chip từ khoá), cột
   **Độ gần** (chỉ hiện ở chế độ AI — thanh phần trăm), cột **Điểm** (chỉ hiện ở chế độ từ
   khoá — điểm quy đổi của bài báo: **0,5**/**0,75**/**1**, để trống nếu công trình không
   phải bài báo hoặc chưa xác định điểm), **Loại**, **Năm**, **Trạng thái**.
@@ -241,10 +241,10 @@ trùng từ), kèm bộ lọc và xuất CSV.
 **Cách sử dụng.**
 1. Gõ từ khoá vào ô tìm; giữ mặc định **Theo từ khoá** hoặc bấm **Theo nghĩa (AI)** nếu
    muốn tìm theo mô tả gần nghĩa.
-2. Chọn thêm **Loại tài liệu**, **Năm**, **Đơn vị**, **Điểm quy đổi**, **Chủ đề** nếu cần;
+2. Chọn thêm **Loại tài liệu**, **Năm**, **Khoa**, **Điểm quy đổi**, **Chủ đề** nếu cần;
    mở **Bộ lọc nâng cao** để lọc theo chỉ mục/quartile/khoá.
 3. Bấm **Tra cứu**. Bảng kết quả cập nhật theo trang (phân trang 50 dòng).
-4. Bấm tiêu đề một công trình để mở chi tiết; bấm một chip đơn vị hoặc một chip từ khoá để
+4. Bấm tiêu đề một công trình để mở chi tiết; bấm một chip khoa hoặc một chip từ khoá để
    lọc theo đúng giá trị đó; bấm **Tải CSV** để xuất danh sách đang lọc.
 
 **Ai được dùng.** Công khai — không cần đăng nhập để tra cứu.
@@ -261,9 +261,9 @@ trùng từ), kèm bộ lọc và xuất CSV.
 - **Điểm quy đổi** là điểm **ghi tại nguồn theo loại ấn phẩm** (0,5/0,75/1) — hệ thống
   **không** tự suy điểm từ chỉ mục Scopus/ISI hay quartile; quy chế quy đổi điểm do trường
   quyết định, không phải một phép tính của hệ thống.
-- Chip đơn vị trên một công trình lấy từ **hợp của hai nguồn**: đơn vị ghi ở kho nguồn (facet
-  `dept` của bài báo) **và** đơn vị của (các) tác giả đã liên kết với công trình đó — một
-  công trình có thể có nhiều chip đơn vị hoặc không chip nào nếu chưa xác định được đơn vị
+- Chip khoa trên một công trình lấy từ **hợp của hai nguồn**: khoa ghi ở kho nguồn (facet
+  `dept` của bài báo) **và** khoa của (các) tác giả đã liên kết với công trình đó — một
+  công trình có thể có nhiều chip khoa hoặc không chip nào nếu chưa xác định được khoa
   từ cả hai nguồn.
 
 **Ảnh.** `docs/huong-dan/tra-cuu.png`.
@@ -276,9 +276,9 @@ trùng từ), kèm bộ lọc và xuất CSV.
 này ở đâu ra": giữ song song giá trị đang dùng, giá trị gốc từ kho, và ai đã đổi nó nếu có.
 
 **Cung cấp gì.**
-- Dòng **"Đơn vị: CNTT, ĐTVT…"** ngay dưới tiêu đề — mỗi mã đơn vị là một chip bấm được, mở
-  trang Tra cứu đã lọc sẵn theo đúng đơn vị đó; di chuột vào một chip để thấy tên đầy đủ.
-  Không hiện dòng này nếu công trình chưa xác định được đơn vị nào.
+- Dòng **"Khoa: CNTT, ĐTVT…"** ngay dưới tiêu đề — mỗi mã khoa là một chip bấm được, mở
+  trang Tra cứu đã lọc sẵn theo đúng khoa đó; di chuột vào một chip để thấy tên đầy đủ.
+  Không hiện dòng này nếu công trình chưa xác định được khoa nào.
 - Bảng **"Xuất xứ dữ liệu"** — 4 cột: **Trường**, **Giá trị đang dùng**, **Giá trị gốc**,
   **Nguồn**. Dòng "Nguồn" ghi rõ *"Chỉnh tay bởi … lúc …"* nếu trường đó từng bị sửa tay,
   ngược lại ghi nguồn gốc (kho dữ liệu ICTU, bảng tính khoa, phiếu đăng ký…). Với bài báo,
@@ -846,10 +846,10 @@ giảng viên thành một hồ sơ công bố, cùng số liệu theo loại v�
 
 **Cung cấp gì.**
 - **Chức vụ** (nếu có, ví dụ *"Hiệu trưởng"*, *"Phó Hiệu trưởng"*, *"Trưởng khoa"*) hiện
-  ngay dưới tên, **tách riêng** khỏi đơn vị — chức vụ không còn được coi là một đơn vị.
-- **Đơn vị** (mã + tên, ví dụ *"CNTT — Khoa Công nghệ thông tin"*), kèm icon toà nhà; nếu
-  đơn vị này do hệ thống tự suy ra (chưa có ai gán tay), di chuột vào dòng đơn vị hiện chú
-  giải **"Suy từ đa số công trình đã liên kết"**. Không hiện dòng đơn vị nếu giảng viên chưa
+  ngay dưới tên, **tách riêng** khỏi khoa — chức vụ không còn được coi là một khoa.
+- **Khoa** (mã + tên, ví dụ *"CNTT — Khoa Công nghệ thông tin"*), kèm icon toà nhà; nếu
+  khoa này do hệ thống tự suy ra (chưa có ai gán tay), di chuột vào dòng khoa hiện chú
+  giải **"Suy từ đa số công trình đã liên kết"**. Không hiện dòng khoa nếu giảng viên chưa
   đủ tín hiệu để suy ra hoặc chưa được gán.
 - Thông tin liên hệ: ORCID, Google Scholar, email (nếu có).
 - Cảnh báo nếu có công trình đang chờ xác nhận liên kết với hồ sơ này, kèm liên kết mở hàng
@@ -871,10 +871,10 @@ giảng viên thành một hồ sơ công bố, cùng số liệu theo loại v�
 **Lưu ý / giới hạn.**
 - Không có giới hạn số dòng — bảng hiển thị toàn bộ công trình đã liên kết của giảng viên,
   sắp theo năm giảm dần.
-- Đơn vị của giảng viên **không sửa được trên giao diện này**. Hệ thống tự gán (`unit_source
-  = auto`) theo mã đơn vị xuất hiện nhiều nhất trong các công trình đã liên kết còn sống của
+- Khoa của giảng viên **không sửa được trên giao diện này**. Hệ thống tự gán (`unit_source
+  = auto`) theo mã khoa xuất hiện nhiều nhất trong các công trình đã liên kết còn sống của
   người đó (hoà phiếu thì bỏ, không gán); Phòng KH-CN gán tay bằng dòng lệnh
-  `python -m cris user set-unit --email <email> --unit <mã đơn vị>` khi cần sửa lại
+  `python -m cris user set-unit --email <email> --unit <mã khoa>` khi cần sửa lại
   (`unit_source = manual`, không hiện chú giải "Suy từ đa số công trình").
 - Chức vụ lấy từ dữ liệu gốc của kho nguồn (trường *jobTitle*) — phần lớn giảng viên không
   có chức vụ ghi ở nguồn nên trường này thường để trống.
@@ -970,46 +970,68 @@ KH-CN**).
 
 ---
 
-### 2.15 Quản trị đơn vị
+### 2.15 Quản trị khoa
 
-**Tính năng này là gì.** Trang `/don-vi/` là danh mục **đơn vị thật** (khoa/trung tâm) của
-trường — mã lấy thẳng từ bộ lọc `dept` của kho nguồn (`repository.ictu.edu.vn`), tên và bí
-danh do Phòng KH-CN đặt cho dễ hiểu. Đây không phải nơi tạo đơn vị mới hay xoá đơn vị — chỉ
-đặt tên và bí danh cho các mã đã đồng bộ về.
+**Tính năng này là gì.** Trang `/don-vi/` là danh mục **khoa thật** của trường — mã lấy
+thẳng từ bộ lọc `dept` của kho nguồn (`repository.ictu.edu.vn`), tên và bí danh do Phòng
+KH-CN đặt cho dễ hiểu. Đây không phải nơi tạo khoa mới hay xoá khoa — chỉ đặt tên và bí
+danh cho các mã đã đồng bộ về.
 
 **Cung cấp gì.**
-- Bảng đơn vị: **Mã**, **Tên**, **Bí danh** (huy hiệu, có thể nhiều bí danh), **Công trình**
-  (số công trình có đơn vị này), **Giảng viên** (số giảng viên được gán đơn vị này), cột
+- Bảng khoa: **Mã**, **Tên**, **Bí danh** (huy hiệu, có thể nhiều bí danh), **Công trình**
+  (số công trình có khoa này), **Giảng viên** (số giảng viên được gán khoa này), cột
   **Hành động**.
-- Nút **"Đổi tên"** trên mỗi dòng — mở hộp thoại đổi tên đơn vị.
-- Nút **"Thêm bí danh"** trên mỗi dòng — mở hộp thoại thêm một bí danh mới cho đơn vị (ví dụ
+- Nút **"Đổi tên"** trên mỗi dòng — mở hộp thoại đổi tên khoa.
+- Nút **"Thêm bí danh"** trên mỗi dòng — mở hộp thoại thêm một bí danh mới cho khoa (ví dụ
   `HTTKT` là bí danh của `HTTTKT`).
 - Cả hai hộp thoại có ô **Lý do** (không bắt buộc) để ghi chú lý do đổi, thuận tiện đối
   chiếu lịch sử thay đổi sau này.
 
 **Cách sử dụng.**
-1. Mở `/don-vi/` (mục **"Quản trị đơn vị"** trên thanh bên).
-2. Bấm **"Đổi tên"** trên dòng đơn vị cần sửa, nhập **Tên mới \*** (bắt buộc, không được để
+1. Mở `/don-vi/` (mục **"Quản trị khoa"** trên thanh bên).
+2. Bấm **"Đổi tên"** trên dòng khoa cần sửa, nhập **Tên mới \*** (bắt buộc, không được để
    trống), có thể ghi thêm **Lý do**, bấm **"Lưu tên"**.
-3. Bấm **"Thêm bí danh"** để gán thêm một cách viết khác cho cùng một mã đơn vị, nhập
+3. Bấm **"Thêm bí danh"** để gán thêm một cách viết khác cho cùng một mã khoa, nhập
    **Bí danh \*** (bắt buộc), có thể ghi thêm **Lý do**, bấm **"Thêm bí danh"**.
-4. Bảng đơn vị cập nhật ngay sau khi lưu.
+4. Bảng khoa cập nhật ngay sau khi lưu.
 
 **Ai được dùng.** Xem và sửa: chỉ **Phòng KH-CN** (`rd_officer`) — vai trò khác mở trang này
 thấy thông báo **"Không có quyền truy cập"**.
 
 **Lưu ý / giới hạn.**
-- **Mã đơn vị lấy từ kho nguồn và không đổi được** ở đây — chỉ đổi được **tên** và thêm
+- **Mã khoa lấy từ kho nguồn và không đổi được** ở đây — chỉ đổi được **tên** và thêm
   **bí danh**. Muốn đổi mã (ví dụ kho nguồn đổi cách gõ) phải sửa qua CLI
   (`python -m cris units rename --code <mã> --name "<tên>"` hoặc
   `python -m cris units alias --code <mã> --alias <bí danh>`).
 - Mỗi lần đổi tên hoặc thêm bí danh đều **ghi vào nhật ký thao tác** (mục 2.17), kèm người
   thực hiện, giá trị trước/sau và lý do nếu có.
-- Đơn vị hiển thị ở đây chỉ gồm đơn vị **đang hoạt động** (khoa/trung tâm thật) — chức vụ
-  Ban Giám hiệu (Hiệu trưởng, Phó Hiệu trưởng…) không còn là một đơn vị trong danh mục này,
-  xem trường **Chức vụ** riêng ở hồ sơ giảng viên (mục 2.13).
-- Đây là nơi **duy nhất trên giao diện** đổi tên/bí danh đơn vị; đơn vị của từng giảng viên
+- Khoa hiển thị ở đây chỉ gồm khoa **đang hoạt động** — chức vụ Ban Giám hiệu (Hiệu trưởng,
+  Phó Hiệu trưởng…) không còn là một khoa trong danh mục này, xem trường **Chức vụ** riêng
+  ở hồ sơ giảng viên (mục 2.13).
+- Đây là nơi **duy nhất trên giao diện** đổi tên/bí danh khoa; khoa của từng giảng viên
   (gán tự động hoặc gán tay) sửa ở CLI, xem mục 2.13.
+
+**Bảng mã ↔ tên chính thức.** Theo ictu.edu.vn (13/09/2026), trường hiện có **5 khoa**; các
+mã còn lại trong danh mục là khoa/bộ môn tiền thân, còn xuất hiện ở bản ghi cũ vì kho nguồn
+chưa gộp lại:
+
+| Mã | Tên hiển thị hiện tại | Ghi chú |
+|---|---|---|
+| `CNTT` | Khoa Công nghệ thông tin | Khoa hiện tại |
+| `KT&CN` | Khoa Kỹ thuật và Công nghệ | Khoa hiện tại |
+| `KT&QT` | Khoa Kinh tế và Quản trị | Khoa hiện tại; đổi tên năm 2011 từ Khoa Hệ thống thông tin kinh tế |
+| `NT&TT` | Khoa Nghệ thuật và Truyền thông | Khoa hiện tại; tiền thân là Bộ môn Truyền thông đa phương tiện |
+| *(chưa có mã ở nguồn)* | Khoa Khoa học liên ngành | Khoa hiện tại; tiền thân là Bộ môn Khoa học cơ bản |
+| `ĐTVT` | Khoa Công nghệ điện tử và truyền thông | Tiền thân, nay thuộc KT&CN |
+| `ĐTTT` | Khoa Điện tử truyền thông | Tiền thân, nay thuộc KT&CN |
+| `TĐH` | Khoa Công nghệ tự động hoá | Tiền thân, nay thuộc KT&CN |
+| `HTTTKT` (bí danh `HTTKT`) | Khoa Hệ thống thông tin kinh tế | Tiền thân, nay là KT&QT |
+| `KHCB` | Khoa Khoa học cơ bản | Tiền thân, nay thuộc Khoa Khoa học liên ngành |
+| `TTĐPT` | Khoa Truyền thông đa phương tiện | Tiền thân, nay thuộc NT&TT |
+
+Các mã tiền thân **chưa được gộp** vào khoa hiện tại trên giao diện hay trong thống kê — mỗi
+mã vẫn đứng riêng ở trang này, ở bộ lọc Tra cứu và ở chip công trình cho tới khi Phòng KH-CN
+quyết định gộp (xem `docs/SRS.md` và kế hoạch lát cắt M).
 
 **Ảnh.** Chưa có ảnh minh hoạ riêng.
 
@@ -1341,8 +1363,8 @@ hiện rõ "AI chưa bật".
 | **PCA (chiếu 2 chiều)** | Kỹ thuật toán học rút gọn một vector nhiều chiều xuống còn 2 chiều để vẽ lên bản đồ — giữ lại phần lớn nhưng không phải toàn bộ thông tin gốc. |
 | **NFR-02 (phạm vi đơn vị)** | Quy tắc: vai trò cấp khoa chỉ xem và thao tác được dữ liệu của đơn vị mình, lọc ngay ở tầng cơ sở dữ liệu. |
 | **BR-23 (chỉnh tay có xuất xứ)** | Quy tắc: Phòng KH-CN chỉ sửa trực tiếp được 9 trường mô tả của công trình, luôn kèm lý do, không sửa tác giả/đơn vị/minh chứng. |
-| **Đơn vị** (unit) | Khoa hoặc trung tâm thật, mã lấy từ bộ lọc `dept` của kho nguồn (ví dụ `CNTT`, `KHCB`) — khác với **chức vụ** (Hiệu trưởng, Trưởng khoa…), vốn không phải một đơn vị. |
-| **Chức vụ** (position) | Vai trò quản lý của một giảng viên (Hiệu trưởng, Phó Hiệu trưởng, Trưởng khoa…), hiển thị tách riêng khỏi đơn vị trên hồ sơ giảng viên. |
+| **Khoa** (mã hệ thống: `unit`) | Khoa thật của trường, mã lấy từ bộ lọc `dept` của kho nguồn (ví dụ `CNTT`, `KHCB`) — khác với **chức vụ** (Hiệu trưởng, Trưởng khoa…), vốn không phải một khoa. 10 mã đọc được ở nguồn ứng với 5 khoa hiện tại và một số khoa/bộ môn tiền thân còn xuất hiện ở bản ghi cũ — xem bảng mã ↔ tên chính thức ở mục 2.15. |
+| **Chức vụ** (position) | Vai trò quản lý của một giảng viên (Hiệu trưởng, Phó Hiệu trưởng, Trưởng khoa…), hiển thị tách riêng khỏi khoa trên hồ sơ giảng viên. |
 | **Điểm quy đổi** (score) | Điểm 0,5/0,75/1 ghi tại nguồn theo loại ấn phẩm của một bài báo — hệ thống dùng nguyên giá trị này để lọc/hiển thị, không tự suy từ chỉ mục Scopus/ISI hay quartile. |
 
 ## 7. Phụ lục quản trị

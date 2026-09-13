@@ -160,11 +160,12 @@ thành một script idempotent, `--nightly` bỏ hai bước AI nặng nhất ch
   công bố giảng viên; lọc thêm theo chỉ mục/quartile/khoá/từ khoá riêng, và
   theo **điểm quy đổi** (0,5/0,75/1/chưa xác định, ghi tại nguồn theo loại ấn
   phẩm) (`GET /api/works/facets` đếm số lượng từng giá trị).
-- **Đơn vị thật & Quản trị đơn vị** (`/don-vi/`, `rd_officer`) — mã đơn vị
-  (khoa/trung tâm) đọc từ bộ lọc `dept` của kho nguồn thay vì chức vụ Ban
-  Giám hiệu bị nhập nhầm thành đơn vị trước đây; chức vụ (Hiệu trưởng,
-  Trưởng khoa…) nay tách riêng khỏi đơn vị trên hồ sơ giảng viên; trang quản
-  trị đổi tên/thêm bí danh cho từng mã đơn vị, ghi nhật ký thao tác.
+- **Khoa thật & Quản trị khoa** (`/don-vi/`, `rd_officer`) — mã khoa đọc từ
+  bộ lọc `dept` của kho nguồn thay vì chức vụ Ban Giám hiệu bị nhập nhầm
+  thành khoa trước đây; tên chính thức của 5 khoa hiện tại và các khoa/bộ
+  môn tiền thân theo ictu.edu.vn; chức vụ (Hiệu trưởng, Trưởng khoa…) nay
+  tách riêng khỏi khoa trên hồ sơ giảng viên; trang quản trị đổi tên/thêm bí
+  danh cho từng mã khoa, ghi nhật ký thao tác.
 - **Tìm kiếm ngữ nghĩa** — công tắc "Theo từ khoá / Theo nghĩa (AI)" ngay
   cạnh ô tra cứu, tìm công trình gần nghĩa với câu đã gõ dù không trùng từ,
   giữ nguyên mọi bộ lọc khác; rơi về tìm từ khoá kèm giải thích khi AI chưa

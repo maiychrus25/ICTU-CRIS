@@ -24,6 +24,11 @@
   (điểm quy đổi 0,5/0,75/1/chưa xác định) ở `GET /api/works`; facet `scores` ở
   `GET /api/works/facets`; `WorkSummary`/`WorkDetail` thêm `score` và `units` (chip
   đơn vị); `PersonProfile` thêm `position`, `unit`, `unit_source`.
+- Tên chính thức của 10 mã khoa theo ictu.edu.vn (13/09/2026): 5 khoa hiện tại (CNTT,
+  KT&CN, KT&QT, NT&TT, Khoa Khoa học liên ngành) và các khoa/bộ môn tiền thân còn ở
+  bản ghi cũ (ĐTVT, ĐTTT, TĐH, HTTTKT, KHCB, TTĐPT) — migration `0020_units_from_source.sql`;
+  giao diện đổi nhãn "Đơn vị" thành "Khoa" ở bộ lọc, chip, hồ sơ giảng viên và trang
+  quản trị (`/don-vi/` → "Quản trị khoa").
 
 ## [0.6.1] - 2026-09-13
 

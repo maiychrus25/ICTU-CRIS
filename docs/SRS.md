@@ -101,13 +101,13 @@ Mã `FR-<giai đoạn>-<số>` trùng với mã chức năng trong [ba/04-functi
 | FR-N-10 | Nhóm khác sinh viên mang `hint` "đồ án nhóm", giao diện mặc định Giữ riêng | ✅ |
 | FR-N-11 | Tách "loại bài" văn bản tự do thành chỉ mục, loại nơi công bố, điểm; không suy được thì gắn cờ, không đoán | ✅ |
 | FR-N-12 | Gom biến thể tên đơn vị về một mã (`unit.aliases`) | ✅ |
-| FR-N-13 | Đơn vị của công trình (`v_work_unit`) = đơn vị đọc trực tiếp từ kho nguồn (bộ lọc `dept` của `/bai-bao/`, `work_unit.source='source'`) hợp với đơn vị gán tay (`'manual'`) hợp với đơn vị suy từ tác giả đã nối (như trước) | ✅ |
+| FR-N-13 | Khoa của công trình (`v_work_unit`) = khoa đọc trực tiếp từ kho nguồn (bộ lọc `dept` của `/bai-bao/`, `work_unit.source='source'`) hợp với khoa gán tay (`'manual'`) hợp với khoa suy từ tác giả đã nối (như trước) | ✅ |
 | FR-N-14 | Gom cụm từ khoá thành trục chủ đề | ⏳ → FR-AI-05 |
 | FR-N-15 | Báo cáo chất lượng dữ liệu: độ phủ, số chờ nối, số chưa có đơn vị, số nghi trùng mở, lần đồng bộ gần nhất | ✅ |
 | FR-N-16 | Mọi trường sau chuẩn hoá có dòng `field_provenance` (giá trị gốc, giá trị dùng, `set_kind`, ai, khi nào); chuẩn hoá lại giữ giá trị sửa tay | ✅ |
 | FR-N-17 | Cảnh báo bất thường dữ liệu (K2, màn SC-10 mở rộng): `python -m cris quality scan` (`cris/anomaly.py`) quét sáu loại — Scopus/ISI không DOI, năm ngoài khoảng hợp lý, luận văn/đồ án trùng tiêu đề với bài báo, hai giảng viên cùng ORCID, DOI sai định dạng, bài báo không tóm tắt — ghi/đóng `quality_flag`, quét idempotent, không đụng cờ đã bỏ qua; `GET /api/quality/anomalies`, `POST .../{id}/dismiss` (lý do bắt buộc, ghi `audit_log`). Đo trên DB thật (7.618 công trình, 400 giảng viên, 12/09/2026): `scopus_no_doi` 64, `thesis_title_equals_article` 2, `missing_abstract_article` 1.697; `year_out_of_range`/`orcid_duplicate`/`doi_invalid` đều 0 (ORCID trùng vốn bị chặn bởi `UNIQUE(orcid)` từ lúc nhập, không phải cờ bỏ sót) | ✅ |
-| FR-N-18 | Đơn vị thật (khoa/trung tâm) đọc từ bộ lọc `dept` của kho nguồn (`repository.facet_index`, quét từng giá trị dept của `/bai-bao/`), ghi vào `archive.depts` lúc đồng bộ (`sync_repository(..., with_facets=True)`, tắt bằng CLI `sync --no-facets`) rồi nạp vào `work_unit(source='source')` lúc chuẩn hoá; mã dept lạ tự tạo đơn vị mới (tên = mã) kèm cảnh báo, quản trị sửa tên bằng `units rename`. 10 đơn vị hạt giống ở migration `0020_units_from_source.sql`; "Ban Giám hiệu" (chức vụ, không phải khoa) bị tắt | ✅ |
-| FR-N-19 | Chức vụ (`jobTitle` nguồn: Hiệu trưởng, Trưởng khoa…) tách hẳn khỏi đơn vị — ghi vào `person.position` (chuẩn hoá vài biến thể, ví dụ "Hiệu phó" → "Phó Hiệu trưởng"), không còn suy/tạo đơn vị từ đó. Đơn vị giảng viên (`person.unit_id`) suy theo đa số `work_unit(source)` của công trình đã liên kết còn sống (`cris.people.assign_units_by_works`, hoà phiếu → bỏ, không đoán), đánh dấu `person.unit_source='auto'`; quản trị gán tay (`cris.units.set_person_unit`) chuyển sang `'manual'`, không còn bị suy tự động ghi đè | ✅ |
+| FR-N-18 | Khoa thật đọc từ bộ lọc `dept` của kho nguồn (`repository.facet_index`, quét từng giá trị dept của `/bai-bao/`), ghi vào `archive.depts` lúc đồng bộ (`sync_repository(..., with_facets=True)`, tắt bằng CLI `sync --no-facets`) rồi nạp vào `work_unit(source='source')` lúc chuẩn hoá; mã dept lạ tự tạo khoa mới (tên = mã) kèm cảnh báo, quản trị sửa tên bằng `units rename`. 10 khoa hạt giống ở migration `0020_units_from_source.sql`, tên chính thức theo ictu.edu.vn (13/09/2026): 5 khoa hiện tại (CNTT, KT&CN, KT&QT, NT&TT, Khoa Khoa học liên ngành — chưa có mã ở nguồn) cộng các khoa/bộ môn tiền thân còn ở bản ghi cũ (ĐTVT, ĐTTT, TĐH, HTTTKT, KHCB, TTĐPT); "Ban Giám hiệu" (chức vụ, không phải khoa) bị tắt | ✅ |
+| FR-N-19 | Chức vụ (`jobTitle` nguồn: Hiệu trưởng, Trưởng khoa…) tách hẳn khỏi khoa — ghi vào `person.position` (chuẩn hoá vài biến thể, ví dụ "Hiệu phó" → "Phó Hiệu trưởng"), không còn suy/tạo khoa từ đó. Khoa giảng viên (`person.unit_id`) suy theo đa số `work_unit(source)` của công trình đã liên kết còn sống (`cris.people.assign_units_by_works`, hoà phiếu → bỏ, không đoán), đánh dấu `person.unit_source='auto'`; quản trị gán tay (`cris.units.set_person_unit`) chuyển sang `'manual'`, không còn bị suy tự động ghi đè | ✅ |
 
 ### 3.3 Giao diện hàng đợi và tra cứu (FR-Q, FR-T)
 
@@ -121,8 +121,14 @@ Mã `FR-<giai đoạn>-<số>` trùng với mã chức năng trong [ba/04-functi
 | FR-T-03 | Chi tiết công trình hiện đủ ba cột cho mỗi trường: giá trị đang dùng, giá trị gốc, nguồn | ✅ |
 | FR-T-04 | Trang chất lượng dữ liệu: mỗi chỉ số bấm được dẫn sang hàng đợi tương ứng | ✅ |
 | FR-T-05 | Nhập đề tài dự kiến và nhận bảng đối chiếu | ⏳ → FR-AI-02..04 |
-| FR-T-06 | Lọc công trình theo điểm quy đổi (0,5/0,75/1/chưa xác định — `work.score`, không suy từ chỉ mục Scopus/ISI): `GET /api/works?score=` (đúng giá trị) và `?min_score=` (ngưỡng dưới); facet `scores` ở `GET /api/works/facets`; `WorkSummary`/`WorkDetail` trả `score` và `units` (chip đơn vị, `v_work_unit`) | ✅ |
-| FR-T-07 | `GET /api/units`: đơn vị đang hoạt động kèm số công trình (`v_work_unit`), số giảng viên và `aliases`, sắp theo số công trình giảm dần — nguồn cho bộ lọc Đơn vị và trang quản trị đơn vị `/don-vi/`; `PATCH /api/units/{id}` (đổi tên) và `POST /api/units/{id}/aliases` (thêm bí danh) — chỉ `rd_officer`, dùng chung `cris/units.py` với CLI `units rename\|alias`, ghi `audit_log` | ✅ |
+| FR-T-06 | Lọc công trình theo điểm quy đổi (0,5/0,75/1/chưa xác định — `work.score`, không suy từ chỉ mục Scopus/ISI): `GET /api/works?score=` (đúng giá trị) và `?min_score=` (ngưỡng dưới); facet `scores` ở `GET /api/works/facets`; `WorkSummary`/`WorkDetail` trả `score` và `units` (chip khoa, `v_work_unit`) | ✅ |
+| FR-T-07 | `GET /api/units`: khoa đang hoạt động kèm số công trình (`v_work_unit`), số giảng viên và `aliases`, sắp theo số công trình giảm dần — nguồn cho bộ lọc Khoa và trang quản trị khoa `/don-vi/`; `PATCH /api/units/{id}` (đổi tên) và `POST /api/units/{id}/aliases` (thêm bí danh) — chỉ `rd_officer`, dùng chung `cris/units.py` với CLI `units rename\|alias`, ghi `audit_log` | ✅ |
+
+> **Ghi chú mở:** quan hệ khoa tiền thân → khoa hiện tại (ĐTVT/ĐTTT/TĐH → KT&CN, HTTTKT →
+> KT&QT, KHCB → Khoa học liên ngành, TTĐPT → NT&TT) **chưa** được áp dụng vào thống kê hay
+> Góc nhìn khoa (FR-T-07, `GET /api/units`, `/api/stats`, `/khoa/?id=`) — mỗi mã tiền thân vẫn
+> đứng riêng, không gộp số liệu vào khoa hiện tại. Chờ quyết định của Phòng KH-CN trước khi
+> triển khai gộp (xem "Cần anh xác nhận" ở kế hoạch lát cắt M).
 
 ### 3.4 Tích hợp AI (FR-AI)
 
