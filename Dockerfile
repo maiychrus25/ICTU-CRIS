@@ -4,7 +4,7 @@
 # Ảnh một container: tầng 1 xuất tĩnh giao diện Next.js, tầng 2 Python phục vụ
 # API FastAPI và bản xuất đó tại "/". Cùng một ảnh dùng cho mọi lệnh CLI.
 
-FROM node:24-alpine AS ui
+FROM node:26-alpine AS ui
 WORKDIR /ui
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
