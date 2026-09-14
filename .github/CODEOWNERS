@@ -1,8 +1,29 @@
 # Copyright (c) 2026 ICTU-CRIS contributors
 # SPDX-License-Identifier: Apache-2.0
-# Người được yêu cầu review mặc định theo đường dẫn.
-*                 @maiychrus25
-/cris/ai/         @maiychrus25
-/cris/migrations/ @maiychrus25
-/docs/            @maiychrus25
-/.github/         @maiychrus25
+# Người được yêu cầu review mặc định theo đường dẫn. Dùng cùng quy tắc bảo vệ
+# nhánh main (Settings → Branches → Require a pull request + Require review from
+# Code Owners); dòng sau khớp trước thì ghi đè dòng trước.
+*                        @maiychrus25
+
+# Quy tắc cho agent và tài liệu điều phối — chỉ chủ dự án được đổi
+/AGENTS.md               @maiychrus25
+/CLAUDE.md               @maiychrus25
+/frontend/AGENTS.md      @maiychrus25
+/frontend/DESIGN.md      @maiychrus25
+
+# Nghiệp vụ, lược đồ và AI
+/cris/                   @maiychrus25
+/cris/ai/                @maiychrus25
+/cris/migrations/        @maiychrus25
+
+# Phát hành, CI/CD, máy chủ thật
+/.github/                @maiychrus25
+/deploy/                 @maiychrus25
+/Dockerfile              @maiychrus25
+/pyproject.toml          @maiychrus25
+/CHANGELOG.md            @maiychrus25
+/docs/release-notes/     @maiychrus25
+
+# Tài liệu và giao diện
+/docs/                   @maiychrus25
+/frontend/               @maiychrus25
