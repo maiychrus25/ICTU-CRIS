@@ -16,6 +16,19 @@
   truy vấn gộp cho toàn bộ trang (tránh N+1), cùng cách gán chủ đề công trình đã dùng ở
   `cris.ai.map`/`cris.ai.trends`; không lộ email/điện thoại.
 
+### Fixed
+
+- Popup của bộ lọc không còn che mất nội dung: trước đây bề rộng bị khoá cứng bằng
+  bề rộng ô neo (`width: var(--anchor-width)`) kèm `overflow-x-hidden`, nên tên khoa
+  dài như "ĐTVT — Khoa Công nghệ điện tử và truyền thông" bị cắt cụt và không cuộn
+  ngang được. Nay bề rộng do nội dung quyết định, lấy ô neo làm sàn và chỗ trống còn
+  lại làm trần; chữ trong từng mục xuống dòng thay vì bị giấu, nên ở màn hẹp 320px
+  vẫn đọc được đủ. Đồng thời tắt `alignItemWithTrigger` của `Select`: khi bề rộng
+  thôi bị khoá, chế độ căn-mục-theo-ô-neo của `@base-ui/react` tính sai va chạm mép
+  màn hình và đẩy popup ra ngoài 28px ở 390px (9/10 lần đo). Cùng một dòng được sửa
+  ở `components/ui/dropdown-menu.tsx` cho nhất quán. Test hồi quy
+  `e2e/overlay-width.spec.ts` chạy ở 390/768/1440px.
+
 ## [0.7.0] - 2026-09-13
 
 ### Added
