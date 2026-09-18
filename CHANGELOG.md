@@ -31,6 +31,10 @@
   bắt nhầm là `pid`.
 
 ### Fixed
+- Tên hiển thị của giảng viên còn dính học hàm/học vị ở 47 hồ sơ ("DH. Bùi Thị Kim Thái" ×46 — nguồn ghi
+  "ĐH.", và "GS.TS. Đặng Quang Á"): `cris.people.strip_honorific` thay danh sách biến thể cố định bằng một
+  mẫu có dấu ngăn bắt buộc (không cắt nhầm tên bắt đầu bằng "Ts…"), giữ hậu tố phân biệt trùng tên của
+  nguồn ("(88)"). Danh bạ giảng viên sắp theo tên và hiển thị đúng; cần chạy lại `python -m cris people`.
 
 - Popup của bộ lọc không còn che mất nội dung: trước đây bề rộng bị khoá cứng bằng
   bề rộng ô neo (`width: var(--anchor-width)`) kèm `overflow-x-hidden`, nên tên khoa

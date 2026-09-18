@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 import hashlib
 
+import pytest
+
 from cris import people, rules, sync
 
 
@@ -270,3 +272,20 @@ def test_assign_units_by_works_skips_manual_unit_source(conn):
     row = q(conn, "SELECT unit_id, unit_source FROM person WHERE id=%s", pid)[0]
     assert row["unit_id"] == cntt and row["unit_source"] == "manual"
 
+
+
+@pytest.mark.parametrize("raw, want", [
+    ("GS.TS. Đặng Quang Á", "Đặng Quang Á"),
+    ("DH. Bùi Thị Kim Thái", "Bùi Thị Kim Thái"),
+    ("ĐH. Bùi Thị Kim Thái", "Bùi Thị Kim Thái"),
+    ("PGS.TS. Phùng Trung Nghĩa", "Phùng Trung Nghĩa"),
+    ("pgs. ts nguyễn văn a", "nguyễn văn a"),
+    ("PGS-TS Lê Văn C", "Lê Văn C"),
+    ("ThS Trần Thị B", "Trần Thị B"),
+    ("TS. Nguyễn Thu Hương (88)", "Nguyễn Thu Hương (88)"),   # hậu tố phân biệt trùng tên ở nguồn: giữ
+    ("Tsering Dorje", "Tsering Dorje"),                       # tên bắt đầu bằng "Ts" không bị cắt
+    ("Nguyễn Văn An", "Nguyễn Văn An"),
+    ("TS", "TS"),                                             # chỉ có danh xưng: không trả chuỗi rỗng
+])
+def test_strip_honorific_keeps_only_the_name(raw, want):
+    assert people.strip_honorific(raw) == want
