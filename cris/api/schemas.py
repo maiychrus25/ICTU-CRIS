@@ -71,6 +71,7 @@ class WorkSummary(BaseModel):
     score: float | None = None
     units: list[UnitChip] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)   # tách keywords_raw, tối đa 6 đầu tiên
+    cohort: str | None = None   # khoá (đồ án) — kho nguồn không ghi năm cho đồ án, UI hiện "Khoá 21" thay năm
 
 
 class WorkList(BaseModel):

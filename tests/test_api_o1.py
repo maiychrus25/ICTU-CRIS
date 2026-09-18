@@ -91,6 +91,16 @@ def test_works_default_order_surfaces_cohorts_after_dated_works(client, conn, us
     assert ids == [dated, k21, k19, no_cohort]
 
 
+def test_work_summary_carries_cohort_so_the_ui_can_show_it_instead_of_a_year(client, conn, user_id):
+    thesis = mk_work(conn, "Đồ án có khoá", doc_type="do_an")
+    q(conn, "UPDATE work SET cohort='K21' WHERE id=%s", thesis)
+    article = mk_work(conn, "Bài báo không khoá", doc_type="bai_bao")
+    conn.commit()
+    items = {it["id"]: it for it in client.get("/api/works").json()["items"]}
+    assert items[thesis]["cohort"] == "K21" and items[thesis]["year"] is None
+    assert items[article]["cohort"] is None
+
+
 def test_works_sort_title_orders_a_to_z(client, conn, user_id):
     c = mk_work(conn, "Cong trinh C")
     a = mk_work(conn, "Cong trinh A")

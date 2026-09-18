@@ -192,7 +192,8 @@ def _summary(r):
                        year=r["year_issue"], doi=r["doi"], state=r["state"],
                        needs_review=bool(r["needs_review"]), score=r.get("score"),
                        units=r.get("units") or [],
-                       keywords=_split_keywords(r.get("keywords_raw"), limit=6))
+                       keywords=_split_keywords(r.get("keywords_raw"), limit=6),
+                       cohort=r.get("cohort"))
 
 
 def _units_for_works(conn, work_ids):
@@ -280,7 +281,7 @@ def list_works(conn: Conn, q: str = "", doc_type: str = "", year: int | None = N
         cur.execute(f"SELECT count(DISTINCT w.id) AS n {from_sql} WHERE {where_sql}", params)
         total = cur.fetchone()["n"]
         cur.execute(f"SELECT DISTINCT w.id, w.title, w.doc_type, w.year_issue, w.doi, w.state, w.needs_review, "
-                    f"w.keywords_raw, w.score, {SORT_SELECT_EXTRA} {from_sql} WHERE {where_sql} "
+                    f"w.keywords_raw, w.score, w.cohort, {SORT_SELECT_EXTRA} {from_sql} WHERE {where_sql} "
                     f"ORDER BY {SORT_ORDER_SQL[sort]} LIMIT %s OFFSET %s",
                     params + [PER_PAGE, (page - 1) * PER_PAGE])
         rows = cur.fetchall()
