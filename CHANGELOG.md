@@ -28,7 +28,24 @@
   khoa/học hàm-học vị/`has_works`, sắp theo số công trình hoặc theo tên gọi tiếng Việt
   (từ cuối họ tên), phân trang, facet đơn vị/học vị không tự lọc theo chính nó — không
   email/điện thoại/ngày sinh. Khai báo trước `/persons/{pid}` trong router để không bị
-  bắt nhầm là `pid`.
+  bắt nhầm là `pid`. `WorkSummary` (mọi danh sách công trình: tra cứu, hồ sơ giảng viên,
+  CSV) thêm trường `cohort: string | null` — khoá của đồ án, để giao diện hiện "Khoá 21"
+  ở cột Năm khi công trình không ghi năm ở nguồn.
+- Lát cắt O — giao diện: mục **Giảng viên** ở thanh bên dẫn sang trang danh bạ mới
+  `/giang-vien/` (không `?id=`) — tìm theo tên (không dấu), lọc khoa/học hàm-học vị/chỉ
+  người có công trình, sắp theo số công trình hoặc theo tên, lưới thẻ giảng viên có
+  phân trang; `?id=` vẫn mở đúng hồ sơ như trước, nay thêm liên kết "← Danh bạ giảng
+  viên". Dưới mục **Tra cứu**, nhóm con thu gọn được **"Loại công trình"** liệt kê 5
+  loại kèm số lượng từ `facets.doc_types`, dẫn thẳng sang `/tra-cuu/?doc_type=`. Trang
+  Tra cứu đổi select "Loại tài liệu" thành hàng tab loại kèm số lượng, thêm select
+  **"Sắp xếp"** (Mới nhất/Tiêu đề A→Z/Mới đưa vào kho), ẩn bộ lọc riêng của bài báo
+  (Loại nơi công bố, Chỉ mục, Điểm quy đổi) khi tab khác Bài báo/Tất cả, cột Năm hiện
+  "Khoá 21" cho đồ án không có năm. Trang Tổng quan thêm hàng thẻ **"Toàn bộ kho"** (Tổng
+  công trình, từng loại, Giảng viên — từ `stats.totals`, mỗi thẻ bấm được) trên hàng thẻ
+  5 năm, và đổi câu chú thích dưới biểu đồ theo năm thành giải thích vì sao đồ án/luận
+  văn/luận án không nằm trong biểu đồ, kèm liên kết "Xem theo khoá". Mọi trường mới đều
+  optional — backend cũ chưa trả `doc_types`/`totals`/`directory` thì giao diện rơi về
+  cách hiển thị cũ.
 
 ### Fixed
 - Tên hiển thị của giảng viên còn dính học hàm/học vị ở 47 hồ sơ ("DH. Bùi Thị Kim Thái" ×46 — nguồn ghi

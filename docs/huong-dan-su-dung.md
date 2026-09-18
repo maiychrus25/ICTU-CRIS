@@ -31,7 +31,7 @@
   - [2.10 Kỳ báo cáo](#210-kỳ-báo-cáo)
   - [2.11 Kê khai của tôi](#211-kê-khai-của-tôi)
   - [2.12 Khoa của tôi / Theo khoa](#212-khoa-của-tôi--theo-khoa)
-  - [2.13 Hồ sơ giảng viên](#213-hồ-sơ-giảng-viên)
+  - [2.13 Danh bạ giảng viên](#213-danh-bạ-giảng-viên)
   - [2.14 Chất lượng dữ liệu](#214-chất-lượng-dữ-liệu)
   - [2.15 Quản trị khoa](#215-quản-trị-khoa)
   - [2.16 Đồng bộ](#216-đồng-bộ)
@@ -125,13 +125,17 @@ trong ứng dụng).
 
 - **Thanh bên (sidebar)**, cố định bên trái trên máy tính (menu rút gọn qua nút **☰** trên
   điện thoại): logo ICTU-CRIS ở trên cùng, rồi tới danh sách điều hướng theo thứ tự
-  **Tổng quan**, (**Kê khai của tôi** — chỉ hiện với giảng viên), **Tra cứu**, **Chủ đề**,
-  **Bản đồ tri thức**, **Đối chiếu đề tài**, **Hàng đợi tác giả**, **Hàng đợi nghi trùng**,
-  **Kỳ báo cáo**, **Chất lượng dữ liệu**, (**Quản trị khoa** — chỉ hiện với Phòng KH-CN),
-  **Đồng bộ**, **Nhật ký**, **Về hệ thống**, **Hướng dẫn**. Nếu tài khoản gắn với một đơn vị
-  hoặc có quyền xem mọi đơn vị, mục **Khoa của tôi** (hoặc **Theo khoa**) chèn thêm ngay sau
-  **Kê khai của tôi**. Cuối thanh bên là liên kết **"Kiểm tra đề tài công khai"** rồi tới
-  khối tài khoản (tên, vai trò, nút đăng xuất) hoặc nút **Đăng nhập** nếu chưa vào phiên.
+  **Tổng quan**, (**Kê khai của tôi** — chỉ hiện với giảng viên), **Tra cứu**, **Giảng viên**,
+  **Chủ đề**, **Bản đồ tri thức**, **Đối chiếu đề tài**, **Hàng đợi tác giả**, **Hàng đợi nghi
+  trùng**, **Kỳ báo cáo**, **Chất lượng dữ liệu**, (**Quản trị khoa** — chỉ hiện với Phòng
+  KH-CN), **Đồng bộ**, **Nhật ký**, **Về hệ thống**, **Hướng dẫn**. Nếu tài khoản gắn với một
+  đơn vị hoặc có quyền xem mọi đơn vị, mục **Khoa của tôi** (hoặc **Theo khoa**) chèn thêm
+  ngay sau **Kê khai của tôi**. Ngay dưới mục **Tra cứu**, một nhóm con thụt lề — **Loại
+  công trình** (thu gọn/mở rộng được, mặc định mở) — liệt kê **Bài báo**, **Đồ án/Khoá
+  luận**, **Luận văn**, **Luận án**, **Học liệu số**, mỗi mục kèm số lượng và đưa thẳng sang
+  `/tra-cuu/` đã lọc sẵn theo đúng loại. Cuối thanh bên là liên kết **"Kiểm tra đề tài công
+  khai"** rồi tới khối tài khoản (tên, vai trò, nút đăng xuất) hoặc nút **Đăng nhập** nếu
+  chưa vào phiên.
 - **Thanh trên (topbar)**: nút mở menu (điện thoại), tiêu đề trang hiện tại, ô **"Tìm nhanh
   công trình…"** (gõ rồi Enter để nhảy thẳng sang `/tra-cuu/` với từ khoá đó), chuông
   **Thông báo**, nút đổi **sáng/tối** (biểu tượng mặt trời/mặt trăng).
@@ -168,7 +172,7 @@ hợp với việc chia sẻ hoặc in.
   động khi in).
 - **Trích dẫn**: nút hoặc biểu tượng **Trích dẫn** xuất hiện ở bốn nơi — chi tiết công trình
   (mục 2.3), mỗi dòng kết quả tra cứu (mục 2.2), bảng công trình trên hồ sơ giảng viên (mục
-  2.13), và lý lịch khoa học (mục 2.13.1). Ba nơi đầu mở cùng một hộp thoại 3 định dạng
+  2.13.1), và lý lịch khoa học (mục 2.13.2). Ba nơi đầu mở cùng một hộp thoại 3 định dạng
   **APA** / **IEEE** / **BibTeX** cho một công trình; riêng lý lịch khoa học có nút **"Sao
   chép trích dẫn tất cả"** (APA, toàn bộ danh sách công trình cùng lúc, không mở hộp thoại).
 
@@ -183,24 +187,33 @@ liệu 5 năm gần nhất, không cần mở từng màn con — đúng như c�
 tranh chung trước khi đi vào chi tiết.
 
 **Cung cấp gì.**
-- Bốn thẻ số đầu trang: **Tổng công trình 5 năm**, **Công trình có liên kết tác giả** (%),
+- Hàng thẻ **"Toàn bộ kho"**, đặt **trên** hàng bốn thẻ 5 năm: **Tổng công trình**, **Bài
+  báo**, **Đồ án/Khoá luận**, **Luận văn**, **Luận án**, **Học liệu số**, **Giảng viên** —
+  số liệu toàn bộ kho đang hoạt động, không giới hạn 5 năm (bỏ bản đã gộp); mỗi thẻ bấm
+  được, đưa thẳng sang Tra cứu đã lọc theo đúng loại (thẻ **Giảng viên** đưa sang danh bạ
+  giảng viên).
+- Bốn thẻ số 5 năm: **Tổng công trình 5 năm**, **Công trình có liên kết tác giả** (%),
   **Liên kết tác giả chờ xác nhận** (bấm vào để mở thẳng Hàng đợi tác giả), **Nhóm nghi
   trùng đang mở** (bấm vào để mở Hàng đợi nghi trùng).
 - Khối **"Mới cập nhật từ kho"**: hai cột **Thêm** và **Đổi** liệt kê công trình vừa thêm
   mới hoặc thay đổi ở lượt đồng bộ gần nhất, cùng nút **"Xem lịch sử đồng bộ"** và nút
   **RSS** (mở `/api/feed.xml` — nguồn cấp dữ liệu công khai cho công cụ theo dõi bên ngoài).
-- Biểu đồ cột chồng **"Công trình theo năm và loại tài liệu"**, kèm dòng chú thích số công
-  trình "không rõ năm" nằm ngoài biểu đồ.
+- Biểu đồ cột chồng **"Công trình theo năm và loại tài liệu"**, kèm dòng chú thích dưới biểu
+  đồ: số công trình "không rõ năm" cùng lời giải thích *"đồ án, luận văn và luận án ở kho
+  nguồn không ghi năm nên không nằm trong biểu đồ"* và liên kết **"Xem theo khoá"** (mở Tra
+  cứu đã lọc theo Đồ án/Khoá luận).
 - Bảng **"Công trình theo đơn vị"** (mã, tên, số công trình).
 - Bảng **"10 giảng viên có nhiều công trình nhất"** — bấm tên để mở hồ sơ giảng viên.
 - Dòng chân trang ghi thời điểm đồng bộ lần cuối.
 
 **Cách sử dụng.**
 1. Mở `/tong-quan/` (trang mặc định sau khi vào hệ thống).
-2. Đọc bốn thẻ số ở đầu trang; bấm vào **Liên kết tác giả chờ xác nhận** hoặc **Nhóm nghi
-   trùng đang mở** để nhảy thẳng sang hàng đợi tương ứng.
-3. Cuộn xuống biểu đồ theo năm và loại tài liệu, đọc dòng chú thích dưới biểu đồ.
-4. Xem bảng theo đơn vị và top giảng viên; bấm tên một giảng viên để mở hồ sơ của họ.
+2. Đọc hàng thẻ **"Toàn bộ kho"** để biết tổng số công trình từng loại và số giảng viên; bấm
+   một thẻ để mở đúng danh sách đó.
+3. Đọc bốn thẻ số 5 năm; bấm vào **Liên kết tác giả chờ xác nhận** hoặc **Nhóm nghi trùng
+   đang mở** để nhảy thẳng sang hàng đợi tương ứng.
+4. Cuộn xuống biểu đồ theo năm và loại tài liệu, đọc dòng chú thích dưới biểu đồ.
+5. Xem bảng theo đơn vị và top giảng viên; bấm tên một giảng viên để mở hồ sơ của họ.
 
 **Ai được dùng.** Mọi vai trò đã đăng nhập (hoặc mọi người nếu hệ thống đang ở chế độ mở) —
 trang chỉ đọc, không có thao tác quyết định nào.
@@ -222,41 +235,47 @@ khoá** (khớp chuỗi, kể cả gõ không dấu) hoặc **Theo nghĩa (AI)**
 trùng từ), kèm bộ lọc và xuất CSV.
 
 **Cung cấp gì.**
+- Hàng **tab loại tài liệu** ngay trên ô tìm, mỗi tab kèm số lượng thật: **Tất cả (7.618)** ·
+  **Bài báo (1.907)** · **Đồ án/Khoá luận (5.375)** · **Luận văn (323)** · **Luận án (11)** ·
+  **Học liệu số (2)** — cuộn ngang được trong chính hàng tab ở màn hẹp; đổi tab tức thì lọc
+  lại và quay về trang 1.
 - Công tắc **"Theo từ khoá"** / **"Theo nghĩa (AI)"** ngay cạnh ô tìm.
 - Ô **Từ khoá** (placeholder đổi theo chế độ: *"Tiêu đề (không dấu cũng được) hoặc tên tác
   giả…"* ở chế độ từ khoá, *"Mô tả điều bạn tìm, ví dụ: app dạy trẻ phát âm"* ở chế độ AI).
-- Bộ lọc chính: **Loại tài liệu**, **Năm**, **Khoa**, **Loại nơi công bố**, **Chỉ mục**,
-  **Điểm quy đổi** (mỗi lựa chọn kèm số lượng công trình khớp, ví dụ *"Bài báo (1.907)"*).
-  **Khoa** đọc từ danh mục khoa thật (`GET /api/units`) — mỗi lựa chọn hiện *"Mã — Tên"*
-  (ví dụ *"CNTT — Khoa Công nghệ thông tin"*).
-- **Loại nơi công bố**: chỉ hiện khi **Loại tài liệu** đang là *"Bài báo"* hoặc *"Tất cả"* —
-  phân biệt **Tạp chí quốc tế**, **Tạp chí trong nước**, **Hội thảo quốc tế**, **Hội thảo
-  trong nước**, hoặc **Chưa xác định**; ô này mới chuyển từ "Bộ lọc nâng cao" lên tầng
-  chính vì hay dùng.
-- **Chỉ mục**: lọc theo chỉ mục ghi tại nguồn (ví dụ Scopus, ISI) — cũng vừa chuyển từ "Bộ
-  lọc nâng cao" lên tầng chính.
-- **Điểm quy đổi**: lọc bài báo theo mức điểm ghi tại nguồn — **0,5**, **0,75**, **1**, hoặc
-  **Chưa xác định**, mỗi mức kèm số lượng khớp lấy từ facet `scores`.
-- Khung **"Bộ lọc nâng cao"** (đóng mặc định, bấm mở): **Quartile**, **Khoá**, **Chủ đề**
-  (Chủ đề chuyển từ tầng chính xuống đây để nhường chỗ cho Loại nơi công bố và Chỉ mục).
+- Chọn **Sắp xếp**: **Mới nhất** (mặc định — công trình có năm mới nhất trước; đồ án không
+  ghi năm sắp theo khoá mới nhất, ngay sau nhóm có năm), **Tiêu đề A→Z**, **Mới đưa vào kho**
+  (bản ghi mới lấy về ở lượt đồng bộ gần nhất lên trước).
+- Bộ lọc chính: **Năm**, **Khoa**, **Loại nơi công bố**, **Chỉ mục**, **Điểm quy đổi** (mỗi
+  lựa chọn kèm số lượng công trình khớp, ví dụ *"Bài báo (1.907)"*). **Khoa** đọc từ danh mục
+  khoa thật (`GET /api/units`) — mỗi lựa chọn hiện *"Mã — Tên"* (ví dụ *"CNTT — Khoa Công
+  nghệ thông tin"*).
+- **Loại nơi công bố**, **Chỉ mục**, **Điểm quy đổi**: chỉ hiện khi tab đang chọn là **Bài
+  báo** hoặc **Tất cả** — ẩn hẳn ở các tab Đồ án/Khoá luận, Luận văn, Luận án, Học liệu số vì
+  các loại này không có dữ liệu tương ứng. **Loại nơi công bố** phân biệt **Tạp chí quốc
+  tế**, **Tạp chí trong nước**, **Hội thảo quốc tế**, **Hội thảo trong nước**, hoặc **Chưa
+  xác định**.
+- Khung **"Bộ lọc nâng cao"** (đóng mặc định, bấm mở): **Quartile** (chỉ hiện ở tab Bài báo/
+  Tất cả), **Khoá** (chỉ hiện ở tab Đồ án/Khoá luận/Tất cả), **Chủ đề**.
 - Chip từ khoá và chip **khoa** (mã khoa): mỗi công trình trong bảng kết quả hiện chip
   khoa (di chuột vào để thấy tên đầy đủ) rồi tối đa 3 từ khoá dạng huy hiệu; bấm vào một
   chip khoa hoặc một từ khoá để lọc tiếp theo đúng giá trị đó.
-- Nút **Tải CSV** (tải đúng tập kết quả đang lọc, UTF-8 có BOM, mở được ngay bằng Excel).
+- Nút **Tải CSV** (tải đúng tập kết quả đang lọc và đang sắp, UTF-8 có BOM, mở được ngay
+  bằng Excel).
 - Nút **Tra cứu** (chạy tìm kiếm) và **Xoá bộ lọc**.
 - Bảng kết quả: cột **Công trình** (tiêu đề + DOI nếu có + chip khoa + chip từ khoá), cột
   **Độ gần** (chỉ hiện ở chế độ AI — thanh phần trăm), cột **Điểm** (chỉ hiện ở chế độ từ
   khoá — điểm quy đổi của bài báo: **0,5**/**0,75**/**1**, để trống nếu công trình không
-  phải bài báo hoặc chưa xác định điểm), **Loại**, **Năm**, **Trạng thái**, và cột **Trích
-  dẫn** — một nút biểu tượng trên từng dòng, mở cùng hộp thoại 3 định dạng APA/IEEE/BibTeX
-  như ở trang chi tiết công trình, không cần rời khỏi bảng kết quả.
+  phải bài báo hoặc chưa xác định điểm), **Loại**, **Năm** (đồ án không ghi năm ở nguồn hiện
+  *"Khoá 21"* thay vì để trống), **Trạng thái**, và cột **Trích dẫn** — một nút biểu tượng
+  trên từng dòng, mở cùng hộp thoại 3 định dạng APA/IEEE/BibTeX như ở trang chi tiết công
+  trình, không cần rời khỏi bảng kết quả.
 
 **Cách sử dụng.**
-1. Gõ từ khoá vào ô tìm; giữ mặc định **Theo từ khoá** hoặc bấm **Theo nghĩa (AI)** nếu
-   muốn tìm theo mô tả gần nghĩa.
-2. Chọn thêm **Loại tài liệu**, **Năm**, **Khoa**, **Loại nơi công bố** (nếu đang xem bài
-   báo), **Chỉ mục**, **Điểm quy đổi** nếu cần; mở **Bộ lọc nâng cao** để lọc thêm theo
-   quartile/khoá/chủ đề.
+1. Bấm một tab loại tài liệu (mặc định **Tất cả**); gõ từ khoá vào ô tìm — giữ mặc định
+   **Theo từ khoá** hoặc bấm **Theo nghĩa (AI)** nếu muốn tìm theo mô tả gần nghĩa.
+2. Chọn thêm **Năm**, **Khoa**, **Loại nơi công bố** (nếu đang xem bài báo), **Chỉ mục**,
+   **Điểm quy đổi** nếu cần; đổi **Sắp xếp** nếu không muốn giữ **Mới nhất**; mở **Bộ lọc
+   nâng cao** để lọc thêm theo quartile/khoá/chủ đề.
 3. Bấm **Tra cứu**. Bảng kết quả cập nhật theo trang (phân trang 50 dòng).
 4. Bấm tiêu đề một công trình để mở chi tiết; bấm một chip khoa hoặc một chip từ khoá để
    lọc theo đúng giá trị đó; bấm nút **Trích dẫn** trên một dòng để lấy ngay APA/IEEE/BibTeX
@@ -271,8 +290,13 @@ trùng từ), kèm bộ lọc và xuất CSV.
 - Khi AI chưa bật (`CRIS_AI_PROVIDER=none`), chế độ **Theo nghĩa (AI)** tự rơi về tìm theo
   từ khoá và hiện dòng giải thích *"AI chưa bật — tìm theo từ khoá."* — không bao giờ báo
   lỗi.
-- Bộ lọc **Loại tài liệu** chỉ liệt kê 5 loại công bố (Bài báo, Đồ án, Luận văn, Luận án,
-  Học liệu) — hai loại nội bộ "Giảng viên" và "Đăng ký đồ án" không xuất hiện ở đây.
+- Hàng tab loại tài liệu chỉ liệt kê 5 loại công bố (Bài báo, Đồ án/Khoá luận, Luận văn,
+  Luận án, Học liệu số) — hai loại nội bộ "Giảng viên" và "Đăng ký đồ án" không xuất hiện ở
+  đây.
+- Trước đây **Tra cứu** sắp mặc định theo năm giảm dần, nên đồ án/luận văn/luận án (không
+  ghi năm ở nguồn) bị đẩy xuống cuối hàng chục trang toàn bài báo — dễ khiến người dùng
+  tưởng kho chỉ có bài báo. Hàng tab loại kèm số lượng và sắp xếp **Mới nhất** hiện tại đưa
+  đồ án theo khoá mới nhất lên ngay sau nhóm công trình có năm.
 - **Điểm quy đổi** là điểm **ghi tại nguồn theo loại ấn phẩm** (0,5/0,75/1) — hệ thống
   **không** tự suy điểm từ chỉ mục Scopus/ISI hay quartile; quy chế quy đổi điểm do trường
   quyết định, không phải một phép tính của hệ thống.
@@ -281,8 +305,7 @@ trùng từ), kèm bộ lọc và xuất CSV.
   công trình có thể có nhiều chip khoa hoặc không chip nào nếu chưa xác định được khoa
   từ cả hai nguồn.
 - **Loại nơi công bố** chỉ đếm **bài báo** — đồ án, luận văn, luận án và học liệu không có
-  `venue_kind` nên không xuất hiện trong bộ lọc này dù đang chọn "Tất cả" ở **Loại tài
-  liệu**.
+  `venue_kind` nên tab của các loại này không hiện bộ lọc đó.
 
 **Ảnh.** `docs/huong-dan/tra-cuu.png`.
 
@@ -857,7 +880,51 @@ mình. **Phòng KH-CN**, **Lãnh đạo** — xem được mọi đơn vị.
 
 ---
 
-### 2.13 Hồ sơ giảng viên
+### 2.13 Danh bạ giảng viên
+
+**Tính năng này là gì.** Trang `/giang-vien/` (không có `?id=`) là danh bạ công khai của
+giảng viên nhà trường — trước đây hệ thống chưa có trang hay mục thanh bên nào dẫn tới đây,
+dù kho nguồn (`repository.ictu.edu.vn`) có sẵn menu "Giảng viên" riêng.
+
+**Cung cấp gì.**
+- Ô tìm **"Tên giảng viên"** (gõ tới đâu lọc tới đó sau một nhịp ngắn, gõ không dấu vẫn ra
+  đúng kết quả — ví dụ gõ "nghia" ra "Phùng Trung Nghĩa").
+- Bộ lọc **Khoa**, **Học hàm, học vị**, ô tick **"Chỉ người có công trình"**.
+- Chọn **Sắp xếp**: **Nhiều công trình** (mặc định — số công trình đã liên kết giảm dần) hoặc
+  **Theo tên** (theo tên gọi tiếng Việt — từ cuối của họ tên — rồi đến họ).
+- Lưới thẻ giảng viên: ảnh đại diện, tên kèm học hàm/học vị viết đúng (ví dụ *"PGS.TS.
+  Nguyễn Văn A"*), chức vụ nếu có, khoa (mã — tên), lĩnh vực, tổng số công trình đã liên kết
+  và số lượng theo từng loại (chip nhỏ, ví dụ *"Bài báo: 12"*); cả thẻ là một liên kết mở hồ
+  sơ giảng viên (mục 2.13.1).
+- Tiêu đề trang hiện kèm tổng số, ví dụ *"Giảng viên · 400"*.
+- Phân trang (24 giảng viên/trang).
+- Bộ lọc đồng bộ lên đường link (`?q=&unit=&degree=&sort=&page=`) — chia sẻ hoặc bấm quay
+  lại vẫn giữ đúng kết quả đang xem.
+
+**Cách sử dụng.**
+1. Mở mục **Giảng viên** ở thanh bên (hoặc vào thẳng `/giang-vien/`).
+2. Gõ tên vào ô tìm (không cần gõ dấu) và/hoặc chọn **Khoa**, **Học hàm, học vị**, tick
+   **"Chỉ người có công trình"** nếu chỉ muốn xem người đã có công bố.
+3. Chọn **Sắp xếp** theo số công trình hoặc theo tên.
+4. Bấm một thẻ để mở hồ sơ giảng viên; ở hồ sơ, bấm **"← Danh bạ giảng viên"** để quay lại
+   đúng bộ lọc vừa dùng.
+
+**Ai được dùng.** Công khai — không cần đăng nhập.
+
+**Lưu ý / giới hạn.**
+- Danh bạ hiện **400 hồ sơ** giảng viên — 10 hồ sơ trùng ORCID ở nguồn bị bỏ qua lúc nhập
+  liệu (lỗi có sẵn ở dữ liệu nguồn, không phải do bộ lọc trên trang này).
+- **Không hiện email, số điện thoại, ngày sinh** trên danh bạ — cùng nguyên tắc dữ liệu cá
+  nhân với hồ sơ giảng viên (mục 2.13.1).
+- Số lượng ở bộ lọc **Khoa**/**Học hàm, học vị** tính trên tập đã lọc theo tên tìm, nhưng
+  **chưa** tự lọc theo chính bộ lọc đó — ví dụ số cạnh mỗi khoa không đổi ngay khi bạn vừa
+  chọn một khoa khác.
+
+**Ảnh.** Chưa có ảnh minh hoạ riêng.
+
+---
+
+#### 2.13.1 Hồ sơ giảng viên
 
 **Tính năng này là gì.** Trang `/giang-vien/?id=` gom mọi công trình đã liên kết của một
 giảng viên thành một hồ sơ công bố, cùng số liệu theo loại và theo năm.
@@ -888,7 +955,8 @@ giảng viên thành một hồ sơ công bố, cùng số liệu theo loại v�
   **Trích dẫn** ở từng dòng của bảng, vốn chỉ trích dẫn một công trình.
 
 **Cách sử dụng.**
-1. Mở hồ sơ một giảng viên từ Tổng quan, Tra cứu, hàng đợi, hoặc chi tiết công trình.
+1. Mở hồ sơ một giảng viên từ danh bạ giảng viên (mục 2.13), Tổng quan, Tra cứu, hàng đợi,
+   hoặc chi tiết công trình.
 2. Xem ảnh đại diện (hoặc chữ cái đầu nếu giảng viên chưa có ảnh riêng ở kho), tên kèm học
    hàm/học vị, chức vụ, khoa và lĩnh vực (nếu có) ở đầu trang.
 3. Xem thống kê theo loại và theo năm; nếu có cảnh báo liên kết đang chờ, bấm mở hàng đợi
@@ -897,7 +965,7 @@ giảng viên thành một hồ sơ công bố, cùng số liệu theo loại v�
    riêng công trình đó; hoặc bấm **"Tải BibTeX (tất cả)"** / **"Sao chép APA (tất cả)"** ở
    đầu trang để lấy trích dẫn của toàn bộ công trình đã liên kết cùng một lúc.
 5. Bấm **"Tải CSV"** để xuất toàn bộ danh sách công bố của giảng viên này.
-6. Bấm **"Lý lịch khoa học"** để mở bản in được (xem mục 2.13.1).
+6. Bấm **"Lý lịch khoa học"** để mở bản in được (xem mục 2.13.2).
 
 **Ai được dùng.** Công khai.
 
@@ -924,7 +992,7 @@ giảng viên thành một hồ sơ công bố, cùng số liệu theo loại v�
 
 **Ảnh.** `docs/huong-dan/ho-so-giang-vien.png`.
 
-#### 2.13.1 Lý lịch khoa học
+#### 2.13.2 Lý lịch khoa học
 
 **Tính năng này là gì.** Trang `/giang-vien/ly-lich/?id=` sinh một bản lý lịch khoa học khổ
 A4, sẵn sàng in hoặc lưu PDF — tổng hợp học hàm/học vị, số liệu công bố theo loại/năm, và
@@ -1050,9 +1118,9 @@ thấy thông báo **"Không có quyền truy cập"**.
   thực hiện, giá trị trước/sau và lý do nếu có.
 - Khoa hiển thị ở đây chỉ gồm khoa **đang hoạt động** — chức vụ Ban Giám hiệu (Hiệu trưởng,
   Phó Hiệu trưởng…) không còn là một khoa trong danh mục này, xem trường **Chức vụ** riêng
-  ở hồ sơ giảng viên (mục 2.13).
+  ở hồ sơ giảng viên (mục 2.13.1).
 - Đây là nơi **duy nhất trên giao diện** đổi tên/bí danh khoa; khoa của từng giảng viên
-  (gán tự động hoặc gán tay) sửa ở CLI, xem mục 2.13.
+  (gán tự động hoặc gán tay) sửa ở CLI, xem mục 2.13.1.
 
 **Bảng mã ↔ tên chính thức.** Theo ictu.edu.vn (13/09/2026), trường hiện có **5 khoa**; các
 mã còn lại trong danh mục là khoa/bộ môn tiền thân, còn xuất hiện ở bản ghi cũ vì kho nguồn
@@ -1382,6 +1450,16 @@ hiện rõ "AI chưa bật".
     Trường chưa có hệ SSO sẵn dùng trong thời gian phát triển bản này — hệ thống dùng đăng
     nhập cục bộ (mật khẩu băm PBKDF2-HMAC-SHA256) để có đăng nhập thật ngay, không chặn tích
     hợp SSO ở các bản sau.
+
+15. **Vì sao tôi chỉ thấy bài báo?**
+    Dữ liệu không thiếu — kho có đủ đồ án, luận văn, luận án, học liệu; chỉ là trước đây khó
+    thấy. Tra cứu từng sắp mặc định theo năm giảm dần, mà đồ án/luận văn/luận án ở kho nguồn
+    không ghi năm nên bị đẩy xuống cuối hàng chục trang toàn bài báo. Nay Tra cứu có hàng tab
+    riêng từng loại kèm số lượng thật (Bài báo 1.907 · Đồ án/Khoá luận 5.375 · Luận văn 323 ·
+    Luận án 11 · Học liệu số 2, tổng 7.618), sắp xếp **Mới nhất** đưa đồ án theo khoá mới
+    nhất lên ngay sau công trình có năm, và Tổng quan có hàng thẻ **"Toàn bộ kho"** hiện đủ số
+    liệu từng loại — bấm vào một tab, một thẻ, hoặc một mục "Loại công trình" ở thanh bên để
+    xem đúng loại đó.
 
 ## 6. Thuật ngữ
 
