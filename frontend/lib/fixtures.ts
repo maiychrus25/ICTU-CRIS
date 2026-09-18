@@ -135,12 +135,34 @@ export const personsFixture: PersonSearchRow[] = [
   { id: 3, display_name: "ThS. Trần Thị Bình", degree: "Thạc sĩ", unit_code: "HTTTKT", kind: "giang_vien", works: 24, avatar_url: null },
 ];
 
+const candidateDetailsFixture = [
+  {
+    candidate_degree: "TS.", candidate_rank: "PGS.", candidate_unit: { id: 1, code: "CNTT", name: "Khoa Công nghệ thông tin" },
+    candidate_position: "Trưởng khoa", candidate_field: "Trí tuệ nhân tạo", candidate_orcid: "0000-0002-1825-0097",
+    candidate_works: 42, candidate_top_topics: ["Trí tuệ nhân tạo", "Khai phá dữ liệu", "Thị giác máy tính"],
+  },
+  {
+    candidate_degree: "TS.", candidate_rank: null, candidate_unit: { id: 3, code: "HTTTKT", name: "Khoa Hệ thống thông tin kinh tế" },
+    candidate_position: "Phó trưởng bộ môn", candidate_field: "Hệ thống thông tin", candidate_orcid: "0000-0001-5109-3700",
+    candidate_works: 27, candidate_top_topics: ["Hệ thống thông tin", "Chuyển đổi số"],
+  },
+  {
+    candidate_degree: "ThS.", candidate_rank: null, candidate_unit: { id: 6, code: "TTĐPT", name: "Khoa Truyền thông đa phương tiện" },
+    candidate_position: null, candidate_field: "Truyền thông số", candidate_orcid: "0000-0003-1415-9265",
+    candidate_works: 9, candidate_top_topics: ["Truyền thông đa phương tiện", "Thiết kế số", "Ứng dụng web"],
+  },
+  {
+    candidate_degree: null, candidate_rank: null, candidate_unit: null, candidate_position: null,
+    candidate_field: null, candidate_orcid: null, candidate_works: null, candidate_top_topics: null,
+  },
+];
+
 export const authorQueueFixture: AuthorQueueList = {
   state: "ChoXacNhan", page: { page: 1, per_page: 50, total: 8 },
   items: [
-    [201, "Nguyễn Văn A", 1, "TS. Nguyễn Văn A", "Tên và khoa công tác trùng khớp", 1],
-    [207, "Nguyễn Văn A", 1, "TS. Nguyễn Văn An", "Tên gần giống, cần người dùng chọn", 2],
-    [208, "Nguyễn Văn A", 1, "ThS. Trần Thị Bình", "Cùng nhóm chuyên môn", 3],
+    [201, "Nguyễn Thị Dung", 1, "Nguyễn Thị Dung", "Cùng khoa và chuyên môn công trình", 1],
+    [207, "Nguyễn Thị Dung", 1, "Nguyễn Thị Dung", "Cùng tên nhưng khác đơn vị công tác", 2],
+    [208, "Nguyễn Thị Dung", 1, "Nguyễn Thị Dung", "Cùng tên, cần người dùng đối chiếu", 3],
     [202, "N.V. An", 2, "TS. Nguyễn Văn An", "Tên viết tắt, có cùng chuỗi công trình", 2],
     [203, "Trần Thị Bình", 3, "ThS. Trần Thị Bình", "Tên đầy đủ trùng khớp", 3],
     [204, "Lê Hoàng", 4, "TS. Lê Văn Hoàng", "Cùng khoa nhưng tên chưa đủ", 4],
@@ -148,9 +170,10 @@ export const authorQueueFixture: AuthorQueueList = {
     [206, "Đỗ Thu Hà", 6, "TS. Đỗ Thu Hà", "ORCID trong nguồn liên quan", 6],
   ].map(([linkId, rawName, workId, candidateName, reason, personId], index) => ({
     link_id: Number(linkId), raw_name: String(rawName), work_id: Number(workId), work_title: workItems[Number(workId) - 1].title,
-    candidate_person_id: Number(personId), candidate_name: String(candidateName), confidence: index < 3 ? "cao" : "vua",
+    candidate_person_id: Number(personId), candidate_name: String(candidateName), confidence: index < 3 ? "ten_day_du_nhieu_ung_vien" : "vua",
     degree_conflict: index === 3, group_work_count: 2 + index, ai_rank: index + 1,
     ai_score: 0.92 - index * 0.08, ai_reason: String(reason),
+    ...(candidateDetailsFixture[index] ?? {}),
   })),
 };
 

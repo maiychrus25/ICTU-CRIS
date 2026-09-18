@@ -50,6 +50,10 @@ export interface AuthorQueueRow {
   link_id: number; raw_name: string; work_id: number; work_title: string | null;
   candidate_person_id: number; candidate_name: string; confidence: string; degree_conflict: boolean;
   group_work_count: number; ai_rank: number | null; ai_score: number | null; ai_reason: string | null;
+  candidate_degree?: string | null; candidate_rank?: string | null;
+  candidate_unit?: Pick<Unit, "id" | "code" | "name"> | null; candidate_position?: string | null;
+  candidate_field?: string | null; candidate_orcid?: string | null;
+  candidate_works?: number | null; candidate_top_topics?: string[] | null;
 }
 export interface AuthorQueueList { items: AuthorQueueRow[]; page: PageInfo; state: string }
 export interface DecideAuthorsIn {

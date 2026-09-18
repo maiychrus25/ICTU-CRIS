@@ -4,7 +4,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Bot, Check, CornerDownRight, Search, Sparkles, UserRoundX } from "lucide-react";
+import { AlertTriangle, Check, CornerDownRight, ExternalLink, Search, Sparkles, UserRoundX } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -37,7 +37,18 @@ function groupRows(items: AuthorQueueRow[]) {
 }
 
 function hasUsefulSuggestion(candidate: AuthorQueueRow) {
-  return candidate.ai_rank !== null && Boolean(candidate.ai_reason && !candidate.ai_reason.toLocaleLowerCase("vi").includes("chưa có công trình đã xác nhận"));
+  return candidate.ai_rank === 1 && candidate.ai_score !== null && candidate.ai_score !== undefined
+    && Boolean(candidate.ai_reason && !candidate.ai_reason.toLocaleLowerCase("vi").includes("chưa có công trình đã xác nhận"));
+}
+
+function candidateDisplayName(candidate: AuthorQueueRow) {
+  const rank = candidate.candidate_rank?.toLocaleLowerCase("vi-VN").replaceAll(".", "").trim();
+  const degree = candidate.candidate_degree?.toLocaleLowerCase("vi-VN").replaceAll(".", "").trim();
+  const rankTitle = rank === "pgs" || rank?.includes("phó giáo sư") ? "PGS" : rank === "gs" || rank?.includes("giáo sư") ? "GS" : null;
+  const degreeTitle = degree === "ts" || degree?.includes("tiến sĩ") ? "TS" : degree === "ths" || degree?.includes("thạc sĩ") ? "ThS" : null;
+  const credentials = [rankTitle, degreeTitle].filter(Boolean).join(".");
+  const name = candidate.candidate_name.replace(/^(?:(?:GS|PGS)\.)?(?:(?:TS|ThS)\.)?\s*/i, "");
+  return credentials ? `${credentials}. ${name}` : candidate.candidate_name;
 }
 
 export default function AuthorQueuePage() {
@@ -113,10 +124,21 @@ export default function AuthorQueuePage() {
               <input type="checkbox" aria-label={`Chọn ${first.raw_name} – ${first.work_title ?? `công trình #${first.work_id}`}`} checked={Boolean(selectedGroups[key])} onChange={(event) => setSelectedGroups((current) => ({ ...current, [key]: event.target.checked }))} />
               <div className="min-w-0 flex-1"><h2 className="font-semibold">{first.raw_name}</h2><Link href={`/cong-trinh/?id=${first.work_id}`} className="mt-1 block break-words text-sm font-medium text-primary hover:underline">{first.work_title ?? "Chưa có tiêu đề"}</Link><p className="mt-1 text-xs text-muted-foreground">Tên này xuất hiện trong <span className="tabular-nums">{first.group_work_count}</span> công trình đang đối soát.</p></div>
             </div>
-            <fieldset className="mt-3 space-y-2 pl-7"><legend className="sr-only">Chọn ứng viên cho {first.raw_name}</legend>{candidates.map((candidate) => <label key={candidate.link_id} className="flex min-h-12 cursor-pointer items-start gap-3 rounded-md border p-3 has-checked:border-primary has-checked:bg-primary/5">
-              <input type="radio" name={`candidate-${key}`} checked={selectedLinkId === candidate.link_id} onChange={() => setCandidateChoices((current) => ({ ...current, [key]: candidate.link_id }))} />
-              <span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2"><Link href={`/giang-vien/?id=${candidate.candidate_person_id}`} className="font-medium text-primary hover:underline">{candidate.candidate_name}</Link><Badge variant="outline" className={candidate.confidence === "ai_mentor" ? "border-primary/30 bg-primary/10 text-primary" : ["cao", "ten_day_du_duy_nhat", "orcid"].includes(candidate.confidence) ? "border-status-success/30 bg-status-success/10 text-status-success" : "border-status-warning/30 bg-status-warning/10 text-status-warning"}>{candidate.confidence === "ai_mentor" && <Sparkles />}{confidenceLabels[candidate.confidence] ?? candidate.confidence}</Badge>{candidate.degree_conflict && <span title="Học vị trong nguồn có dấu hiệu xung đột" className="inline-flex items-center gap-1 text-status-warning"><AlertTriangle className="size-4" />Cần kiểm tra học vị</span>}</span>{hasUsefulSuggestion(candidate) && <span className="mt-2 block rounded-md bg-muted/50 p-2 text-xs leading-5 text-muted-foreground"><span className="mb-0.5 flex items-center gap-1 font-medium text-foreground"><Bot className="size-3.5" />Gợi ý AI · hạng {candidate.ai_rank}</span>{candidate.ai_reason}</span>}</span>
-            </label>)}</fieldset>
+            <fieldset className="mt-3 space-y-2 pl-7"><legend className="sr-only">Chọn ứng viên cho {first.raw_name}</legend>{candidates.map((candidate) => {
+              const displayName = candidateDisplayName(candidate);
+              return <div key={candidate.link_id} role="group" aria-label={`Ứng viên ${displayName}`} className="grid min-h-12 grid-cols-[auto_minmax(0,1fr)] items-start gap-3 rounded-md border p-3 has-checked:border-primary has-checked:bg-primary/5">
+                <input id={`candidate-${candidate.link_id}`} type="radio" name={`candidate-${key}`} aria-label={`Chọn ${displayName}`} checked={selectedLinkId === candidate.link_id} onChange={() => setCandidateChoices((current) => ({ ...current, [key]: candidate.link_id }))} />
+                <div className="min-w-0">
+                  <label htmlFor={`candidate-${candidate.link_id}`} className="block cursor-pointer">
+                    <span className="flex flex-wrap items-center gap-2"><span className="font-medium">{displayName}</span><Badge variant="outline" className={candidate.confidence === "ai_mentor" ? "border-primary/30 bg-primary/10 text-primary" : ["cao", "ten_day_du_duy_nhat", "orcid"].includes(candidate.confidence) ? "border-status-success/30 bg-status-success/10 text-status-success" : "border-status-warning/30 bg-status-warning/10 text-status-warning"}>{candidate.confidence === "ai_mentor" && <Sparkles />}{confidenceLabels[candidate.confidence] ?? candidate.confidence}</Badge>{candidate.degree_conflict && <span title="Học vị trong nguồn có dấu hiệu xung đột" className="inline-flex items-center gap-1 text-status-warning"><AlertTriangle className="size-4" />Cần kiểm tra học vị</span>}</span>
+                    {(candidate.candidate_unit || candidate.candidate_position || candidate.candidate_field || candidate.candidate_works != null || candidate.candidate_orcid) && <span className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">{candidate.candidate_unit && <span>{candidate.candidate_unit.code} — {candidate.candidate_unit.name}</span>}{candidate.candidate_position && <span>{candidate.candidate_position}</span>}{candidate.candidate_field && <span>Lĩnh vực: {candidate.candidate_field}</span>}{candidate.candidate_works != null && <span className="tabular-nums">{candidate.candidate_works} công trình đã liên kết</span>}{candidate.candidate_orcid && <span title={candidate.candidate_orcid}>ORCID …{candidate.candidate_orcid.slice(-4)}</span>}</span>}
+                    {candidate.candidate_top_topics?.length ? <span className="mt-2 flex flex-wrap gap-1">{candidate.candidate_top_topics.slice(0, 3).map((topic) => <Badge key={topic} variant="secondary">{topic}</Badge>)}</span> : null}
+                  </label>
+                  <Link href={`/giang-vien/?id=${candidate.candidate_person_id}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex min-h-8 items-center gap-1 text-xs font-medium text-primary hover:underline">Mở hồ sơ<ExternalLink className="size-3.5" /></Link>
+                  {hasUsefulSuggestion(candidate) && <span className="mt-2 block rounded-md bg-muted/50 p-2 text-xs leading-5 text-muted-foreground"><span className="mb-0.5 flex items-center gap-1 font-medium text-foreground"><Sparkles className="size-3.5" />Gợi ý AI</span>{candidate.ai_reason}</span>}
+                </div>
+              </div>;
+            })}</fieldset>
             {(state === "ChoXacNhan" || state === "DaNoiTuDong") && <div className="mt-3 flex justify-end" title={canDecide ? undefined : officerRoleRequired}><Button type="button" size="sm" aria-label="Xác nhận ứng viên đã chọn" onClick={() => void submitDecision({ link_ids: [selectedLinkId], decision: "confirm" })} disabled={!canDecide || decide.isPending}><Check />Xác nhận</Button></div>}
           </article>;
         })}
