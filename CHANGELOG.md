@@ -15,6 +15,20 @@
   "Nguyễn Thị Dung" phân biệt được thay vì hiện giống hệt nhau ở hàng đợi tác giả. Một
   truy vấn gộp cho toàn bộ trang (tránh N+1), cùng cách gán chủ đề công trình đã dùng ở
   `cris.ai.map`/`cris.ai.trends`; không lộ email/điện thoại.
+- Lát cắt O1: danh bạ giảng viên và làm lộ đủ các loại công trình (trên prod chỉ thấy
+  bài báo dù kho có đủ đồ án/luận văn/luận án/học liệu, vì `year_issue DESC` đẩy các
+  loại không ghi năm xuống cuối 39 trang). `GET /api/works/facets` thêm `doc_types`
+  (đủ 5 loại kể cả n=0, thứ tự cố định: Bài báo · Đồ án/Khoá luận · Luận văn ThS ·
+  Luận án TS · Học liệu số). `GET /api/works`/`GET /api/works.csv` đổi thứ tự mặc định
+  thành `year_issue DESC NULLS LAST, cohort_num DESC NULLS LAST, id DESC` (khoá — số
+  trích từ `work.cohort` — mới nhất lên ngay sau công trình có năm) và thêm
+  `sort=recent|title|added` (422 nếu giá trị khác; bỏ qua khi `mode=semantic`).
+  `GET /api/stats` thêm `totals` (toàn bộ kho, không giới hạn 5 năm, bỏ bản đã gộp).
+  `GET /api/persons/directory` (mới, công khai): tìm theo tên (không dấu), lọc
+  khoa/học hàm-học vị/`has_works`, sắp theo số công trình hoặc theo tên gọi tiếng Việt
+  (từ cuối họ tên), phân trang, facet đơn vị/học vị không tự lọc theo chính nó — không
+  email/điện thoại/ngày sinh. Khai báo trước `/persons/{pid}` trong router để không bị
+  bắt nhầm là `pid`.
 
 ### Fixed
 

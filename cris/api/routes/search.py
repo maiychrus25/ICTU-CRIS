@@ -63,6 +63,32 @@ VENUE_KIND_LABELS = {
 }
 VENUE_KIND_ORDER = {"journal_intl": 0, "journal_domestic": 1, "conference_intl": 2,
                     "conference_natl": 3, "none": 4}
+# Loại tài liệu ở facet `doc_types`/`GET /api/works/facets` — nhãn riêng cho menu
+# (khác `DOC_TYPE_LABELS` dùng ở `WorkSummary.doc_type_label`), thứ tự cố định,
+# đủ cả 5 loại kể cả không có công trình nào (n=0).
+DOC_TYPE_FACET_LABELS = [
+    ("bai_bao", "Bài báo"), ("do_an", "Đồ án/Khoá luận"), ("luan_van", "Luận văn ThS"),
+    ("luan_an", "Luận án TS"), ("hoc_lieu", "Học liệu số"),
+]
+# Trích số từ `work.cohort` ("K21"/"21" → 21) để sắp đồ án/luận văn/luận án theo
+# khoá mới nhất trước; NULL nếu không có chữ số. Cấp bí danh `cohort_num` — bắt
+# buộc với `SELECT DISTINCT` (Postgres chỉ cho ORDER BY biểu thức có mặt nguyên
+# văn trong select list, tham chiếu qua bí danh là hợp lệ).
+_COHORT_NUM_SQL = "NULLIF(regexp_replace(w.cohort, '\\D', '', 'g'), '')::int AS cohort_num"
+# Cột phụ nạp sẵn cho mọi truy vấn `SELECT DISTINCT ... {from_sql}` để `ORDER BY
+# {SORT_ORDER_SQL[sort]}` luôn hợp lệ dù `sort` là gì (list_works, export.works.csv).
+SORT_SELECT_EXTRA = f"w.title_norm, {_COHORT_NUM_SQL}, sr.first_seen_at"
+# `sort` ở `GET /api/works`/`GET /api/works.csv` (mode=keyword; `mode=semantic` bỏ
+# qua, luôn sắp theo điểm tương đồng). "recent" (mặc định): năm giảm dần, rồi khoá
+# (số) giảm dần — đưa đồ án/luận văn/luận án khoá mới lên ngay sau công trình có
+# năm, thay vì rơi hẳn xuống cuối vì thiếu năm. "title": tiêu đề A→Z theo
+# `title_norm`. "added": mới đưa vào kho trước (`first_seen_at` của bản ghi nguồn
+# hiện hành). Luôn thêm `w.id` để ổn định phân trang.
+SORT_ORDER_SQL = {
+    "recent": "w.year_issue DESC NULLS LAST, cohort_num DESC NULLS LAST, w.id DESC",
+    "title": "w.title_norm ASC, w.id ASC",
+    "added": "sr.first_seen_at DESC NULLS LAST, w.id DESC",
+}
 
 
 def _fmt_dt(v):
@@ -113,7 +139,10 @@ def _works_query(q: str, doc_type: str, year: int | None, unit: str, topic: int 
     from_sql = ("FROM v_work_current w "
                 "LEFT JOIN author_mention m ON m.work_id = w.id AND m.position > 0 "
                 "LEFT JOIN v_work_unit vu ON vu.work_id = w.id "
-                "LEFT JOIN unit u ON u.id = vu.unit_id")
+                "LEFT JOIN unit u ON u.id = vu.unit_id "
+                # 1-1 (work_primary_source là UNIQUE) — không nhân dòng; chỉ dùng cho
+                # `sort=added` nhưng join sẵn ở đây để mọi truy vấn dùng chung một `from_sql`.
+                "LEFT JOIN source_record sr ON sr.id = w.primary_source_record_id")
     where, params = [], []
     if q.strip():
         like = f"%{q.strip()}%"
@@ -235,9 +264,11 @@ def list_works(conn: Conn, q: str = "", doc_type: str = "", year: int | None = N
                score: Literal["", "0.5", "0.75", "1", "none"] = "", min_score: float | None = None,
                venue_kind: Literal["", "journal_intl", "journal_domestic", "conference_intl",
                                    "conference_natl", "none"] = "",
+               sort: Literal["recent", "title", "added"] = "recent",
                page: int = Query(1, ge=1)):
     note = None
     if mode == "semantic" and q.strip():
+        # sort không áp cho tìm kiếm ngữ nghĩa — giữ nguyên thứ tự theo điểm tương đồng.
         out = _semantic_work_list(conn, q, doc_type, year, unit, topic, page,
                                   pub_type, quartile, cohort, keyword, score, min_score, venue_kind)
         if out is not None:
@@ -249,8 +280,8 @@ def list_works(conn: Conn, q: str = "", doc_type: str = "", year: int | None = N
         cur.execute(f"SELECT count(DISTINCT w.id) AS n {from_sql} WHERE {where_sql}", params)
         total = cur.fetchone()["n"]
         cur.execute(f"SELECT DISTINCT w.id, w.title, w.doc_type, w.year_issue, w.doi, w.state, w.needs_review, "
-                    f"w.keywords_raw, w.score {from_sql} WHERE {where_sql} ORDER BY w.year_issue DESC NULLS LAST, w.id DESC "
-                    f"LIMIT %s OFFSET %s",
+                    f"w.keywords_raw, w.score, {SORT_SELECT_EXTRA} {from_sql} WHERE {where_sql} "
+                    f"ORDER BY {SORT_ORDER_SQL[sort]} LIMIT %s OFFSET %s",
                     params + [PER_PAGE, (page - 1) * PER_PAGE])
         rows = cur.fetchall()
     units_by_work = _units_for_works(conn, [r["id"] for r in rows])
@@ -300,8 +331,12 @@ def works_facets(conn: Conn):
         venue_kinds = [FacetValue(value=r["value"], label=VENUE_KIND_LABELS.get(r["value"], r["value"]), n=r["n"])
                       for r in cur.fetchall()]
         venue_kinds.sort(key=lambda v: VENUE_KIND_ORDER.get(v.value, 5))
+        cur.execute("SELECT w.doc_type AS value, count(*) AS n FROM v_work_current w GROUP BY w.doc_type")
+        doc_type_n = {r["value"]: r["n"] for r in cur.fetchall()}
+        doc_types = [FacetValue(value=code, label=label, n=doc_type_n.get(code, 0))
+                    for code, label in DOC_TYPE_FACET_LABELS]
     return WorksFacetsOut(pub_types=pub_types, quartiles=quartiles, cohorts=cohorts, years=years, units=units,
-                          scores=scores, venue_kinds=venue_kinds)
+                          scores=scores, venue_kinds=venue_kinds, doc_types=doc_types)
 
 
 @router.get("/works/{wid}", response_model=WorkDetail)
