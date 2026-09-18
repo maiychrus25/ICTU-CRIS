@@ -22,6 +22,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api";
 import { confidenceLabels, officerRoleRequired, stateLabels } from "@/lib/labels";
+import { formatPersonName } from "@/lib/person-name";
 import { useAuthorQueue, useDecideAuthors, useOfficerAccess } from "@/lib/queries";
 import type { AuthorQueueRow, DecideAuthorsIn } from "@/lib/types";
 
@@ -42,13 +43,7 @@ function hasUsefulSuggestion(candidate: AuthorQueueRow) {
 }
 
 function candidateDisplayName(candidate: AuthorQueueRow) {
-  const rank = candidate.candidate_rank?.toLocaleLowerCase("vi-VN").replaceAll(".", "").trim();
-  const degree = candidate.candidate_degree?.toLocaleLowerCase("vi-VN").replaceAll(".", "").trim();
-  const rankTitle = rank === "pgs" || rank?.includes("phó giáo sư") ? "PGS" : rank === "gs" || rank?.includes("giáo sư") ? "GS" : null;
-  const degreeTitle = degree === "ts" || degree?.includes("tiến sĩ") ? "TS" : degree === "ths" || degree?.includes("thạc sĩ") ? "ThS" : null;
-  const credentials = [rankTitle, degreeTitle].filter(Boolean).join(".");
-  const name = candidate.candidate_name.replace(/^(?:(?:GS|PGS)\.)?(?:(?:TS|ThS)\.)?\s*/i, "");
-  return credentials ? `${credentials}. ${name}` : candidate.candidate_name;
+  return formatPersonName(candidate.candidate_name, candidate.candidate_rank, candidate.candidate_degree);
 }
 
 export default function AuthorQueuePage() {

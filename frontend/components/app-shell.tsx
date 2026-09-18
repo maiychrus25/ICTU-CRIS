@@ -4,14 +4,14 @@
 "use client";
 
 import {
-  AlertTriangle, BarChart3, Building2, CalendarRange, CircleHelp, CopyCheck, FilePenLine, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
-  GraduationCap, Map, RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRound, UserRoundCheck, X,
+  AlertTriangle, BarChart3, Building2, CalendarRange, ChevronDown, CircleHelp, CopyCheck, FilePenLine, Info, LayoutDashboard, LogIn, LogOut, Menu, Moon,
+  GraduationCap, Map as MapIcon, RefreshCw, Scale, ScrollText, Search, Sun, Tags, UserRound, UserRoundCheck, Users, X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -21,15 +21,16 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ApiError } from "@/lib/api";
 import { userRoleLabels } from "@/lib/labels";
-import { useHealth, useLogout, useMe } from "@/lib/queries";
+import { useHealth, useLogout, useMe, useWorkFacets } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { href: "/tong-quan/", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/ke-khai-cua-toi/", label: "Kê khai của tôi", icon: FilePenLine, lecturerOnly: true },
   { href: "/tra-cuu/", label: "Tra cứu", icon: Search, public: true },
+  { href: "/giang-vien/", label: "Giảng viên", icon: Users, public: true },
   { href: "/chu-de/", label: "Chủ đề", icon: Tags, public: true },
-  { href: "/ban-do/", label: "Bản đồ tri thức", icon: Map, public: true },
+  { href: "/ban-do/", label: "Bản đồ tri thức", icon: MapIcon, public: true },
   { href: "/doi-chieu/", label: "Đối chiếu đề tài", icon: Scale },
   { href: "/doi-soat/tac-gia/", label: "Hàng đợi tác giả", icon: UserRoundCheck },
   { href: "/doi-soat/trung-lap/", label: "Hàng đợi nghi trùng", icon: CopyCheck },
@@ -67,7 +68,7 @@ const routeTitles = [
   ["/nhat-ky", "Nhật ký"],
   ["/tong-quan", "Tổng quan"],
   ["/cong-trinh", "Chi tiết công trình"],
-  ["/giang-vien", "Hồ sơ giảng viên"],
+  ["/giang-vien", "Giảng viên"],
   ["/doi-chieu", "Đối chiếu đề tài"],
   ["/tra-cuu", "Tra cứu"],
   ["/dang-nhap", "Đăng nhập"],
@@ -82,6 +83,20 @@ function Brand({ compact = false }: { compact?: boolean }) {
       {!compact && <span><strong className="block text-sm tracking-wide">ICTU-CRIS</strong><span className="block text-[11px] text-muted-foreground">Thông tin nghiên cứu</span></span>}
     </Link>
   );
+}
+
+const documentTypeNavigation = [
+  ["bai_bao", "Bài báo"], ["do_an", "Đồ án/Khoá luận"], ["luan_van", "Luận văn"], ["luan_an", "Luận án"], ["hoc_lieu", "Học liệu số"],
+] as const;
+
+function DocumentTypeNavigation() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const facets = useWorkFacets();
+  const [open, setOpen] = useState(true);
+  const selected = searchParams.get("doc_type");
+  const counts = new Map(facets.data?.doc_types?.map((item) => [item.value, item.n]) ?? []);
+  return <div className="ml-6 border-l border-sidebar-border pl-2"><button type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)} className="flex min-h-8 w-full items-center justify-between rounded-md px-2 text-xs font-medium text-sidebar-foreground/65 hover:bg-sidebar-accent"><span>Loại công trình</span><ChevronDown className={cn("size-3.5 transition-transform", !open && "-rotate-90")} /></button>{open && <div className="space-y-0.5 pb-1">{documentTypeNavigation.map(([value, label]) => { const active = pathname.startsWith("/tra-cuu") && selected === value; return <Link key={value} href={`/tra-cuu/?doc_type=${value}`} onClick={() => window.dispatchEvent(new CustomEvent("cris:document-type", { detail: value }))} aria-current={active ? "page" : undefined} className={cn("flex min-h-8 items-center justify-between gap-2 rounded-md px-2 text-xs text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", active && "bg-sidebar-accent text-sidebar-accent-foreground")}><span>{label}</span><span suppressHydrationWarning className="tabular-nums text-[11px] text-muted-foreground">{counts.get(value)?.toLocaleString("vi-VN") ?? ""}</span></Link>; })}</div>}</div>;
 }
 
 function Navigation({ compact = false }: { compact?: boolean }) {
@@ -99,13 +114,11 @@ function Navigation({ compact = false }: { compact?: boolean }) {
     <nav aria-label="Điều hướng chính" className="space-y-1 px-2 py-3">
       {items.filter((item) => (!publicOnly || ("public" in item && item.public)) && (!("lecturerOnly" in item) || !item.lecturerOnly || showMyDeclarations) && (!("officerOnly" in item) || !item.officerOnly || user?.roles.includes("rd_officer"))).map(({ href, label, icon: Icon }) => {
         const active = pathname.startsWith(href.replace(/\/$/, ""));
-        return (
-          <Link key={href} href={href} title={compact ? label : undefined} aria-current={active ? "page" : undefined}
-            className={cn("flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", active && "bg-sidebar-accent text-sidebar-accent-foreground", compact && "justify-center px-0")}>
-            <Icon className="size-[18px] shrink-0" />
-            {!compact && <span>{label}</span>}
-          </Link>
-        );
+        return <div key={href}><Link href={href} title={compact ? label : undefined} aria-current={active ? "page" : undefined}
+          className={cn("flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", active && "bg-sidebar-accent text-sidebar-accent-foreground", compact && "justify-center px-0")}>
+          <Icon className="size-[18px] shrink-0" />
+          {!compact && <span>{label}</span>}
+        </Link>{label === "Tra cứu" && !compact && <Suspense fallback={null}><DocumentTypeNavigation /></Suspense>}</div>;
       })}
     </nav>
   );
@@ -174,7 +187,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
         <div className="lg:hidden"><Brand compact /></div><div className="hidden lg:block"><Brand /></div>
-        <div className="border-t border-sidebar-border lg:hidden"><Navigation compact /></div><div className="hidden border-t border-sidebar-border lg:block"><Navigation /></div>
+        <div className="flex-1 overflow-y-auto border-t border-sidebar-border lg:hidden"><Navigation compact /></div><div className="hidden flex-1 overflow-y-auto border-t border-sidebar-border lg:block"><Navigation /></div>
         <div className="mt-auto lg:hidden"><PublicPortalLink compact /><Account compact /></div><div className="mt-auto hidden lg:block"><PublicPortalLink /><Account /></div>
       </aside>
 

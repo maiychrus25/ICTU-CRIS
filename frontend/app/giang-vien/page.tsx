@@ -3,42 +3,124 @@
 
 "use client";
 
-import { BookMarked, BookOpen, Building2, Copy, Download, ExternalLink, FileText, Mail, TimerReset } from "lucide-react";
+import { ArrowLeft, BookMarked, BookOpen, Building2, Copy, Download, ExternalLink, FileText, Mail, Search, TimerReset } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { PageHeader } from "@/components/page-header";
+import { Pager } from "@/components/pager";
 import { PersonAvatar } from "@/components/person-avatar";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { StatusBadge } from "@/components/status-badge";
 import { WorkCitationDialog } from "@/components/work-citation-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { docTypeLabels, getFieldValueLabel } from "@/lib/labels";
+import { formatPersonName } from "@/lib/person-name";
 import { api, API_BASE, ApiError } from "@/lib/api";
-import { usePerson } from "@/lib/queries";
-import type { PersonPublication } from "@/lib/types";
+import { usePerson, usePersonDirectory, useWorkFacets } from "@/lib/queries";
+import type { DirectoryPerson, PersonDirectoryFilters, PersonPublication } from "@/lib/types";
 
 function formatDate(value: string | null | undefined) {
   return value ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "Chưa có";
 }
 
-function formatPersonName(name: string, rank?: string | null, degree?: string | null) {
-  const rankValue = rank?.toLocaleLowerCase("vi-VN").replaceAll(".", "");
-  const degreeValue = degree?.toLocaleLowerCase("vi-VN").replaceAll(".", "");
-  const rankTitle = rankValue === "pgs" || rankValue?.includes("phó giáo sư") ? "PGS" : rankValue === "gs" || rankValue?.includes("giáo sư") ? "GS" : null;
-  const degreeTitle = degreeValue === "ts" || degreeValue?.includes("tiến sĩ") ? "TS" : degreeValue === "ths" || degreeValue?.includes("thạc sĩ") ? "ThS" : null;
-  const titles = [rankTitle, degreeTitle].filter(Boolean);
-  return titles.length ? `${titles.join(".")}. ${name.replace(/^(?:(?:GS|PGS)\.)?(?:(?:TS|ThS)\.)?\s*/i, "")}` : name;
-}
-
 function formatCredential(value: string) {
   return { gs: "Giáo sư", pgs: "Phó giáo sư", ts: "Tiến sĩ", ths: "Thạc sĩ" }[value.toLocaleLowerCase("vi-VN").replaceAll(".", "")] ?? value;
+}
+
+const all = "all";
+
+function LecturerCard({ person }: { person: DirectoryPerson }) {
+  const name = formatPersonName(person.display_name, person.rank, person.degree);
+  return (
+    <Link href={`/giang-vien/?id=${person.id}`} className="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+      <Card className="h-full transition-colors group-hover:bg-muted/40" size="sm">
+        <CardContent className="flex gap-3">
+          <PersonAvatar name={name} src={person.avatar_url} small />
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold leading-5 text-primary group-hover:underline">{name}</h2>
+            {person.position && <p className="mt-1 text-xs">{person.position}</p>}
+            <p className="mt-1 text-xs text-muted-foreground">{person.unit ? person.unit.name === person.unit.code ? person.unit.code : `${person.unit.code} — ${person.unit.name}` : "Chưa gán khoa"}</p>
+            {person.field && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{person.field}</p>}
+          </div>
+        </CardContent>
+        <CardContent className="mt-auto border-t pt-3">
+          <p className="font-medium tabular-nums">{person.works.toLocaleString("vi-VN")} công trình</p>
+          {Object.keys(person.by_type).length > 0 && <div className="mt-2 flex flex-wrap gap-1">{Object.entries(person.by_type).map(([type, count]) => <Badge key={type} variant="secondary" className="font-normal tabular-nums">{docTypeLabels[type] ?? type}: {count}</Badge>)}</div>}
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+function LecturerDirectory() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const initialControls = {
+    q: searchParams.get("q") ?? "", unit: searchParams.get("unit") ?? all,
+    degree: searchParams.get("degree") ?? all, sort: searchParams.get("sort") === "name" ? "name" as const : "works" as const,
+    hasWorks: searchParams.get("has_works") === "true", page: Math.max(1, Number(searchParams.get("page")) || 1),
+  };
+  const [controls, setControls] = useState(initialControls);
+  const controlsRef = useRef(controls);
+  const [search, setSearch] = useState(controls.q);
+  const facets = useWorkFacets();
+  const supportsDirectory = Boolean(facets.data?.doc_types);
+  const filters: PersonDirectoryFilters = {
+    q: controls.q || undefined, unit: controls.unit === all ? undefined : controls.unit,
+    degree: controls.degree === all ? undefined : controls.degree as PersonDirectoryFilters["degree"],
+    has_works: controls.hasWorks || undefined, sort: controls.sort, page: controls.page, per_page: 24,
+  };
+  const directory = usePersonDirectory(filters, supportsDirectory, !facets.isLoading);
+
+  const updateControls = useCallback((changes: Partial<typeof initialControls>, nextPage = 1) => {
+    const next = { ...controlsRef.current, ...changes, page: nextPage };
+    controlsRef.current = next;
+    setControls(next);
+    const params = new URLSearchParams();
+    if (next.q) params.set("q", next.q);
+    if (next.unit !== all) params.set("unit", next.unit);
+    if (next.degree !== all) params.set("degree", next.degree);
+    if (next.hasWorks) params.set("has_works", "true");
+    params.set("sort", next.sort);
+    params.set("page", String(next.page));
+    router.replace(`/giang-vien/${params.size ? `?${params}` : ""}`);
+  }, [router]);
+
+  useEffect(() => {
+    if (search === controls.q) return;
+    const timeout = window.setTimeout(() => updateControls({ q: search.trim() }), 350);
+    return () => window.clearTimeout(timeout);
+  }, [controls.q, search, updateControls]);
+
+  const data = directory.data;
+  const filtersSupported = data?.filters_supported;
+  return (
+    <>
+      <PageHeader title={`Giảng viên${data ? ` · ${data.page.total.toLocaleString("vi-VN")}` : ""}`} description="Tìm giảng viên theo tên, khoa và học hàm, học vị; mở hồ sơ để xem các công trình đã liên kết." />
+      <section aria-label="Bộ lọc danh bạ giảng viên" className="mb-5 rounded-lg border bg-card p-4">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <div className="md:col-span-2"><label htmlFor="lecturer-search" className="mb-1.5 block text-xs font-medium">Tên giảng viên</label><div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input id="lecturer-search" aria-label="Tìm theo tên giảng viên" value={search} onChange={(event) => setSearch(event.target.value)} className="pl-9" placeholder="Nhập tên, có thể không dấu…" /></div></div>
+          {filtersSupported && <>
+            <div><label className="mb-1.5 block text-xs font-medium">Khoa</label><Select value={controls.unit} onValueChange={(value) => updateControls({ unit: String(value) })}><SelectTrigger aria-label="Khoa" className="w-full"><SelectValue>{(value) => value === all ? "Tất cả khoa" : data.facets.units.find((item) => item.value === value)?.label ?? value}</SelectValue></SelectTrigger><SelectContent><SelectItem value={all}>Tất cả khoa</SelectItem>{data.facets.units.map((item) => <SelectItem key={item.value} value={item.value}>{item.label} ({item.n})</SelectItem>)}</SelectContent></Select></div>
+            <div><label className="mb-1.5 block text-xs font-medium">Học hàm, học vị</label><Select value={controls.degree} onValueChange={(value) => updateControls({ degree: String(value) })}><SelectTrigger aria-label="Học hàm, học vị" className="w-full"><SelectValue>{(value) => value === all ? "Tất cả" : data.facets.degrees.find((item) => item.value === value)?.label ?? value}</SelectValue></SelectTrigger><SelectContent><SelectItem value={all}>Tất cả</SelectItem>{data.facets.degrees.map((item) => <SelectItem key={item.value} value={item.value}>{item.label} ({item.n})</SelectItem>)}</SelectContent></Select></div>
+            <div><label className="mb-1.5 block text-xs font-medium">Sắp xếp</label><Select value={controls.sort} onValueChange={(value) => updateControls({ sort: String(value) as typeof controls.sort })}><SelectTrigger aria-label="Sắp xếp" className="w-full"><SelectValue>{(value) => value === "name" ? "Theo tên" : "Nhiều công trình"}</SelectValue></SelectTrigger><SelectContent><SelectItem value="works">Nhiều công trình</SelectItem><SelectItem value="name">Theo tên</SelectItem></SelectContent></Select></div>
+          </>}
+        </div>
+        {filtersSupported && <label className="mt-3 inline-flex min-h-8 cursor-pointer items-center gap-2 text-sm"><input type="checkbox" checked={controls.hasWorks} onChange={(event) => updateControls({ hasWorks: event.target.checked })} className="size-4 accent-primary" />Chỉ người có công trình</label>}
+      </section>
+      {facets.isLoading || directory.isLoading ? <LoadingView label="Đang tải danh bạ giảng viên…" /> : directory.isError ? <ErrorView error={directory.error} retry={() => directory.refetch()} /> : !data?.items.length ? <EmptyView title="Không tìm thấy giảng viên" description="Hãy đổi tên tìm kiếm hoặc bỏ bớt bộ lọc rồi thử lại." /> : <section aria-label="Danh sách giảng viên"><div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{data.items.map((person) => <LecturerCard key={person.id} person={person} />)}</div>{filtersSupported && <div className="mt-4 overflow-hidden rounded-lg border bg-card"><Pager page={data.page.page} perPage={data.page.per_page} total={data.page.total} onPageChange={(nextPage) => updateControls({}, nextPage)} /></div>}</section>}
+    </>
+  );
 }
 
 function PersonContent() {
@@ -55,7 +137,7 @@ function PersonContent() {
     { id: "citation", header: "Trích dẫn", enableSorting: false, cell: ({ row }) => <Button type="button" variant="ghost" size="sm" onClick={() => setCitationWorkId(row.original.work_id)}><BookMarked />Trích dẫn</Button> },
   ], []);
 
-  if (id === null) return <><PageHeader title="Hồ sơ giảng viên" /><EmptyView title="Chưa chọn giảng viên" description="Mở tên một giảng viên từ công trình hoặc hàng đợi tác giả để xem hồ sơ." action={<Link href="/tra-cuu/" className="font-medium text-primary hover:underline">Đi đến tra cứu</Link>} /></>;
+  if (id === null) return <LecturerDirectory />;
   if (query.isLoading) return <><PageHeader title="Hồ sơ giảng viên" /><LoadingView /></>;
   if (query.isError) return <><PageHeader title="Hồ sơ giảng viên" /><ErrorView error={query.error} retry={() => query.refetch()} /></>;
   if (!query.data) return <><PageHeader title="Hồ sơ giảng viên" /><EmptyView description="Hồ sơ này không còn tồn tại. Hãy quay lại trang tra cứu." /></>;
@@ -87,7 +169,7 @@ function PersonContent() {
 
   return (
     <>
-      <PageHeader title="Hồ sơ giảng viên" description="Thông tin chuyên môn và các công trình đã liên kết trong ICTU-CRIS." />
+      <PageHeader title="Hồ sơ giảng viên" description="Thông tin chuyên môn và các công trình đã liên kết trong ICTU-CRIS." action={<Link href="/giang-vien/" className={buttonVariants({ variant: "outline" })}><ArrowLeft />Danh bạ giảng viên</Link>} />
       <section aria-labelledby="person-name" className="mb-6 rounded-lg border bg-card p-5">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
           <PersonAvatar name={displayName} src={person.avatar_url} />

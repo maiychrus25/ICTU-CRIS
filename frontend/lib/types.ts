@@ -7,7 +7,7 @@ export interface WorkSummary {
   id: number; title: string | null; doc_type: string; doc_type_label: string;
   year: number | null; doi: string | null; state: string; needs_review: boolean;
   score?: number | null; units?: WorkUnit[]; keywords?: string[]; first_seen_at?: string; version?: number;
-  venue_kind?: string | null;
+  venue_kind?: string | null; cohort?: string | null;
 }
 export interface WorkList { items: WorkSummary[]; page: PageInfo; mode?: "keyword" | "semantic"; note?: string | null }
 export interface FieldRow { field: string; label: string; value: string | null; raw: string | null; source: string }
@@ -42,6 +42,21 @@ export interface PersonProfile {
 export interface PersonSearchRow {
   id: number; display_name: string; degree: string | null; unit_code: string | null; kind: string; works: number;
   avatar_url?: string | null;
+}
+export interface DirectoryUnit { id: number; code: string; name: string }
+export interface DirectoryPerson {
+  id: number; display_name: string; rank: string | null; degree: string | null; position: string | null;
+  unit: DirectoryUnit | null; field: string | null; avatar_url: string | null; orcid: string | null;
+  works: number; by_type: Record<string, number>;
+}
+export interface PersonDirectoryOut {
+  items: DirectoryPerson[]; page: PageInfo;
+  facets: { units: FacetOption[]; degrees: FacetOption[] };
+}
+export interface PersonDirectoryData extends PersonDirectoryOut { filters_supported: boolean }
+export interface PersonDirectoryFilters {
+  q?: string; unit?: string; degree?: "gs" | "pgs" | "ts" | "ths" | "other";
+  has_works?: boolean; sort?: "works" | "name"; page?: number; per_page?: number;
 }
 export interface Topic { id: number; label: string; size: number; keywords: string[]; built_at: string | null }
 export interface TopicKeyword { keyword: string; weight: number }
@@ -149,6 +164,7 @@ export interface StatsOut {
   by_year_type: YearTypeRow[]; unknown_year: UnknownYearRow; by_unit: UnitWorks[];
   top_persons: TopPerson[]; queues: { authors_pending: number; dup_groups_open: number };
   coverage: { works_with_link_pct: number; works_without_unit: number }; last_sync: LastSync | null;
+  totals?: { works: number; persons: number; by_type: UnknownYearRow };
 }
 export interface AuditRow {
   id: number; at: string; actor_name: string | null; action: string; action_label: string;
@@ -262,11 +278,13 @@ export interface FacetUnit { value: number; code: string; name: string; n: numbe
 export interface WorkFacets {
   pub_types: FacetOption[]; quartiles: FacetOption[]; cohorts: FacetOption[];
   years: FacetYear[]; units: FacetUnit[]; scores?: FacetOption[]; venue_kinds?: FacetOption[];
+  doc_types?: FacetOption[];
 }
 export interface WorkFilters {
   q?: string; mode?: "keyword" | "semantic"; doc_type?: string; year?: number; unit?: string;
   topic?: number; pub_type?: string; quartile?: string; cohort?: string; keyword?: string;
-  score?: "0.5" | "0.75" | "1" | "none"; min_score?: number; venue_kind?: string; page?: number;
+  score?: "0.5" | "0.75" | "1" | "none"; min_score?: number; venue_kind?: string;
+  sort?: "recent" | "title" | "added"; page?: number;
 }
 export interface ExpertEvidence { work_id: number; title: string | null; doc_type: string; year: number | null; score: number }
 export interface ExpertResult {
