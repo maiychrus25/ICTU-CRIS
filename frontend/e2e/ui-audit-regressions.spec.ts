@@ -54,12 +54,41 @@ test("hàng đợi gom ứng viên theo lượt tên và công trình", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/doi-soat/tac-gia/");
 
-  const group = page.getByRole("article", { name: /Nguyễn Văn A.*Xây dựng website quản lý thư viện/ });
+  const group = page.getByRole("article", { name: /Nguyễn Thị Dung.*Xây dựng website quản lý thư viện/ });
   await expect(group).toBeVisible();
   await expect(group.getByRole("radio")).toHaveCount(3);
   await expect(group.getByRole("link", { name: /Xây dựng website quản lý thư viện/ })).toHaveCount(1);
   await expect(group.getByRole("button", { name: "Xác nhận ứng viên đã chọn" })).toBeVisible();
   await expect(page.locator('main [data-slot="table-container"]')).toHaveCount(0);
+});
+
+test("ứng viên trùng tên có đủ căn cứ phân biệt mà không làm mất lựa chọn", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/doi-soat/tac-gia/");
+
+  const group = page.getByRole("article", { name: /Nguyễn Thị Dung.*Xây dựng website quản lý thư viện/ });
+  const suggested = group.getByRole("group", { name: "Ứng viên PGS.TS. Nguyễn Thị Dung" });
+  await expect(group.getByRole("group", { name: /^Ứng viên/ })).toHaveCount(3);
+  await expect(suggested).toContainText("CNTT — Khoa Công nghệ thông tin");
+  await expect(suggested).toContainText("Trưởng khoa");
+  await expect(suggested).toContainText("42 công trình đã liên kết");
+  await expect(suggested).toContainText("Trí tuệ nhân tạo");
+  await expect(suggested.getByTitle("0000-0002-1825-0097")).toHaveText("ORCID …0097");
+  await expect(group.getByText("Gợi ý AI", { exact: true })).toHaveCount(1);
+  await expect(suggested).toContainText("Cùng khoa và chuyên môn công trình");
+  await expect(group.getByText(/chưa có công trình đã xác nhận/i)).toHaveCount(0);
+
+  const fallback = page.getByRole("group", { name: "Ứng viên TS. Nguyễn Văn An" });
+  await expect(fallback).not.toContainText("công trình đã liên kết");
+
+  const second = group.getByRole("group", { name: "Ứng viên TS. Nguyễn Thị Dung" });
+  const secondRadio = second.getByRole("radio");
+  await secondRadio.check();
+  const popupPromise = page.waitForEvent("popup");
+  await second.getByRole("link", { name: "Mở hồ sơ" }).click();
+  const popup = await popupPromise;
+  await popup.close();
+  await expect(secondRadio).toBeChecked();
 });
 
 test("tài khoản chưa gắn giảng viên không gọi API kê khai cá nhân", async ({ page }) => {
