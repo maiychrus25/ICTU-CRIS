@@ -110,10 +110,11 @@ test("khách chưa đăng nhập chỉ thấy các mục công khai", async ({ p
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/dang-nhap/");
   const sidebar = page.locator("aside");
-  for (const label of ["Tra cứu", "Giảng viên", "Chủ đề", "Bản đồ tri thức", "Kiểm tra đề tài", "Hướng dẫn", "Về hệ thống"]) {
+  for (const label of ["Tổng quan", "Tra cứu", "Giảng viên", "Chủ đề", "Bản đồ tri thức", "Kiểm tra đề tài", "Hướng dẫn", "Về hệ thống"]) {
     await expect(sidebar.getByRole("link", { name: label, exact: true })).toBeVisible();
   }
-  for (const label of ["Tổng quan", "Hàng đợi tác giả", "Hàng đợi nghi trùng", "Kỳ báo cáo", "Đồng bộ", "Nhật ký"]) {
+  await expect(sidebar.getByText("Đăng nhập để dùng kê khai, đối soát, báo cáo")).toBeVisible();
+  for (const label of ["Hàng đợi tác giả", "Hàng đợi nghi trùng", "Kỳ báo cáo", "Đồng bộ", "Nhật ký"]) {
     await expect(sidebar.getByRole("link", { name: label, exact: true })).toHaveCount(0);
   }
 });

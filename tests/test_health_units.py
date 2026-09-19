@@ -245,3 +245,12 @@ def test_add_unit_alias_requires_rd_officer_403(client, conn):
     officer = mk_actor(conn, ["faculty_officer"], unit_id=uid)
     r = client.post(f"/api/units/{uid}/aliases", json={"alias": "KQ"}, headers=hdr(officer))
     assert r.status_code == 403
+
+
+def test_health_version_is_the_installed_package_version_not_a_hardcoded_string(client):
+    """Bản chạy thật 0.8.0 từng báo "0.7.0": mã tra tên gói "ictu-cris" (không tồn tại) rồi rơi về chuỗi viết cứng."""
+    import pathlib
+    import tomllib
+    want = tomllib.loads((pathlib.Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    assert client.get("/api/health").json()["version"] == want
+    assert client.get("/openapi.json").json()["info"]["version"] == want

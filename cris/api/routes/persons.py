@@ -93,7 +93,10 @@ def persons_directory(conn: Conn, q: str = "", unit: str = "", degree: str = "",
     # `sort=name`: tên gọi tiếng Việt (từ cuối họ tên) trước, rồi cả họ tên — không
     # phân biệt hoa/thường, ổn định (thêm `p.id`). `sort=works` (mặc định): nhiều
     # công trình trước, cũng ổn định nhờ `p.id`.
-    order_sql = ("lower(regexp_replace(btrim(p.display_name), '^.*\\s+', '')), lower(p.display_name), p.id"
+    # Tên gọi = từ cuối của họ tên, sau khi bỏ hậu tố trong ngoặc mà nguồn dùng để phân biệt người trùng tên
+    # ("Nguyễn Thu Hương (88)" → "Hương"), nếu không "(88)" sẽ bị coi là tên gọi và đứng đầu danh bạ.
+    _name = "regexp_replace(btrim(p.display_name), '\\s*\\([^)]*\\)\\s*$', '')"
+    order_sql = (f"lower(regexp_replace({_name}, '^.*\\s+', '')), lower(p.display_name), p.id"
                 if sort == "name" else "COALESCE(c.works, 0) DESC, p.id")
     from_sql = ("FROM person p LEFT JOIN unit u ON u.id = p.unit_id "
                 "LEFT JOIN (SELECT vp.person_id, count(*) AS works, "
