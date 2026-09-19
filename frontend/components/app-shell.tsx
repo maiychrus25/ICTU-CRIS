@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -89,13 +89,19 @@ const documentTypeNavigation = [
   ["bai_bao", "Bài báo"], ["do_an", "Đồ án/Khoá luận"], ["luan_van", "Luận văn"], ["luan_an", "Luận án"], ["hoc_lieu", "Học liệu số"],
 ] as const;
 
+const subscribeNever = () => () => {};
+
 function DocumentTypeNavigation() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const facets = useWorkFacets();
   const [open, setOpen] = useState(true);
   const selected = searchParams.get("doc_type");
-  const counts = new Map(facets.data?.doc_types?.map((item) => [item.value, item.n]) ?? []);
+  // Số lượng chỉ hiện sau khi hydrate: nhóm này nằm trong Suspense nên hydrate muộn, lúc đó facet có thể đã
+  // nằm sẵn trong cache (trang Tra cứu gọi trước) → client có số mà HTML máy chủ chưa có → hydration mismatch,
+  // React dựng lại cả cây và làm mất thao tác người dùng vừa bấm (ví dụ mở "Bộ lọc" trên điện thoại).
+  const hydrated = useSyncExternalStore(subscribeNever, () => true, () => false);
+  const counts = new Map((hydrated ? facets.data?.doc_types : undefined)?.map((item) => [item.value, item.n]) ?? []);
   return <div className="ml-6 border-l border-sidebar-border pl-2"><button type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)} className="flex min-h-8 w-full items-center justify-between rounded-md px-2 text-xs font-medium text-sidebar-foreground/65 hover:bg-sidebar-accent"><span>Loại công trình</span><ChevronDown className={cn("size-3.5 transition-transform", !open && "-rotate-90")} /></button>{open && <div className="space-y-0.5 pb-1">{documentTypeNavigation.map(([value, label]) => { const active = pathname.startsWith("/tra-cuu") && selected === value; return <Link key={value} href={`/tra-cuu/?doc_type=${value}`} onClick={() => window.dispatchEvent(new CustomEvent("cris:document-type", { detail: value }))} aria-current={active ? "page" : undefined} className={cn("flex min-h-8 items-center justify-between gap-2 rounded-md px-2 text-xs text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", active && "bg-sidebar-accent text-sidebar-accent-foreground")}><span>{label}</span><span suppressHydrationWarning className="tabular-nums text-[11px] text-muted-foreground">{counts.get(value)?.toLocaleString("vi-VN") ?? ""}</span></Link>; })}</div>}</div>;
 }
 
