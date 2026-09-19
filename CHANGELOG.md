@@ -11,6 +11,9 @@
   cài tên là `cris`, nên luôn rơi về một chuỗi viết cứng đã cũ. Nay `_package_version()` là nguồn duy nhất, không còn chuỗi viết cứng.
 - Danh bạ giảng viên sắp theo tên: bỏ qua hậu tố trong ngoặc mà nguồn dùng để phân biệt người trùng tên — "Nguyễn Thu Hương (88)"
   từng đứng đầu danh bạ vì "(88)" bị coi là tên gọi.
+- Thanh bên của khách chưa đăng nhập: hiện lại "Tổng quan" (trang vốn xem công khai được nhưng bị ẩn khỏi điều hướng từ đợt rà soát
+  UI) và thêm dòng nhắc "Đăng nhập để dùng kê khai, đối soát, báo cáo…" phía trên nút Đăng nhập — tránh hiểu nhầm là các trang nghiệp vụ
+  đã bị gỡ.
 
 ## [0.8.0] - 2026-09-20
 

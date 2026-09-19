@@ -25,7 +25,7 @@ import { useHealth, useLogout, useMe, useWorkFacets } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { href: "/tong-quan/", label: "Tổng quan", icon: LayoutDashboard },
+  { href: "/tong-quan/", label: "Tổng quan", icon: LayoutDashboard, public: true },
   { href: "/ke-khai-cua-toi/", label: "Kê khai của tôi", icon: FilePenLine, lecturerOnly: true },
   { href: "/tra-cuu/", label: "Tra cứu", icon: Search, public: true },
   { href: "/giang-vien/", label: "Giảng viên", icon: Users, public: true },
@@ -179,7 +179,7 @@ function Account({ compact = false }: { compact?: boolean }) {
     const roles = user.roles.map((role) => userRoleLabels[role] ?? role).join(", ");
     return compact ? <div className="border-t border-sidebar-border p-3 text-center" title={`${user.display_name} · ${roles}`}><Button type="button" variant="ghost" size="icon" aria-label="Đăng xuất" onClick={() => void signOut()} disabled={logout.isPending}><LogOut /></Button></div> : <div className="border-t border-sidebar-border p-3"><div className="flex items-center gap-2"><UserRound className="size-5 shrink-0 text-primary" /><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold">{user.display_name}</p><p className="truncate text-[11px] text-muted-foreground">{roles || "Chưa có vai trò"}</p></div><Button type="button" variant="ghost" size="icon-sm" title="Đăng xuất" aria-label="Đăng xuất" onClick={() => void signOut()} disabled={logout.isPending}><LogOut /></Button></div></div>;
   }
-  if (me.data?.auth_required) return <div className="border-t border-sidebar-border p-3"><Button render={<Link href="/dang-nhap/" />} variant="outline" size={compact ? "icon" : "default"} className="w-full" title={compact ? "Đăng nhập" : undefined}><LogIn />{!compact && "Đăng nhập"}</Button></div>;
+  if (me.data?.auth_required) return <div className="border-t border-sidebar-border p-3">{!compact && <p className="mb-2 text-xs leading-snug text-sidebar-foreground/70">Đăng nhập để dùng kê khai, đối soát, báo cáo và các chức năng nghiệp vụ khác.</p>}<Button render={<Link href="/dang-nhap/" />} variant="outline" size={compact ? "icon" : "default"} className="w-full" title={compact ? "Đăng nhập" : undefined}><LogIn />{!compact && "Đăng nhập"}</Button></div>;
   return <div className="border-t border-sidebar-border p-3 text-center text-[11px] text-muted-foreground"><span className="hidden lg:inline">AI gợi ý, người quyết</span><span className="lg:hidden">v0.1</span></div>;
 }
 
