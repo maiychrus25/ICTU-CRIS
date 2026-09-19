@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 dependencies = [
-  "psycopg[binary]>=3.2,<4",
+  "psycopg[binary]>=3.3.5,<4",
   "fastapi>=0.115,<1",
   "uvicorn>=0.30,<1",
   "pydantic>=2.7,<3",
