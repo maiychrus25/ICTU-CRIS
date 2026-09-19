@@ -16,18 +16,20 @@ test("tổng quan giới hạn cập nhật và xếp thẻ số hai cột trên
   expect(first?.x).not.toBe(second?.x);
 });
 
-test("tra cứu giấu bộ lọc phụ trên điện thoại và không cuộn bảng ở 1280px", async ({ page }) => {
+test("tra cứu giữ tab loại và giấu bộ lọc phụ trên điện thoại, không cuộn bảng ở 1280px", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/tra-cuu/");
 
   const filters = page.getByText("Bộ lọc (0 đang áp dụng)", { exact: true });
   await expect(filters).toBeVisible();
-  await expect(page.getByRole("combobox", { name: "Loại tài liệu" })).toBeHidden();
   await filters.click();
-  await page.getByRole("combobox", { name: "Loại tài liệu" }).click();
-  await page.getByRole("option", { name: "Bài báo" }).click();
+  await expect(page.getByRole("tab", { name: /Bài báo/ })).toBeVisible();
+  await page.getByRole("tab", { name: /Bài báo/ }).click();
+  await page.getByRole("combobox", { name: "Khoa" }).click();
+  await page.getByRole("option", { name: /CNTT — Khoa Công nghệ thông tin/ }).click();
   await page.getByRole("button", { name: "Tra cứu", exact: true }).click();
   await expect(page.getByLabel("Bộ lọc đang áp dụng").getByText("Bài báo", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Bộ lọc đang áp dụng")).toContainText("CNTT");
 
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/tra-cuu/");
@@ -103,12 +105,12 @@ test("tài khoản chưa gắn giảng viên không gọi API kê khai cá nhân
   expect(myWorksRequests).toHaveLength(0);
 });
 
-test("khách chưa đăng nhập chỉ thấy sáu mục công khai", async ({ page }) => {
+test("khách chưa đăng nhập chỉ thấy các mục công khai", async ({ page }) => {
   await page.addInitScript(() => window.sessionStorage.setItem("cris:mock-user", "signed-out"));
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/dang-nhap/");
   const sidebar = page.locator("aside");
-  for (const label of ["Tra cứu", "Chủ đề", "Bản đồ tri thức", "Kiểm tra đề tài", "Hướng dẫn", "Về hệ thống"]) {
+  for (const label of ["Tra cứu", "Giảng viên", "Chủ đề", "Bản đồ tri thức", "Kiểm tra đề tài", "Hướng dẫn", "Về hệ thống"]) {
     await expect(sidebar.getByRole("link", { name: label, exact: true })).toBeVisible();
   }
   for (const label of ["Tổng quan", "Hàng đợi tác giả", "Hàng đợi nghi trùng", "Kỳ báo cáo", "Đồng bộ", "Nhật ký"]) {

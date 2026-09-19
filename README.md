@@ -162,6 +162,15 @@ thành một script idempotent, `--nightly` bỏ hai bước AI nặng nhất ch
   bố (`venue_kind`)/chỉ mục/quartile/khoá/từ khoá riêng, và theo **điểm quy
   đổi** (0,5/0,75/1/chưa xác định, ghi tại nguồn theo loại ấn phẩm) (`GET
   /api/works/facets` đếm số lượng từng giá trị).
+- **Xem theo loại công trình** — hàng tab loại (Tất cả/Bài báo/Đồ án/Khoá
+  luận/Luận văn/Luận án/Học liệu số) kèm số lượng thật ngay trên Tra cứu,
+  cùng một nhóm rút gọn được ở thanh bên; sắp xếp **Mới nhất/Tiêu đề A→Z/Mới
+  đưa vào kho**, mặc định đưa đồ án theo khoá mới nhất lên ngay sau công
+  trình có năm — trước đây các loại không ghi năm (đồ án/luận văn/luận án)
+  bị chôn sau hàng chục trang bài báo.
+- **Danh bạ giảng viên** (`/giang-vien/`) — tìm theo tên (không dấu), lọc
+  khoa/học hàm-học vị/chỉ người có công trình, sắp theo số công trình hoặc
+  theo tên; 400 hồ sơ công khai, không hiện email/điện thoại/ngày sinh.
 - **Khoa thật & Quản trị khoa** (`/don-vi/`, `rd_officer`) — mã khoa đọc từ
   bộ lọc `dept` của kho nguồn thay vì chức vụ Ban Giám hiệu bị nhập nhầm
   thành khoa trước đây; tên chính thức của 5 khoa hiện tại và các khoa/bộ

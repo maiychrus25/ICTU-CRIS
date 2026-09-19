@@ -32,7 +32,7 @@ const run = (await getJson("/api/sync/runs?page=1"))?.items?.[0]?.id ?? 1;
 const topic = (await getJson("/api/topics"))?.[0]?.id ?? 1;
 const routes = [
   "/", "/tong-quan/", "/tra-cuu/", "/tra-cuu/?q=m%E1%BA%A1ng&doc_type=bai_bao",
-  "/cong-trinh/?id=1", "/giang-vien/?id=1", "/giang-vien/ly-lich/?id=1", "/khoa/",
+  "/cong-trinh/?id=1", "/giang-vien/", "/giang-vien/?id=1", "/giang-vien/ly-lich/?id=1", "/khoa/",
   "/ban-do/", "/chu-de/", "/chu-de/chi-tiet/?id=" + topic, "/doi-chieu/",
   "/doi-chieu/chuyen-gia/", "/doi-chieu/ra-soat/", "/kiem-tra-de-tai/",
   "/doi-soat/huong-dan/", "/doi-soat/tac-gia/", "/doi-soat/trung-lap/",

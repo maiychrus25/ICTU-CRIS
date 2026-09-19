@@ -11,6 +11,7 @@ from cris.api.schemas import (
     StatsCoverage,
     StatsOut,
     StatsQueues,
+    StatsTotals,
     TopPerson,
     UnitWorks,
     UnknownYearRow,
@@ -64,6 +65,13 @@ def stats(conn: Conn, years: int = Query(5, ge=1, le=50)):
         cur.execute("SELECT id, source, scope, status, started_at, finished_at FROM sync_run ORDER BY id DESC LIMIT 1")
         last = cur.fetchone()
 
+        # `totals` (lát cắt O): toàn bộ kho, không giới hạn `years` — cùng điều kiện
+        # "đang hoạt động, chưa gộp" với `GET /api/works` (`v_work_current`).
+        cur.execute(f"SELECT count(*) AS works, {_COUNT_COLS} FROM v_work_current w")
+        t = cur.fetchone()
+        cur.execute("SELECT count(*) AS n FROM person WHERE kind = 'lecturer' AND active")
+        persons_total = cur.fetchone()["n"]
+
     pct = round(dq["works_with_link"] / dq["works"] * 100, 1) if dq["works"] else 0.0
     return StatsOut(
         by_year_type=by_year_type,
@@ -73,4 +81,6 @@ def stats(conn: Conn, years: int = Query(5, ge=1, le=50)):
         queues=StatsQueues(authors_pending=dq["links_queued"], dup_groups_open=dq["dup_groups_open"]),
         coverage=StatsCoverage(works_with_link_pct=pct, works_without_unit=dq["works_without_unit"]),
         last_sync=LastSync(**last) if last else None,
+        totals=StatsTotals(works=t["works"], persons=persons_total,
+                           by_type={dt: t[dt] for dt in DOC_TYPES}),
     )

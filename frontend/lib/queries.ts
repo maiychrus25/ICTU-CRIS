@@ -8,7 +8,7 @@ import type {
   AuditFilters, CompareIn, CreateReportIn, DeclarationCreateIn, DeclarationEvidenceIn, DeclarationStateIn,
   DecideAuthorsIn, DecideDupIn, DismissAnomalyIn, ExpertIn, FieldEditIn, LoginIn, MapColor,
   MentorFilters, MyDeclarationCreateIn, PeriodOpenIn, PublicTopicCheckIn, QualityAnomalyFilters,
-  ScreenFilters, WorkFilters,
+  PersonDirectoryFilters, ScreenFilters, WorkFilters,
 } from "@/lib/types";
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: api.getMe, staleTime: 60_000 });
@@ -28,6 +28,7 @@ export const useWork = (id: number | null) => useQuery({ queryKey: ["work", id],
 export const useCitation = (id: number, style: "apa" | "ieee" | "bibtex", enabled = true) => useQuery({ queryKey: ["citation", id, style], queryFn: () => api.getCitation(id, style), enabled });
 export const useEditWorkField = (id: number) => useMutation({ mutationFn: (input: FieldEditIn) => api.editWorkField(id, input) });
 export const usePerson = (id: number | null) => useQuery({ queryKey: ["person", id], queryFn: () => api.getPerson(id!), enabled: id !== null });
+export const usePersonDirectory = (filters: PersonDirectoryFilters, supportsDirectory: boolean, enabled = true) => useQuery({ queryKey: ["person-directory", filters, supportsDirectory], queryFn: () => api.getPersonDirectory(filters, supportsDirectory), enabled, placeholderData: (previous) => previous });
 export const usePersonSearch = (q: string) => useQuery({ queryKey: ["person-search", q], queryFn: () => api.searchPersons(q), enabled: q.length > 0 });
 export const useTopics = () => useQuery({ queryKey: ["topics"], queryFn: api.getTopics });
 export const useTopic = (id: number | null) => useQuery({ queryKey: ["topic", id], queryFn: () => api.getTopic(id!), enabled: id !== null });

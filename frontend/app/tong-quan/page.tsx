@@ -23,8 +23,8 @@ function formatDate(value: string | null | undefined) {
   return value ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "Chưa có";
 }
 
-function MetricCard({ label, value, icon: Icon, href }: { label: string; value: string; icon: typeof FileStack; href?: string }) {
-  const card = <Card className="h-full" size="sm"><CardHeader className="flex-row items-center justify-between"><CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle><Icon className="size-4 text-primary" /></CardHeader><CardContent><p className="text-2xl font-semibold tabular-nums">{value}</p>{href && <p className="mt-1 text-xs text-primary">Mở hàng đợi →</p>}</CardContent></Card>;
+function MetricCard({ label, value, icon: Icon, href, linkLabel = "Mở hàng đợi →" }: { label: string; value: string; icon: typeof FileStack; href?: string; linkLabel?: string }) {
+  const card = <Card className="h-full" size="sm"><CardHeader className="flex-row items-center justify-between"><CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle><Icon className="size-4 text-primary" /></CardHeader><CardContent><p className="text-2xl font-semibold tabular-nums">{value}</p>{href && <p className="mt-1 text-xs text-primary">{linkLabel}</p>}</CardContent></Card>;
   return href ? <Link href={href} className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50">{card}</Link> : card;
 }
 
@@ -55,6 +55,7 @@ export default function OverviewPage() {
   return (
     <>
       <PageHeader title="Tổng quan" description="Bức tranh 5 năm gần nhất dành cho lãnh đạo, từ số liệu có thể truy ngược về dữ liệu gốc." />
+      {stats.totals && <section aria-label="Toàn bộ kho" className="mb-7"><div className="mb-3"><h2 className="text-base font-semibold">Toàn bộ kho</h2><p className="mt-1 text-xs text-muted-foreground">Số liệu của toàn bộ dữ liệu đang hoạt động, không giới hạn theo năm.</p></div><div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7"><MetricCard label="Tổng công trình" value={stats.totals.works.toLocaleString("vi-VN")} icon={FileStack} href="/tra-cuu/" linkLabel="Mở danh sách →" />{docTypes.map((type) => <MetricCard key={type} label={{ bai_bao: "Bài báo", do_an: "Đồ án/Khoá luận", luan_van: "Luận văn", luan_an: "Luận án", hoc_lieu: "Học liệu số" }[type]} value={(stats.totals!.by_type[type] ?? 0).toLocaleString("vi-VN")} icon={FileStack} href={`/tra-cuu/?doc_type=${type}`} linkLabel="Mở danh sách →" />)}<MetricCard label="Giảng viên" value={stats.totals.persons.toLocaleString("vi-VN")} icon={UserRoundCheck} href="/giang-vien/" linkLabel="Mở danh bạ →" /></div></section>}
       <section aria-label="Chỉ số tổng quan" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <MetricCard label="Tổng công trình 5 năm" value={totalWorks.toLocaleString("vi-VN")} icon={FileStack} />
         <MetricCard label="Công trình có liên kết tác giả" value={`${stats.coverage.works_with_link_pct.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`} icon={Link2} />
@@ -66,7 +67,7 @@ export default function OverviewPage() {
 
       <section className="mt-7" aria-labelledby="year-type-chart-title">
         <div className="mb-3"><h2 id="year-type-chart-title" className="text-base font-semibold">Công trình theo năm và loại tài liệu</h2><p className="text-xs text-muted-foreground">Số lượng trong 5 năm có dữ liệu gần nhất.</p></div>
-        {yearlyData.length ? <><YearTypeChart data={yearlyData} label="Biểu đồ cột chồng công trình theo năm và loại tài liệu" /><p className="mt-2 text-xs text-muted-foreground tabular-nums">{unknownWorks.toLocaleString("vi-VN")} công trình không rõ năm.</p></> : <EmptyView description="Chưa có dữ liệu theo năm để vẽ biểu đồ. Hãy chờ lần đồng bộ tiếp theo." />}
+        {yearlyData.length ? <><YearTypeChart data={yearlyData} label="Biểu đồ cột chồng công trình theo năm và loại tài liệu" /><p className="mt-2 text-xs text-muted-foreground"><span className="tabular-nums">{unknownWorks.toLocaleString("vi-VN")}</span> công trình không rõ năm; đồ án, luận văn và luận án ở kho nguồn không ghi năm nên không nằm trong biểu đồ. <Link href="/tra-cuu/?doc_type=do_an" className="font-medium text-primary hover:underline">Xem theo khoá</Link></p></> : <EmptyView description="Chưa có dữ liệu theo năm để vẽ biểu đồ. Hãy chờ lần đồng bộ tiếp theo." />}
       </section>
 
       <div className="mt-7 grid items-start gap-7 xl:grid-cols-2">

@@ -125,9 +125,12 @@ def create_app(static_dir: str | os.PathLike | None = None) -> FastAPI:
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
     # Bản đồ tri thức/tra cứu có thể tới ~1,5 MB JSON — nén xuống còn ~300 KB.
     app.add_middleware(GZipMiddleware, minimum_size=1024)
-    for r in (search.router, queue.router, compare.router, quality.router,
+    # `persons.router` (khai báo `/persons/directory`) phải nạp TRƯỚC `search.router`
+    # (khai báo `/persons/{pid}`) — FastAPI/Starlette khớp route theo thứ tự nạp,
+    # nếu không "directory" sẽ bị bắt nhầm là `pid` (422 vì không parse được int).
+    for r in (persons.router, search.router, queue.router, compare.router, quality.router,
               stats.router, export.router, audit.router, periods.router, screen.router,
-              persons.router, sync.router, auth.router, declarations.router, me.router,
+              sync.router, auth.router, declarations.router, me.router,
               mentors.router, ai_public.router, ai_map.router,
               cite.router, recent.router, feed.router, anomalies.router, reports.router,
               notifications.router, units.router):

@@ -14,9 +14,28 @@ from fastapi.responses import HTMLResponse
 from cris import cv as cv_mod
 from cris import rules as RU
 from cris.api.deps import Conn
-from cris.api.schemas import PersonSearchRow
+from cris.api.schemas import (
+    DirectoryPerson,
+    FacetValue,
+    Page,
+    PersonDirectoryFacets,
+    PersonDirectoryOut,
+    PersonSearchRow,
+    UnitRef,
+)
 
 router = APIRouter(prefix="/api", tags=["nguoi"])
+
+DIRECTORY_DOC_TYPES = ("bai_bao", "do_an", "luan_van", "luan_an", "hoc_lieu")
+_DIRECTORY_BY_TYPE_COLS = ", ".join(f"count(*) FILTER (WHERE w.doc_type='{t}') AS {t}" for t in DIRECTORY_DOC_TYPES)
+# Học hàm (person.rank) đi trước học vị (person.degree_raw): nguồn ghi PGS/GS
+# luôn kèm học vị TS (xem `archive.rank`/`archive.degree`, `cris/people.py`) nên
+# một người chỉ rơi đúng một mục — không đếm hai lần ở facet `degrees`.
+DEGREE_LABELS = [("gs", "Giáo sư"), ("pgs", "Phó Giáo sư"), ("ts", "Tiến sĩ"),
+                 ("ths", "Thạc sĩ"), ("other", "Khác")]
+_DEGREE_CASE_SQL = ("CASE WHEN lower(p.rank) = 'gs' THEN 'gs' WHEN lower(p.rank) = 'pgs' THEN 'pgs' "
+                    "WHEN lower(p.degree_raw) = 'ts' THEN 'ts' WHEN lower(p.degree_raw) = 'ths' THEN 'ths' "
+                    "ELSE 'other' END")
 
 
 def _query_key(conn, q):
@@ -29,6 +48,87 @@ def _query_key(conn, q):
         return None
     name_norm, _degree = RU.norm_name(q, nb[1])
     return RU.name_key(name_norm) if name_norm else None
+
+
+def _directory_base_where(q: str):
+    """WHERE/params dùng cho cả danh sách và facet của `/persons/directory` — chỉ
+    lọc `kind='lecturer'`, `active` và `q` (tên; không dấu cũng khớp nhờ
+    `person.name_norm`, đã chuẩn hoá sẵn lúc nhập liệu — `cris.people.import_people`);
+    chưa lọc `unit`/`degree`/`has_works` (facet đếm trên tập này)."""
+    where, params = ["p.kind = 'lecturer'", "p.active"], []
+    qs = q.strip()
+    if qs:
+        like = f"%{qs}%"
+        norm_like = f"%{RU.strip_accents(qs).lower()}%"
+        where.append("(p.display_name ILIKE %s OR p.name_norm ILIKE %s)")
+        params += [like, norm_like]
+    return where, params
+
+
+@router.get("/persons/directory", response_model=PersonDirectoryOut)
+def persons_directory(conn: Conn, q: str = "", unit: str = "", degree: str = "", has_works: bool = False,
+                       sort: Literal["works", "name"] = "works",
+                       page: int = Query(1, ge=1), per_page: int = Query(24, ge=1, le=60)):
+    """Danh bạ giảng viên công khai (`/giang-vien/`) — chỉ `kind='lecturer'`,
+    `active`; không email/điện thoại/ngày sinh. `works`/`by_type` đếm liên kết
+    tác giả còn sống (`DaNoiTuDong`/`DaXacNhan`) trên công trình chưa gộp, qua
+    một CTE gộp cho cả trang — không N+1. Khai báo TRƯỚC `/persons/{pid}` (xem
+    thứ tự router ở `cris/api/app.py`) để không bị bắt nhầm là `pid`."""
+    where, params = _directory_base_where(q)
+    if unit:
+        if unit == "none":
+            where.append("p.unit_id IS NULL")
+        elif unit.isdigit():
+            where.append("p.unit_id = %s")
+            params.append(int(unit))
+        else:
+            where.append("u.code = %s")
+            params.append(unit)
+    if degree:
+        where.append(f"{_DEGREE_CASE_SQL} = %s")
+        params.append(degree)
+    if has_works:
+        where.append("COALESCE(c.works, 0) > 0")
+    where_sql = " AND ".join(where)
+    # `sort=name`: tên gọi tiếng Việt (từ cuối họ tên) trước, rồi cả họ tên — không
+    # phân biệt hoa/thường, ổn định (thêm `p.id`). `sort=works` (mặc định): nhiều
+    # công trình trước, cũng ổn định nhờ `p.id`.
+    order_sql = ("lower(regexp_replace(btrim(p.display_name), '^.*\\s+', '')), lower(p.display_name), p.id"
+                if sort == "name" else "COALESCE(c.works, 0) DESC, p.id")
+    from_sql = ("FROM person p LEFT JOIN unit u ON u.id = p.unit_id "
+                "LEFT JOIN (SELECT vp.person_id, count(*) AS works, "
+                f"{_DIRECTORY_BY_TYPE_COLS} FROM v_person_publications vp JOIN work w ON w.id = vp.work_id "
+                "WHERE vp.state IN ('DaNoiTuDong','DaXacNhan') GROUP BY vp.person_id) c ON c.person_id = p.id")
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT count(*) AS n {from_sql} WHERE {where_sql}", params)
+        total = cur.fetchone()["n"]
+        cur.execute(
+            f"SELECT p.id, p.display_name, p.rank, p.degree_raw AS degree, p.position, p.field, p.avatar_url, "
+            f"p.orcid, u.id AS unit_id, u.code AS unit_code, u.name AS unit_name, COALESCE(c.works, 0) AS works, "
+            f"{', '.join(f'COALESCE(c.{t}, 0) AS {t}' for t in DIRECTORY_DOC_TYPES)} "
+            f"{from_sql} WHERE {where_sql} ORDER BY {order_sql} LIMIT %s OFFSET %s",
+            params + [per_page, (page - 1) * per_page])
+        rows = cur.fetchall()
+        base_where, base_params = _directory_base_where(q)
+        base_where_sql = " AND ".join(base_where)
+        cur.execute(
+            f"SELECT COALESCE(u.code, 'none') AS value, COALESCE(u.name, 'Chưa gán khoa') AS label, count(*) AS n "
+            f"FROM person p LEFT JOIN unit u ON u.id = p.unit_id WHERE {base_where_sql} "
+            f"GROUP BY u.code, u.name ORDER BY n DESC, value", base_params)
+        units_facet = [FacetValue(value=r["value"], label=r["label"], n=r["n"]) for r in cur.fetchall()]
+        cur.execute(f"SELECT {_DEGREE_CASE_SQL} AS value, count(*) AS n FROM person p WHERE {base_where_sql} "
+                    f"GROUP BY value", base_params)
+        degree_n = {r["value"]: r["n"] for r in cur.fetchall()}
+    items = []
+    for r in rows:
+        unit_ref = UnitRef(id=r["unit_id"], code=r["unit_code"], name=r["unit_name"]) if r["unit_id"] else None
+        by_type = {t: r[t] for t in DIRECTORY_DOC_TYPES if r[t]}
+        items.append(DirectoryPerson(id=r["id"], display_name=r["display_name"], rank=r["rank"], degree=r["degree"],
+                                     position=r["position"], unit=unit_ref, field=r["field"],
+                                     avatar_url=r["avatar_url"], orcid=r["orcid"], works=r["works"], by_type=by_type))
+    degrees_facet = [FacetValue(value=code, label=label, n=degree_n.get(code, 0)) for code, label in DEGREE_LABELS]
+    return PersonDirectoryOut(items=items, page=Page(page=page, per_page=per_page, total=total),
+                              facets=PersonDirectoryFacets(units=units_facet, degrees=degrees_facet))
 
 
 @router.get("/persons", response_model=list[PersonSearchRow])

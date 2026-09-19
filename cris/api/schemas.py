@@ -71,6 +71,7 @@ class WorkSummary(BaseModel):
     score: float | None = None
     units: list[UnitChip] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)   # tách keywords_raw, tối đa 6 đầu tiên
+    cohort: str | None = None   # khoá (đồ án) — kho nguồn không ghi năm cho đồ án, UI hiện "Khoá 21" thay năm
 
 
 class WorkList(BaseModel):
@@ -155,6 +156,8 @@ class WorksFacetsOut(BaseModel):
     units: list[FacetUnit]
     scores: list[FacetScore] = Field(default_factory=list)
     venue_kinds: list[FacetValue] = Field(default_factory=list)   # loại nơi công bố, chỉ đếm bài báo
+    # loại tài liệu (lát cắt O) — đủ 5 loại kể cả n=0, thứ tự cố định
+    doc_types: list[FacetValue] = Field(default_factory=list)
 
 
 class FieldEditIn(BaseModel):
@@ -217,6 +220,35 @@ class PersonSearchRow(BaseModel):
     kind: str
     works: int
     avatar_url: str | None = None
+
+
+# ---------- danh bạ giảng viên (lát cắt O) ----------
+class DirectoryPerson(BaseModel):
+    """Một thẻ ở `GET /api/persons/directory`. `works`/`by_type` chỉ đếm liên kết
+    tác giả còn sống (`DaNoiTuDong`/`DaXacNhan`) trên công trình chưa gộp — cùng
+    quy tắc với `PersonProfile.by_type`. Không có email/điện thoại/ngày sinh."""
+    id: int
+    display_name: str
+    rank: str | None = None            # học hàm (person.rank)
+    degree: str | None = None          # học vị, y hệt PersonProfile.degree (person.degree_raw)
+    position: str | None = None
+    unit: UnitRef | None = None
+    field: str | None = None
+    avatar_url: str | None = None
+    orcid: str | None = None
+    works: int
+    by_type: dict[str, int] = Field(default_factory=dict)   # chỉ gồm loại có works > 0
+
+
+class PersonDirectoryFacets(BaseModel):
+    units: list[FacetValue] = Field(default_factory=list)
+    degrees: list[FacetValue] = Field(default_factory=list)
+
+
+class PersonDirectoryOut(BaseModel):
+    items: list[DirectoryPerson]
+    page: Page
+    facets: PersonDirectoryFacets
 
 
 class Topic(BaseModel):
@@ -555,6 +587,14 @@ class StatsCoverage(BaseModel):
     works_without_unit: int
 
 
+class StatsTotals(BaseModel):
+    """Toàn bộ kho, không giới hạn theo `years` (lát cắt O) — cùng điều kiện
+    "đang hoạt động, chưa gộp" với `GET /api/works` (`v_work_current`)."""
+    works: int
+    persons: int
+    by_type: dict[str, int]
+
+
 class StatsOut(BaseModel):
     by_year_type: list[YearTypeRow]
     unknown_year: UnknownYearRow
@@ -563,6 +603,7 @@ class StatsOut(BaseModel):
     queues: StatsQueues
     coverage: StatsCoverage
     last_sync: LastSync | None
+    totals: StatsTotals
 
 
 # ---------- nhật ký thao tác ----------

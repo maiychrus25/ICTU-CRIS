@@ -15,8 +15,43 @@
   "Nguyễn Thị Dung" phân biệt được thay vì hiện giống hệt nhau ở hàng đợi tác giả. Một
   truy vấn gộp cho toàn bộ trang (tránh N+1), cùng cách gán chủ đề công trình đã dùng ở
   `cris.ai.map`/`cris.ai.trends`; không lộ email/điện thoại.
+- Lát cắt O1: danh bạ giảng viên và làm lộ đủ các loại công trình (trên prod chỉ thấy
+  bài báo dù kho có đủ đồ án/luận văn/luận án/học liệu, vì `year_issue DESC` đẩy các
+  loại không ghi năm xuống cuối 39 trang). `GET /api/works/facets` thêm `doc_types`
+  (đủ 5 loại kể cả n=0, thứ tự cố định: Bài báo · Đồ án/Khoá luận · Luận văn ThS ·
+  Luận án TS · Học liệu số). `GET /api/works`/`GET /api/works.csv` đổi thứ tự mặc định
+  thành `year_issue DESC NULLS LAST, cohort_num DESC NULLS LAST, id DESC` (khoá — số
+  trích từ `work.cohort` — mới nhất lên ngay sau công trình có năm) và thêm
+  `sort=recent|title|added` (422 nếu giá trị khác; bỏ qua khi `mode=semantic`).
+  `GET /api/stats` thêm `totals` (toàn bộ kho, không giới hạn 5 năm, bỏ bản đã gộp).
+  `GET /api/persons/directory` (mới, công khai): tìm theo tên (không dấu), lọc
+  khoa/học hàm-học vị/`has_works`, sắp theo số công trình hoặc theo tên gọi tiếng Việt
+  (từ cuối họ tên), phân trang, facet đơn vị/học vị không tự lọc theo chính nó — không
+  email/điện thoại/ngày sinh. Khai báo trước `/persons/{pid}` trong router để không bị
+  bắt nhầm là `pid`. `WorkSummary` (mọi danh sách công trình: tra cứu, hồ sơ giảng viên,
+  CSV) thêm trường `cohort: string | null` — khoá của đồ án, để giao diện hiện "Khoá 21"
+  ở cột Năm khi công trình không ghi năm ở nguồn.
+- Lát cắt O — giao diện: mục **Giảng viên** ở thanh bên dẫn sang trang danh bạ mới
+  `/giang-vien/` (không `?id=`) — tìm theo tên (không dấu), lọc khoa/học hàm-học vị/chỉ
+  người có công trình, sắp theo số công trình hoặc theo tên, lưới thẻ giảng viên có
+  phân trang; `?id=` vẫn mở đúng hồ sơ như trước, nay thêm liên kết "← Danh bạ giảng
+  viên". Dưới mục **Tra cứu**, nhóm con thu gọn được **"Loại công trình"** liệt kê 5
+  loại kèm số lượng từ `facets.doc_types`, dẫn thẳng sang `/tra-cuu/?doc_type=`. Trang
+  Tra cứu đổi select "Loại tài liệu" thành hàng tab loại kèm số lượng, thêm select
+  **"Sắp xếp"** (Mới nhất/Tiêu đề A→Z/Mới đưa vào kho), ẩn bộ lọc riêng của bài báo
+  (Loại nơi công bố, Chỉ mục, Điểm quy đổi) khi tab khác Bài báo/Tất cả, cột Năm hiện
+  "Khoá 21" cho đồ án không có năm. Trang Tổng quan thêm hàng thẻ **"Toàn bộ kho"** (Tổng
+  công trình, từng loại, Giảng viên — từ `stats.totals`, mỗi thẻ bấm được) trên hàng thẻ
+  5 năm, và đổi câu chú thích dưới biểu đồ theo năm thành giải thích vì sao đồ án/luận
+  văn/luận án không nằm trong biểu đồ, kèm liên kết "Xem theo khoá". Mọi trường mới đều
+  optional — backend cũ chưa trả `doc_types`/`totals`/`directory` thì giao diện rơi về
+  cách hiển thị cũ.
 
 ### Fixed
+- Tên hiển thị của giảng viên còn dính học hàm/học vị ở 47 hồ sơ ("DH. Bùi Thị Kim Thái" ×46 — nguồn ghi
+  "ĐH.", và "GS.TS. Đặng Quang Á"): `cris.people.strip_honorific` thay danh sách biến thể cố định bằng một
+  mẫu có dấu ngăn bắt buộc (không cắt nhầm tên bắt đầu bằng "Ts…"), giữ hậu tố phân biệt trùng tên của
+  nguồn ("(88)"). Danh bạ giảng viên sắp theo tên và hiển thị đúng; cần chạy lại `python -m cris people`.
 
 - Popup của bộ lọc không còn che mất nội dung: trước đây bề rộng bị khoá cứng bằng
   bề rộng ô neo (`width: var(--anchor-width)`) kèm `overflow-x-hidden`, nên tên khoa

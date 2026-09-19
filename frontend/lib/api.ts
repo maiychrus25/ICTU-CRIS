@@ -4,7 +4,7 @@
 import {
   aboutFixture, auditFixture, authorQueueFixture, compareFixture, declarationDetailsFixture, declarationsFixture,
   anomaliesFixture, citationsFixture, coauthorsFixture, duplicateDetailFixture, duplicateGroupsFixture, expertsFixture,
-  facetsFixture, healthFixture, mapFixture, mentorFixture, notificationFixture, periodProgressFixture, periodReportsFixture, periodsFixture, personFixture,
+  facetsFixture, healthFixture, mapFixture, mentorFixture, notificationFixture, periodProgressFixture, periodReportsFixture, periodsFixture, personDirectoryFixture, personFixture,
   publicTopicFixture, qualityFixture, recentFixture, reportFixture, statsFixture, trendsFixture, unitOverviewFixture,
   lecturerMeFixture, meFixture, myDeclarationsFixture, myWorksFixture, personsFixture, screenCohortsFixture, screenFixture, signedOutMeFixture, syncRunDetailsFixture, syncRunsFixture,
   topicDetailsFixture, topicsFixture, unitsFixture, workDetailsFixture, workItems, worksFixture,
@@ -13,7 +13,7 @@ import type {
   AboutOut, AuditFilters, AuditList, AuthorQueueList, CompareIn, CompareOut, DeclarationCreateIn,
   DeclarationDetail, DeclarationEvidenceIn, DeclarationList, DeclarationRow, DeclarationStateIn,
   AcceptMentorResult, DecideAuthorsIn, DecideDupIn, DecideResult, DupGroupDetail, DupGroupList, EvidenceFileOut, EvidenceOut, HealthOut, MentorFilters, MentorList, PeriodOpenIn, PeriodOut, PeriodProgress,
-  CreateReportIn, FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, MyDeclarationCreateIn, MyWorkList, NotificationList, PeriodFinalizeOut, PeriodReport, PeriodReportListItem, PersonProfile, PersonSearchRow, QualityOut, ReportCreateOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail, Unit, UnitAliasIn, UnitOverview, UnitRenameIn,
+  CreateReportIn, FieldEditIn, FieldEditOut, LoginIn, LogoutOut, MeOut, MyDeclarationCreateIn, MyWorkList, NotificationList, PeriodFinalizeOut, PeriodReport, PeriodReportListItem, PersonDirectoryData, PersonDirectoryFilters, PersonDirectoryOut, PersonProfile, PersonSearchRow, QualityOut, ReportCreateOut, StatsOut, SyncRunDetail, SyncRunList, Topic, TopicDetail, Unit, UnitAliasIn, UnitOverview, UnitRenameIn,
   CoauthorsOut, DismissAnomalyIn, DismissAnomalyOut, ExpertIn, ExpertOut, MapColor, MapOut, PublicTopicCheckIn,
   PublicTopicCheckOut, QualityAnomalyFilters, QualityAnomalyList, RecentOut, TrendsOut, UserOut,
   WorkDetail, WorkFacets, WorkFilters, WorkList,
@@ -168,6 +168,28 @@ async function mockRequest<T>(path: string, init?: RequestInit): Promise<T> {
   else if (/^\/api\/persons\/\d+\/citations$/.test(url.pathname)) {
     const style = url.searchParams.get("style") as keyof typeof citationsFixture;
     data = citationsFixture[style] ?? citationsFixture.apa;
+  }
+  else if (url.pathname === "/api/persons/directory") {
+    const plain = (value: string) => value.toLocaleLowerCase("vi-VN").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const q = plain(url.searchParams.get("q") ?? "");
+    const unit = url.searchParams.get("unit");
+    const degree = url.searchParams.get("degree");
+    const hasWorks = url.searchParams.get("has_works") === "true";
+    const sort = url.searchParams.get("sort") ?? "works";
+    const page = Number(url.searchParams.get("page") ?? 1);
+    const perPage = Number(url.searchParams.get("per_page") ?? 24);
+    const degreeKey = (person: (typeof personDirectoryFixture)[number]) => person.rank?.toLocaleLowerCase("vi-VN") === "pgs" ? "pgs" : person.rank?.toLocaleLowerCase("vi-VN") === "gs" ? "gs" : person.degree?.toLocaleLowerCase("vi-VN") === "ts" ? "ts" : person.degree?.toLocaleLowerCase("vi-VN") === "ths" ? "ths" : "other";
+    const searched = personDirectoryFixture.filter((person) => !q || plain(person.display_name).includes(q));
+    const filtered = searched.filter((person) => (!unit || (unit === "none" ? person.unit === null : person.unit?.code === unit || String(person.unit?.id) === unit)) && (!degree || degreeKey(person) === degree) && (!hasWorks || person.works > 0));
+    filtered.sort(sort === "name" ? (a, b) => (a.display_name.split(" ").at(-1) ?? "").localeCompare(b.display_name.split(" ").at(-1) ?? "", "vi") || a.display_name.localeCompare(b.display_name, "vi") : (a, b) => b.works - a.works || a.id - b.id);
+    data = {
+      items: filtered.slice((page - 1) * perPage, page * perPage),
+      page: { page, per_page: perPage, total: filtered.length },
+      facets: {
+        units: unitsFixture.slice(0, 6).map((item) => ({ value: item.code, label: `${item.code} — ${item.name}`, n: searched.filter((person) => person.unit?.code === item.code).length })),
+        degrees: [["gs", "Giáo sư"], ["pgs", "Phó giáo sư"], ["ts", "Tiến sĩ"], ["ths", "Thạc sĩ"], ["other", "Khác"]].map(([value, label]) => ({ value, label, n: searched.filter((person) => degreeKey(person) === value).length })),
+      },
+    } satisfies PersonDirectoryOut;
   }
   else if (/^\/api\/persons\/\d+$/.test(url.pathname)) data = id === personFixture.id ? personFixture : undefined;
   else if (url.pathname === "/api/persons") {
@@ -539,13 +561,36 @@ export async function apiUpload<T>(path: string, body: FormData): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function getPersonDirectory(filters: PersonDirectoryFilters, supportsDirectory: boolean): Promise<PersonDirectoryData> {
+  const legacy = async (): Promise<PersonDirectoryData> => {
+    const items = await apiRequest<PersonSearchRow[]>(`/api/persons${queryString({ q: filters.q, limit: 100 })}`);
+    return {
+      items: items.map((person) => ({
+        id: person.id, display_name: person.display_name, rank: null, degree: person.degree,
+        position: null, unit: person.unit_code ? { id: 0, code: person.unit_code, name: person.unit_code } : null,
+        field: null, avatar_url: person.avatar_url ?? null, orcid: null, works: person.works, by_type: {},
+      })),
+      page: { page: 1, per_page: items.length || 100, total: items.length },
+      facets: { units: [], degrees: [] }, filters_supported: false,
+    };
+  };
+  if (!supportsDirectory) return legacy();
+  try {
+    const data = await apiRequest<PersonDirectoryOut>(`/api/persons/directory${queryString({ q: filters.q, unit: filters.unit, degree: filters.degree, has_works: filters.has_works ? "true" : undefined, sort: filters.sort, page: filters.page, per_page: filters.per_page })}`);
+    return { ...data, filters_supported: true };
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return legacy();
+    throw error;
+  }
+}
+
 export const evidenceFileUrl = (id: number) => `${API_BASE}/api/evidence/${id}/file`;
 
 export const api = {
   getMe: () => apiRequest<MeOut>("/api/auth/me"),
   login: (input: LoginIn) => apiRequest<UserOut>("/api/auth/login", { method: "POST", body: JSON.stringify(input) }),
   logout: () => apiRequest<LogoutOut>("/api/auth/logout", { method: "POST" }),
-  getWorks: (filters: WorkFilters = {}) => apiRequest<WorkList>(`/api/works${queryString({ q: filters.q, mode: filters.mode, doc_type: filters.doc_type, year: filters.year, unit: filters.unit, topic: filters.topic, pub_type: filters.pub_type, quartile: filters.quartile, cohort: filters.cohort, keyword: filters.keyword, score: filters.score, min_score: filters.min_score, venue_kind: filters.venue_kind, page: filters.page })}`),
+  getWorks: (filters: WorkFilters = {}) => apiRequest<WorkList>(`/api/works${queryString({ q: filters.q, mode: filters.mode, doc_type: filters.doc_type, year: filters.year, unit: filters.unit, topic: filters.topic, pub_type: filters.pub_type, quartile: filters.quartile, cohort: filters.cohort, keyword: filters.keyword, score: filters.score, min_score: filters.min_score, venue_kind: filters.venue_kind, sort: filters.sort, page: filters.page })}`),
   getWorkFacets: () => apiRequest<WorkFacets>("/api/works/facets"),
   getUnits: () => apiRequest<Unit[]>("/api/units"),
   renameUnit: (id: number, input: UnitRenameIn) => apiRequest<Unit>(`/api/units/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
@@ -556,6 +601,7 @@ export const api = {
   getPerson: (id: number) => apiRequest<PersonProfile>(`/api/persons/${id}`),
   getPersonCitation: (id: number, style: "apa" | "ieee" | "bibtex") => apiTextRequest(`/api/persons/${id}/citations${queryString({ style })}`),
   searchPersons: (q: string, limit = 20) => apiRequest<PersonSearchRow[]>(`/api/persons${queryString({ q, limit })}`),
+  getPersonDirectory,
   getTopics: () => apiRequest<Topic[]>("/api/topics"),
   getTopic: (id: number) => apiRequest<TopicDetail>(`/api/topics/${id}`),
   getAuthorQueue: (state = "ChoXacNhan", q = "", page = 1) => apiRequest<AuthorQueueList>(`/api/queue/authors${queryString({ state, q, page })}`),

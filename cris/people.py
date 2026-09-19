@@ -44,6 +44,19 @@ def position_from_job_title(job_title):
 
 # Ảnh đại diện (lát cắt N): chỉ nhận URL của chính kho nguồn — link ảnh lạ (CDN
 # khác, ảnh đặt chỗ do theme sinh) bị bỏ thay vì lưu một URL không kiểm soát được.
+# Học hàm/học vị đứng trước họ tên ở `archive.display` ("PGS.TS. …", "GS.TS. …", "ĐH. …" —
+# nguồn còn ghi "DH."). Tên hiển thị chỉ giữ họ tên; học hàm/học vị đã có cột riêng
+# (`rank`, `degree_raw`). Mỗi danh xưng phải kèm ít nhất một dấu ngăn (chấm, gạch, khoảng
+# trắng) để không cắt nhầm vào một cái tên bắt đầu bằng cùng chữ cái.
+_HONORIFIC_RE = re.compile(r"^(?:(?:PGS|GS|TSKH|TS|ThS|KS|CN|BS|ĐH|DH)[.\s\-–]+)+(?=\S)", re.IGNORECASE)
+
+
+def strip_honorific(raw_name):
+    """"GS.TS. Đặng Quang Á" → "Đặng Quang Á"; "DH. Bùi Thị Kim Thái" → "Bùi Thị Kim Thái"."""
+    display = re.sub(r"\s+", " ", raw_name or "").strip()
+    return _HONORIFIC_RE.sub("", display).strip() or display
+
+
 AVATAR_URL_PREFIX = "https://repository.ictu.edu.vn/"
 
 
@@ -103,13 +116,7 @@ def import_people(conn):
                     # `name` thường là chữ thường (slug) — ưu tiên display cho tên hiển thị.
                     raw_name = a.get("display") or a.get("name") or ""
                     nn, deg = RU.norm_name(a.get("name") or raw_name, nb)
-                    display = re.sub(r"\s+", " ", raw_name).strip()
-                    for canon, variants in nb["prefixes"].items():
-                        matched = next((v for v in variants if display.lower().startswith(v + " ")), None)
-                        if matched:
-                            display = display[len(matched):].strip()
-                            break
-                    display = RU.title_case_name(display)
+                    display = RU.title_case_name(strip_honorific(raw_name))
                     # jobTitle là CHỨC VỤ (lát cắt M) → person.position; KHÔNG suy/gán đơn vị
                     # từ đây nữa — đơn vị nay đến từ assign_units_by_works (đa số công trình
                     # đã liên kết) hoặc gán tay (cris.units.set_person_unit), xem migration 0020.

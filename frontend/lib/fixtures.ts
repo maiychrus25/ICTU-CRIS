@@ -4,7 +4,7 @@
 import type {
   AboutOut, AuditList, AuthorQueueList, CompareOut, DeclarationDetail, DeclarationRow, DupGroupDetail, DupGroupList, HealthOut, MeOut,
   NotificationRow, PeriodReport, PeriodReportListItem, Unit, UnitOverview,
-  CoauthorsOut, ExpertOut, MentorList, MyWorkList, PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow,
+  CoauthorsOut, DirectoryPerson, ExpertOut, MentorList, MyWorkList, PeriodOut, PeriodProgress, PersonProfile, PersonSearchRow,
   PublicTopicCheckOut, QualityAnomalyList, QualityOut, RecentOut, StatsOut, SyncRunDetail, SyncRunList, Topic,
   TopicDetail, TrendsOut, WorkDetail, WorkFacets, WorkList, WorkSummary, ScreenCohortSummary, ScreenList, MapOut,
 } from "@/lib/types";
@@ -35,7 +35,7 @@ export const lecturerMeFixture: MeOut = {
 export const signedOutMeFixture: MeOut = { user: null, auth_required: true };
 
 export const workItems: WorkSummary[] = [
-  { id: 1, title: "Xây dựng website quản lý thư viện trường THPT Lương Ngọc Quyến", doc_type: "do_an", doc_type_label: "Đồ án", year: 2025, doi: null, state: "DaXacNhan", needs_review: false },
+  { id: 1, title: "Xây dựng website quản lý thư viện trường THPT Lương Ngọc Quyến", doc_type: "do_an", doc_type_label: "Đồ án", year: null, cohort: "21", doi: null, state: "DaXacNhan", needs_review: false },
   { id: 2, title: "Ứng dụng học sâu trong nhận dạng bệnh trên lá chè Thái Nguyên", doc_type: "bai_bao", doc_type_label: "Bài báo", year: 2025, doi: "10.15625/ictu.2025.102", state: "DaXacNhan", needs_review: false },
   { id: 3, title: "Phát triển hệ thống điểm danh sinh viên bằng nhận diện khuôn mặt", doc_type: "do_an", doc_type_label: "Đồ án", year: 2024, doi: null, state: "ChoXacNhan", needs_review: true },
   { id: 4, title: "Mô hình dự báo chất lượng không khí tại thành phố Thái Nguyên", doc_type: "luan_van", doc_type_label: "Luận văn", year: 2024, doi: null, state: "DaNoiTuDong", needs_review: false },
@@ -134,6 +134,30 @@ export const personsFixture: PersonSearchRow[] = [
   { id: 2, display_name: "TS. Nguyễn Văn An", degree: "Tiến sĩ", unit_code: "ĐTVT", kind: "giang_vien", works: 31, avatar_url: "https://repository.ictu.edu.vn/avatar/nguyen-van-an.jpg" },
   { id: 3, display_name: "ThS. Trần Thị Bình", degree: "Thạc sĩ", unit_code: "HTTTKT", kind: "giang_vien", works: 24, avatar_url: null },
 ];
+
+const lecturerNames = [
+  "Nguyễn Văn A", "Nguyễn Văn An", "Trần Thị Bình", "Lê Văn Hoàng", "Phạm Minh Đức", "Đỗ Thu Hà", "Hoàng Thị Lan", "Vũ Đức Long",
+  "Nguyễn Thu Trang", "Bùi Quang Huy", "Dương Thị Mai", "Phan Anh Tuấn", "Nguyễn Thị Dung", "Trịnh Minh Khang", "Đặng Ngọc Anh", "Lương Thị Hương",
+  "Mai Quốc Bảo", "Tạ Thị Thanh", "Hà Văn Nam", "Chu Đức Mạnh", "Đinh Thị Thuỷ", "Nông Văn Sơn", "Lý Thị Hạnh", "Quách Minh Tâm",
+  "Vương Thị Nhung", "Cao Xuân Phúc", "Tô Ngọc Linh", "La Văn Dũng", "Kiều Thị Vân", "Mạc Quốc Việt", "Ngô Thị Yến", "Đào Minh Quân",
+];
+
+export const personDirectoryFixture: DirectoryPerson[] = lecturerNames.map((displayName, index) => {
+  const unit = index === lecturerNames.length - 1 ? null : unitsFixture[index % 6];
+  const rank = index === 0 || index === 12 ? "PGS" : index === 20 ? "GS" : null;
+  const degree = index % 4 === 2 ? "ThS" : "TS";
+  const works = index === lecturerNames.length - 2 ? 0 : Math.max(1, 48 - index);
+  return {
+    id: index + 1, display_name: index === 0 ? "TS. Nguyễn Văn A" : displayName, rank, degree,
+    position: index === 0 ? "Hiệu trưởng" : index % 7 === 0 ? "Trưởng bộ môn" : "Giảng viên",
+    unit: unit ? { id: unit.id, code: unit.code, name: unit.name } : null,
+    field: ["Trí tuệ nhân tạo", "Hệ thống thông tin", "Điện tử viễn thông", "Truyền thông số"][index % 4],
+    avatar_url: index < 2 ? personsFixture[index].avatar_url ?? null : null,
+    orcid: index % 9 === 0 ? `0000-0002-1825-${String(97 + index).padStart(4, "0")}` : null,
+    works,
+    by_type: works ? { bai_bao: Math.ceil(works / 3), do_an: Math.floor(works / 2), ...(index % 3 === 0 ? { luan_van: 2 } : {}) } : {},
+  };
+});
 
 const candidateDetailsFixture = [
   {
@@ -284,6 +308,7 @@ export const aboutFixture: AboutOut = {
 };
 
 export const statsFixture: StatsOut = {
+  totals: { works: 7618, persons: 400, by_type: { bai_bao: 1907, do_an: 5375, luan_van: 323, luan_an: 11, hoc_lieu: 2 } },
   by_year_type: [
     { year: 2025, bai_bao: 86, do_an: 174, luan_van: 24, luan_an: 5, hoc_lieu: 18 },
     { year: 2024, bai_bao: 79, do_an: 162, luan_van: 21, luan_an: 4, hoc_lieu: 20 },
@@ -390,6 +415,13 @@ export const syncRunDetailsFixture: Record<number, SyncRunDetail> = Object.fromE
 }])) as Record<number, SyncRunDetail>;
 
 export const facetsFixture: WorkFacets = {
+  doc_types: [
+    { value: "bai_bao", label: "Bài báo", n: 1907 },
+    { value: "do_an", label: "Đồ án/Khoá luận", n: 5375 },
+    { value: "luan_van", label: "Luận văn ThS", n: 323 },
+    { value: "luan_an", label: "Luận án TS", n: 11 },
+    { value: "hoc_lieu", label: "Học liệu số", n: 2 },
+  ],
   pub_types: [{ value: "journal_intl", label: "Tạp chí quốc tế", n: 126 }, { value: "conference", label: "Hội thảo", n: 84 }],
   venue_kinds: [
     { value: "journal_intl", label: "Tạp chí quốc tế", n: 1 },

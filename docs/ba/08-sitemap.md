@@ -16,12 +16,17 @@ dẫn — thông báo trong ứng dụng, báo cáo kỳ đóng băng, góc nhì
 (lát cắt M, xem
 [2026-09-13-lat-cat-m.md](../superpowers/plans/2026-09-13-lat-cat-m.md)): thêm một đường
 dẫn — quản trị khoa (`rd_officer`), cho phép đổi tên/thêm bí danh các khoa thật đọc từ
-kho nguồn. Đường dẫn UI thật đang chạy:
+kho nguồn. Cập nhật 19/09/2026 (lát cắt O, xem
+[2026-09-19-lat-cat-o.md](../superpowers/plans/2026-09-19-lat-cat-o.md)): `/giang-vien/`
+nay gộp hai màn hình trên cùng một đường dẫn — **danh bạ** (không có `?id=`, công khai, tìm/
+lọc/sắp xếp 400 giảng viên) và **hồ sơ** (`?id=`, giữ nguyên như trước). Đường dẫn UI thật
+đang chạy:
 
 ```
 /tong-quan/                                Tổng quan cho lãnh đạo
 /tra-cuu/                                  Tìm công trình
 /cong-trinh/?id=                           Chi tiết công trình (xuất xứ từng trường)
+/giang-vien/                               Danh bạ giảng viên — công khai, tìm/lọc/sắp xếp (lát cắt O)
 /giang-vien/?id=                           Hồ sơ công bố của giảng viên
 /giang-vien/ly-lich/?id=                   Lý lịch khoa học in được (A4)
 /doi-chieu/                                Đối chiếu đề tài dự kiến (bốn khía cạnh)

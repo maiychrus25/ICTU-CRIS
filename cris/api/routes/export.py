@@ -5,12 +5,13 @@ UTF-8 có BOM để Excel mở đúng dấu tiếng Việt, tối đa 20.000 dò
 import csv
 import io
 from datetime import UTC, datetime
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from cris.api.deps import Conn
-from cris.api.routes.search import _works_query
+from cris.api.routes.search import SORT_ORDER_SQL, SORT_SELECT_EXTRA, _works_query
 
 router = APIRouter(prefix="/api", tags=["xuat-du-lieu"])
 
@@ -37,22 +38,24 @@ def _csv_response(rows, filename):
 
 @router.get("/works.csv")
 def export_works_csv(conn: Conn, q: str = "", doc_type: str = "", year: int | None = None,
-                      unit: str = "", topic: int | None = None, venue_kind: str = ""):
+                      unit: str = "", topic: int | None = None, venue_kind: str = "",
+                      sort: Literal["recent", "title", "added"] = "recent"):
     from_sql, where_sql, params = _works_query(q, doc_type, year, unit, topic, venue_kind=venue_kind)
+    order_sql = SORT_ORDER_SQL[sort]
     with conn.cursor() as cur:
         cur.execute(
-            f"SELECT DISTINCT w.id, w.year_issue {from_sql} WHERE {where_sql} "
-            f"ORDER BY w.year_issue DESC NULLS LAST, w.id DESC LIMIT %s",
+            f"SELECT DISTINCT w.id, w.year_issue, {SORT_SELECT_EXTRA} {from_sql} WHERE {where_sql} "
+            f"ORDER BY {order_sql} LIMIT %s",
             params + [MAX_ROWS])
         ids = [r["id"] for r in cur.fetchall()]
-        rows = []
+        rows_by_id = {}
         if ids:
             cur.execute(
                 f"SELECT w.id, w.doc_type, w.title, w.year_issue AS year, w.doi, w.journal, w.state, "
-                f"{_AUTHORS_SUBSELECT} FROM v_work_current w WHERE w.id = ANY(%s) "
-                f"ORDER BY w.year_issue DESC NULLS LAST, w.id DESC",
+                f"{_AUTHORS_SUBSELECT} FROM v_work_current w WHERE w.id = ANY(%s)",
                 (ids,))
-            rows = cur.fetchall()
+            rows_by_id = {r["id"]: r for r in cur.fetchall()}
+        rows = [rows_by_id[i] for i in ids if i in rows_by_id]
     filename = f"cong-trinh-{datetime.now(UTC).date():%Y%m%d}.csv"
     return _csv_response(rows, filename)
 
