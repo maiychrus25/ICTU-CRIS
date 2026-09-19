@@ -1,6 +1,7 @@
 // Copyright (c) 2026 ICTU-CRIS contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { useSyncExternalStore } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -20,7 +21,21 @@ export function useOfficerAccess() {
 }
 
 export const useWorks = (filters: WorkFilters, enabled = true) => useQuery({ queryKey: ["works", filters], queryFn: () => api.getWorks(filters), enabled });
-export const useWorkFacets = (enabled = true) => useQuery({ queryKey: ["work-facets"], queryFn: api.getWorkFacets, enabled });
+const subscribeToNothing = () => () => {};
+/** `true` chỉ sau khi hydrate xong (máy chủ và lần render hydrate đầu đều là `false`). */
+export const useHydrated = () => useSyncExternalStore(subscribeToNothing, () => true, () => false);
+
+/**
+ * Facet dùng chung giữa thanh bên (hydrate sớm) và các trang nằm trong Suspense (hydrate muộn). Khi trang hydrate,
+ * facet có thể đã nằm sẵn trong cache do thanh bên gọi trước → client render nhãn/số lượng mà HTML máy chủ không có →
+ * hydration mismatch, React dựng lại cả cây và làm mất thao tác người dùng vừa làm. Vì vậy dữ liệu chỉ được trả ra
+ * sau khi hydrate; trước đó hook hành xử như đang tải.
+ */
+export function useWorkFacets(enabled = true) {
+  const hydrated = useHydrated();
+  const query = useQuery({ queryKey: ["work-facets"], queryFn: api.getWorkFacets, enabled });
+  return hydrated ? query : { ...query, data: undefined };
+}
 export const useUnits = () => useQuery({ queryKey: ["units"], queryFn: api.getUnits, retry: false });
 export const useRenameUnit = () => useMutation({ mutationFn: ({ id, name, reason }: { id: number; name: string; reason?: string }) => api.renameUnit(id, { name, reason }) });
 export const useAddUnitAlias = () => useMutation({ mutationFn: ({ id, alias, reason }: { id: number; alias: string; reason?: string }) => api.addUnitAlias(id, { alias, reason }) });

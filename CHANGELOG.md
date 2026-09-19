@@ -50,6 +50,10 @@
   cách hiển thị cũ.
 
 ### Fixed
+
+- Hydration mismatch ở trang Tra cứu (chỉ lộ trên máy chậm/CI): nhãn chip bộ lọc lấy từ facet đã có trong cache lúc trang
+  hydrate muộn nên lệch với HTML máy chủ ("Tạp chí quốc tế" so với `journal_intl`), React dựng lại cả cây và đóng ô "Bộ lọc"
+  người dùng vừa mở. `useWorkFacets` chỉ trả dữ liệu sau khi hydrate (`useHydrated`); nhãn khoa/chủ đề ở chip cũng vậy.
 - Tên hiển thị của giảng viên còn dính học hàm/học vị ở 47 hồ sơ ("DH. Bùi Thị Kim Thái" ×46 — nguồn ghi
   "ĐH.", và "GS.TS. Đặng Quang Á"): `cris.people.strip_honorific` thay danh sách biến thể cố định bằng một
   mẫu có dấu ngăn bắt buộc (không cắt nhầm tên bắt đầu bằng "Ts…"), giữ hậu tố phân biệt trùng tên của
