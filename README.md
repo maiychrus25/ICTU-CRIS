@@ -371,7 +371,7 @@ trúc máy chủ, secrets GitHub cần tạo, quy trình phát hành và quay lu
 | 🎯 | [docs/BRD.md](docs/BRD.md) | Yêu cầu nghiệp vụ: 6 vấn đề đo được, YN-01..10, ràng buộc cuộc thi |
 | 📐 | [docs/SRS.md](docs/SRS.md) | Đặc tả phần mềm: FR theo giai đoạn, tích hợp AI, ma trận truy vết YN → FR → UC → US |
 | 🤖 | [docs/ai.md](docs/ai.md) | AI làm gì và không làm gì, ba nhà cung cấp, mô hình, thuật toán, giới hạn |
-| 🏷️ | [docs/release-notes/v0.7.0.md](docs/release-notes/v0.7.0.md) | Ghi chú phát hành bản hiện tại (cũ hơn: [v0.6.1](docs/release-notes/v0.6.1.md), [v0.6.0](docs/release-notes/v0.6.0.md), [v0.5.0](docs/release-notes/v0.5.0.md), [v0.4.0](docs/release-notes/v0.4.0.md), [v0.3.0](docs/release-notes/v0.3.0.md), [v0.2.0](docs/release-notes/v0.2.0.md), [v0.1.0](docs/release-notes/v0.1.0.md)) |
+| 🏷️ | [docs/release-notes/v0.8.0.md](docs/release-notes/v0.8.0.md) | Ghi chú phát hành bản hiện tại (cũ hơn: [v0.7.0](docs/release-notes/v0.7.0.md), [v0.6.1](docs/release-notes/v0.6.1.md), [v0.6.0](docs/release-notes/v0.6.0.md), [v0.5.0](docs/release-notes/v0.5.0.md), [v0.4.0](docs/release-notes/v0.4.0.md), [v0.3.0](docs/release-notes/v0.3.0.md), [v0.2.0](docs/release-notes/v0.2.0.md), [v0.1.0](docs/release-notes/v0.1.0.md)) |
 | 🛰️ | [docs/deploy-prod.md](docs/deploy-prod.md) | Triển khai máy chủ thật: kiến trúc, secrets, quy trình phát hành, quay lui |
 | 📋 | [docs/ba/00-README.md](docs/ba/00-README.md) | Bộ tài liệu phân tích nghiệp vụ (BA) — 18 tệp |
 | 🗄️ | [docs/ba/17-mo-hinh-du-lieu.md](docs/ba/17-mo-hinh-du-lieu.md) | Mô hình dữ liệu bản 0.1 cho lát cắt S + N + T-01/T-02 |

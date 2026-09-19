@@ -97,14 +97,15 @@ function SearchContent() {
   const semantic = filters.mode === "semantic";
   const csvQuery = new URLSearchParams(Object.entries(requestFilters).filter(([key, value]) => key !== "page" && value !== undefined && value !== "").map(([key, value]) => [key, String(value)]));
   const csvUrl = `${API_BASE}/api/works.csv${csvQuery.size ? `?${csvQuery}` : ""}`;
+  // Nhãn chip lấy từ dữ liệu tải về chỉ dùng sau khi hydrate (xem useWorkFacets): tránh lệch với HTML máy chủ.
   const activeFilters = [
     requestFilters.doc_type && docTypeLabels[requestFilters.doc_type],
     filters.year && `Năm ${filters.year}`,
-    filters.unit && (unitOptions.find((item) => item.value === filters.unit)?.label ?? filters.unit),
+    filters.unit && ((hydrated ? unitOptions.find((item) => item.value === filters.unit)?.label : undefined) ?? filters.unit),
     filters.venue_kind && (venueOptions.find((item) => item.value === filters.venue_kind)?.label ?? filters.venue_kind),
     filters.pub_type && (facets.data?.pub_types.find((item) => item.value === filters.pub_type)?.label ?? filters.pub_type),
     filters.score && (scoreOptions.find((item) => item.value === filters.score)?.label ?? filters.score),
-    filters.topic && (topics.data?.find((item) => item.id === filters.topic)?.label ?? `Chủ đề #${filters.topic}`),
+    filters.topic && ((hydrated ? topics.data?.find((item) => item.id === filters.topic)?.label : undefined) ?? `Chủ đề #${filters.topic}`),
     filters.quartile,
     filters.cohort && `Khoá ${filters.cohort}`,
   ].filter((label): label is string => Boolean(label));
