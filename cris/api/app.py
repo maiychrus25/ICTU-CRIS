@@ -92,11 +92,19 @@ def _model_status() -> str:
         return "missing"
 
 
+def _package_version() -> str:
+    """Phiên bản của gói đang cài (tên phân phối là `cris`, xem pyproject.toml) — nguồn duy nhất cho cả
+    OpenAPI lẫn `/api/health`. Trước đây tra nhầm tên "ictu-cris" nên luôn rơi về một chuỗi viết cứng đã cũ."""
+    for dist in ("cris", "ictu-cris"):
+        try:
+            return importlib.metadata.version(dist)
+        except importlib.metadata.PackageNotFoundError:
+            continue
+    return "0+unknown"
+
+
 def _app_version(app: FastAPI) -> str:
-    try:
-        return importlib.metadata.version("ictu-cris")
-    except importlib.metadata.PackageNotFoundError:
-        return app.version
+    return app.version
 
 
 def _last_sync_age_h(conn) -> float | None:
@@ -114,7 +122,7 @@ def _last_sync_age_h(conn) -> float | None:
 def create_app(static_dir: str | os.PathLike | None = None) -> FastAPI:
     app = FastAPI(
         title="ICTU-CRIS API",
-        version="0.7.0",
+        version=_package_version(),
         description="Một nguồn sự thật cho dữ liệu công bố khoa học — mỗi con số truy ngược được về bản ghi gốc. "
                     "AI gợi ý, người quyết; không có AI vẫn chạy đủ chức năng.",
         license_info={"name": "Apache-2.0", "url": "https://www.apache.org/licenses/LICENSE-2.0"},

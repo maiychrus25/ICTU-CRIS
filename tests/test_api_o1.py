@@ -226,6 +226,17 @@ def test_directory_q_matches_without_diacritics_partial(client, conn, user_id):
     assert [p["id"] for p in r["items"]] == [pid]
 
 
+def test_directory_sort_name_ignores_the_sources_parenthesised_disambiguator(client, conn, user_id):
+    """Nguồn ghi "Nguyễn Thu Hương (88)" để phân biệt người trùng tên; tên gọi vẫn là "Hương", không phải "(88)"."""
+    an = mk_person(conn, "Nguyễn Văn An")
+    huong = mk_person(conn, "Nguyễn Thu Hương (88)")
+    vinh = mk_person(conn, "Nguyễn Thế Vịnh")
+    conn.commit()
+    r = client.get("/api/persons/directory", params={"sort": "name"}).json()
+    ids = [p["id"] for p in r["items"]]
+    assert ids.index(an) < ids.index(huong) < ids.index(vinh)
+
+
 def test_directory_sort_name_orders_by_given_name(client, conn, user_id):
     an = mk_person(conn, "Nguyễn Văn An")
     binh = mk_person(conn, "Trần Thị Bình")

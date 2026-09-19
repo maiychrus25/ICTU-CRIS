@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `GET /api/health` và OpenAPI báo sai phiên bản (bản chạy thật 0.8.0 vẫn hiện "0.7.0"): mã tra tên gói "ictu-cris" trong khi gói
+  cài tên là `cris`, nên luôn rơi về một chuỗi viết cứng đã cũ. Nay `_package_version()` là nguồn duy nhất, không còn chuỗi viết cứng.
+- Danh bạ giảng viên sắp theo tên: bỏ qua hậu tố trong ngoặc mà nguồn dùng để phân biệt người trùng tên — "Nguyễn Thu Hương (88)"
+  từng đứng đầu danh bạ vì "(88)" bị coi là tên gọi.
+
 ## [0.8.0] - 2026-09-20
 
 ### Added
