@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-20
+
 ### Added
 
 - Rà soát UI đợt 2: `GET /api/queue/authors` (`AuthorQueueRow`) thêm `candidate_degree`,
